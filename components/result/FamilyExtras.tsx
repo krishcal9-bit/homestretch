@@ -157,10 +157,15 @@ export function FamilyExtras({ profile }: ResultExtrasProps) {
                     <MessageSquare size={18} strokeWidth={1.75} aria-hidden />
                     {t('plan.textMe')}
                   </Button>
-                  <Button variant="secondary" onClick={() => window.open(`/api/pdf/plan/${code}?lang=${lang}`, '_blank')} data-testid="download-pdf">
+                  <a
+                    href={`/api/pdf/plan/${code}?lang=${lang}`}
+                    download={`homestretch-plan-${code}-${lang}.pdf`}
+                    data-testid="download-pdf"
+                    className="inline-flex min-h-[44px] items-center gap-2 rounded-[8px] border border-line bg-surface px-4 text-[15px] font-medium text-ink transition-colors duration-[120ms] hover:bg-paper"
+                  >
                     <Download size={18} strokeWidth={1.75} aria-hidden />
                     {t('plan.downloadPdf')}
-                  </Button>
+                  </a>
                 </div>
                 <AnimatePresence initial={false}>
                   {phoneOpen && (
@@ -194,6 +199,25 @@ export function FamilyExtras({ profile }: ResultExtrasProps) {
         </div>
         <p className="t-helper mt-4 text-ink-2">{t('plan.consent')}</p>
       </Section>
+      {code && (
+        <Section title={t('share.title')} id="share">
+          <div className="panel flex items-start gap-5 !p-5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`/api/card/${code}?lang=${lang}`} alt={t('share.alt')} width={108} height={192} className="h-[192px] w-[108px] shrink-0 rounded-[8px] border border-line bg-paper" />
+            <div>
+              <p className="text-[15px] leading-[22px] text-ink-2">{t('share.help')}</p>
+              <a
+                href={`/api/card/${code}?lang=${lang}`}
+                download={`homestretch-${code}-${lang}.png`}
+                className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-[8px] border border-line bg-surface px-4 text-[15px] font-medium text-ink transition-colors duration-[120ms] hover:bg-paper"
+              >
+                <Download size={18} strokeWidth={1.75} aria-hidden />
+                {t('share.download')}
+              </a>
+            </div>
+          </div>
+        </Section>
+      )}
     </>
   );
 }

@@ -288,5 +288,30 @@
     "sent": "Enviado a {org}",
     "download": "Descargar resumen",
     "error": "No pudimos enviarlo. Revise su conexión e intente de nuevo."
+  },
+  "share": {
+    "title": "Comparta su avance",
+    "help": "Una imagen para su teléfono o redes sociales. Muestra su fecha, nunca su dinero.",
+    "download": "Descargar imagen",
+    "months": "Estoy a {n} meses de mis llaves",
+    "oneMonth": "Estoy a 1 mes de mis llaves",
+    "keysNow": "Voy en camino a mis llaves",
+    "readyBy": "Lista para hipoteca en {month}",
+    "with": "Trabajando por un hogar con Habitat for Humanity del Condado de Orange",
+    "alt": "Imagen para compartir con su camino a las llaves"
+  },
+  "pdf": {
+    "title": "Su camino a las llaves",
+    "ready": "Lista para hipoteca en",
+    "keys": "Llaves en {month}",
+    "road": "Su camino",
+    "plan": "Su plan de 90 días",
+    "code": "Código del plan {code}",
+    "footer": "Hecho con Homestretch para Habitat for Humanity del Condado de Orange. Abra su plan cuando quiera en {url}",
+    "owner": {
+      "you": "Usted",
+      "habitat": "Habitat OC",
+      "counselor": "Asesor"
+    }
   }
 }

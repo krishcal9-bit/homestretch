@@ -288,5 +288,30 @@
     "sent": "Sent to {org}",
     "download": "Download packet",
     "error": "We couldn’t send that. Check your connection and try again."
+  },
+  "share": {
+    "title": "Share your progress",
+    "help": "A picture for your phone or social media. It shows your date, never your money.",
+    "download": "Download image",
+    "months": "I'm {n} months from keys",
+    "oneMonth": "I'm 1 month from keys",
+    "keysNow": "I'm on my way to keys",
+    "readyBy": "Mortgage-ready by {month}",
+    "with": "Working toward a home with Habitat for Humanity of Orange County",
+    "alt": "Share card showing your road to keys"
+  },
+  "pdf": {
+    "title": "Your path to keys",
+    "ready": "Mortgage-ready by",
+    "keys": "Keys in {month}",
+    "road": "Your road",
+    "plan": "Your 90-day plan",
+    "code": "Plan code {code}",
+    "footer": "Made with Homestretch for Habitat for Humanity of Orange County. Open your plan any time at {url}",
+    "owner": {
+      "you": "You",
+      "habitat": "Habitat OC",
+      "counselor": "Counselor"
+    }
   }
 }

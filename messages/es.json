@@ -15,5 +15,80 @@
     "openWithCode": "Ábralo con su código",
     "codeLabel": "Código del plan",
     "openPlan": "Abrir plan"
+  },
+  "flow": {
+    "progress": "Paso {n} de {total}",
+    "seePath": "Ver mi camino",
+    "inlineReq": "Habitat OC lo requiere. Puede continuar y el personal puede revisar opciones con usted.",
+    "household": {
+      "title": "Cuéntenos sobre su hogar",
+      "size": "Personas en su hogar",
+      "sizeHelp": "Todos los que vivirán en la casa, incluyéndose usted.",
+      "decrease": "Una persona menos",
+      "increase": "Una persona más",
+      "inOC": "¿Vive o trabaja en el Condado de Orange?",
+      "resident": "¿Todos los solicitantes son ciudadanos o residentes permanentes de EE. UU.?",
+      "yes": "Sí",
+      "no": "No"
+    },
+    "income": {
+      "title": "¿Cuánto gana su hogar?",
+      "gross": "Ingreso mensual del trabajo",
+      "grossHelp": "Antes de impuestos. Incluya propinas y horas extra si son constantes.",
+      "perYear": "{amount} al año",
+      "addOther": "Agregar otro ingreso",
+      "otherHelp": "Manutención, un segundo trabajo o beneficios.",
+      "other": "Otro ingreso mensual",
+      "scanTitle": "Mejor escanee un talón de pago",
+      "scanBody": "Leemos los números y llenamos esto por usted. Puede editar todo.",
+      "scanButton": "Subir un talón de pago",
+      "fromStub": "De su talón de pago",
+      "edit": "Editar",
+      "required": "Escriba su ingreso mensual para continuar."
+    },
+    "housing": {
+      "title": "Dónde vive ahora",
+      "rent": "Renta mensual",
+      "rentHelp": "Lo que paga su hogar, sin incluir servicios.",
+      "bedrooms": "Recámaras",
+      "occupants": "Personas que duermen ahí",
+      "fewerBedrooms": "Una recámara menos",
+      "moreBedrooms": "Una recámara más",
+      "fewerPeople": "Una persona menos",
+      "morePeople": "Una persona más",
+      "unsafe": "La vivienda tiene condiciones inseguras o insalubres",
+      "unsafeHelp": "Moho, calefacción descompuesta, plagas o reparaciones que el arrendador no hace.",
+      "required": "Escriba su renta para continuar. Escriba 0 si no paga renta."
+    },
+    "money": {
+      "title": "Su situación financiera",
+      "debtsTitle": "Pagos mensuales de deudas",
+      "debtsHelp": "Deje en blanco lo que no tenga.",
+      "payment": "Pago mensual",
+      "balance": "Saldo pendiente",
+      "collectionHelp": "Deudas enviadas a una agencia de cobranza. Escriba lo que debe.",
+      "savings": "Ahorros que podría usar para una casa",
+      "savingsHelp": "Cuenta de cheques, ahorros y efectivo que podría apartar.",
+      "credit": "¿Cómo está su crédito?",
+      "creditHelp": "Su mejor estimación está bien. No revisamos su crédito.",
+      "creditRequired": "Elija cómo está su crédito para continuar.",
+      "savingsRequired": "Escriba sus ahorros para continuar. Escriba 0 si aún no tiene.",
+      "statementTitle": "Suba un estado de cuenta para un plan más preciso",
+      "statementBody": "Opcional. Su archivo se usa una vez para llenar este formulario y no se guarda.",
+      "statementButton": "Subir un estado de cuenta"
+    },
+    "debt": {
+      "car": "Préstamo de auto",
+      "card": "Tarjetas de crédito",
+      "student": "Préstamos estudiantiles",
+      "collection": "Cobranzas",
+      "other": "Otros préstamos"
+    },
+    "credit": {
+      "good": "Bueno",
+      "building": "En progreso",
+      "needs_work": "Necesita trabajo",
+      "unknown": "No sé"
+    }
   }
 }

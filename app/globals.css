@@ -47,6 +47,20 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Visible 2px pine focus ring that fades in over 120ms */
+:focus-visible {
+  outline: 2px solid var(--pine);
+  outline-offset: 2px;
+  transition: outline-color 120ms;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+@layer components {
 /* Type scale */
 .t-helper { font-size: 13px; line-height: 15px; }
 .t-body { font-size: 16px; line-height: 24px; }
@@ -62,19 +76,6 @@ body {
   padding: 16px;
 }
 
-/* Visible 2px pine focus ring that fades in over 120ms */
-:focus-visible {
-  outline: 2px solid var(--pine);
-  outline-offset: 2px;
-  transition: outline-color 120ms;
-}
-
-input,
-select,
-textarea {
-  font: inherit;
-}
-
 .field {
   width: 100%;
   min-height: 48px;
@@ -87,6 +88,8 @@ textarea {
 }
 .field:hover { border-color: #c5cec9; }
 .field:focus { outline: none; border-color: var(--pine); box-shadow: 0 0 0 2px var(--pine); }
+
+}
 
 @keyframes shimmer {
   0% { background-position: -200% 0; }

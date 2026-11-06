@@ -1,0 +1,21 @@
+import { chromium } from 'playwright';
+(async () => {
+  const b = await chromium.launch();
+  const p = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
+  await p.goto('http://localhost:3000/', { waitUntil: 'networkidle' });
+  await p.evaluate(() => localStorage.clear()); await p.reload({ waitUntil: 'networkidle' });
+  await p.getByRole('button', { name: 'Start' }).click(); await p.waitForTimeout(600);
+  await p.getByRole('radio', { name: 'Yes' }).first().click();
+  await p.screenshot({ path: 'docs/screenshots/step3-household-mobile.png', fullPage: true });
+  await p.getByRole('button', { name: 'Continue' }).click(); await p.waitForTimeout(600);
+  await p.getByRole('button', { name: 'Continue' }).click(); await p.waitForTimeout(300);
+  await p.screenshot({ path: 'docs/screenshots/step3-income-error-mobile.png', fullPage: true });
+  await p.fill('#gross', '5200'); await p.waitForTimeout(200);
+  await p.screenshot({ path: 'docs/screenshots/step3-income-mobile.png', fullPage: true });
+  await p.getByRole('button', { name: 'Continue' }).click(); await p.waitForTimeout(600);
+  await p.fill('#rent', '2350');
+  await p.screenshot({ path: 'docs/screenshots/step3-housing-mobile.png', fullPage: true });
+  await p.getByRole('button', { name: 'Continue' }).click(); await p.waitForTimeout(600);
+  await p.screenshot({ path: 'docs/screenshots/step3-money-mobile.png', fullPage: true });
+  await b.close();
+})();

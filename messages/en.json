@@ -15,5 +15,80 @@
     "openWithCode": "Open it with your code",
     "codeLabel": "Plan code",
     "openPlan": "Open plan"
+  },
+  "flow": {
+    "progress": "Step {n} of {total}",
+    "seePath": "See my path",
+    "inlineReq": "Habitat OC requires this. You can keep going, and staff can talk through options with you.",
+    "household": {
+      "title": "Tell us about your household",
+      "size": "People in your household",
+      "sizeHelp": "Everyone who will live in the home, including you.",
+      "decrease": "One fewer person",
+      "increase": "One more person",
+      "inOC": "Do you live or work in Orange County?",
+      "resident": "Is everyone applying a US citizen or permanent resident?",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "income": {
+      "title": "What does your household earn?",
+      "gross": "Monthly income from work",
+      "grossHelp": "Before taxes. Include tips and overtime if steady.",
+      "perYear": "{amount} a year",
+      "addOther": "Add other income",
+      "otherHelp": "Child support, a second job, or benefits.",
+      "other": "Other monthly income",
+      "scanTitle": "Scan a pay stub instead",
+      "scanBody": "We read the numbers and fill this in for you. You can edit anything.",
+      "scanButton": "Upload a pay stub",
+      "fromStub": "From your pay stub",
+      "edit": "Edit",
+      "required": "Enter your monthly income to continue."
+    },
+    "housing": {
+      "title": "Where you live now",
+      "rent": "Monthly rent",
+      "rentHelp": "What your household pays, not including utilities.",
+      "bedrooms": "Bedrooms",
+      "occupants": "People sleeping there",
+      "fewerBedrooms": "One fewer bedroom",
+      "moreBedrooms": "One more bedroom",
+      "fewerPeople": "One fewer person",
+      "morePeople": "One more person",
+      "unsafe": "The home has unsafe or unhealthy conditions",
+      "unsafeHelp": "Mold, broken heat, pests, or repairs the landlord won't make.",
+      "required": "Enter your rent to continue. Enter 0 if you don't pay rent."
+    },
+    "money": {
+      "title": "Your money picture",
+      "debtsTitle": "Monthly debt payments",
+      "debtsHelp": "Leave blank what you don't have.",
+      "payment": "Monthly payment",
+      "balance": "Balance owed",
+      "collectionHelp": "Debts sent to a collection agency. Enter what you owe.",
+      "savings": "Savings you could put toward a home",
+      "savingsHelp": "Checking, savings, and cash you could set aside.",
+      "credit": "How is your credit?",
+      "creditHelp": "Your best guess is fine. We don't check your credit.",
+      "creditRequired": "Choose how your credit looks to continue.",
+      "savingsRequired": "Enter your savings to continue. Enter 0 if none yet.",
+      "statementTitle": "Upload a bank statement for a sharper plan",
+      "statementBody": "Optional. Your file is used once to fill in this form and is not stored.",
+      "statementButton": "Upload a statement"
+    },
+    "debt": {
+      "car": "Car loan",
+      "card": "Credit cards",
+      "student": "Student loans",
+      "collection": "Collections",
+      "other": "Other loans"
+    },
+    "credit": {
+      "good": "Good",
+      "building": "Building",
+      "needs_work": "Needs work",
+      "unknown": "Not sure"
+    }
   }
 }

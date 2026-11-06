@@ -10,7 +10,7 @@ export function Welcome({ onStart }: { onStart?: () => void }) {
   const [code, setCode] = useState('');
   const [showCode, setShowCode] = useState(false);
   return (
-    <section className="pt-16">
+    <section className="pt-12">
       <p className="t-helper mb-4 text-ink-2">{t('app.partner')}</p>
       <h1 className="t-title max-w-[22ch] text-ink">{t('welcome.title')}</h1>
       <p className="mt-4 text-ink-2">{t('welcome.sub')}</p>

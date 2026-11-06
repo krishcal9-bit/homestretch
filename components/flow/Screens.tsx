@@ -25,8 +25,8 @@ export type ScreenProps = {
 
 export function ScreenTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
-    <div className="mb-8 flex items-start justify-between gap-4">
-      <h1 tabIndex={-1} data-screen-title className="t-title text-ink focus:outline-none">
+    <div className="mb-8 flex flex-wrap items-start justify-between gap-x-4">
+      <h1 tabIndex={-1} data-screen-title className="t-title min-w-0 flex-1 text-ink focus:outline-none">
         {children}
       </h1>
       {action}

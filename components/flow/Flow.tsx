@@ -11,6 +11,8 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Welcome } from './Welcome';
 import { HouseholdScreen, HousingScreen, IncomeScreen, MoneyScreen, validate, type ScreenProps } from './Screens';
 import { UploadCard } from './UploadCard';
+import { VoiceControl } from './Voice';
+import type { SpeechFields } from '@/lib/speech';
 import { money } from '@/lib/format';
 import type { DebtKind, StatementFindings } from '@/lib/types';
 import { ResultScreen } from '@/components/result/ResultScreen';
@@ -62,6 +64,46 @@ export function Flow() {
 
   if (!ready) return <div className="min-h-[60vh]" aria-busy />;
 
+  /** D3: apply spoken fields to the draft (any screen), highlight each filled field. Returns how many. */
+  const applySpeech = (f: SpeechFields): number => {
+    const patch: Partial<Draft> = {};
+    const keys: string[] = [];
+    const set = <K extends keyof Draft>(k: K, v: Draft[K], flashKey: string = k) => {
+      patch[k] = v;
+      keys.push(flashKey);
+    };
+    if (f.householdSize !== undefined) set('householdSize', f.householdSize);
+    if (f.inOC !== undefined) set('inOC', f.inOC);
+    if (f.residentOrCitizen !== undefined) set('residentOrCitizen', f.residentOrCitizen);
+    if (f.grossMonthlyIncome !== undefined) set('grossMonthlyIncome', f.grossMonthlyIncome);
+    if (f.otherMonthlyIncome !== undefined) {
+      set('otherMonthlyIncome', f.otherMonthlyIncome);
+      patch.otherIncomeOn = true;
+    }
+    if (f.rent !== undefined) set('rent', f.rent);
+    if (f.bedrooms !== undefined) set('bedrooms', f.bedrooms);
+    if (f.occupants !== undefined) set('occupants', f.occupants);
+    else if (f.householdSize !== undefined) patch.occupants = Math.max(draft.occupants, f.householdSize);
+    if (f.unsafeConditions !== undefined) set('unsafeConditions', f.unsafeConditions);
+    if (f.savings !== undefined) set('savings', f.savings);
+    if (f.creditBand !== undefined) set('creditBand', f.creditBand);
+    const debts = { ...draft.debts };
+    let debtTouched = false;
+    const debt = (kind: keyof Draft['debts'], part: 'payment' | 'balance', v?: number) => {
+      if (v === undefined) return;
+      debts[kind] = { ...debts[kind], [part]: v };
+      keys.push(`debt-${kind}`);
+      debtTouched = true;
+    };
+    debt('car', 'payment', f.carPayment);
+    debt('card', 'payment', f.cardPayment);
+    debt('student', 'payment', f.studentPayment);
+    debt('collection', 'balance', f.collectionBalance);
+    if (debtTouched) patch.debts = debts;
+    fill(patch, keys);
+    return keys.length;
+  };
+  const mic = (screen: 'household' | 'income' | 'housing' | 'money') => <VoiceControl key={`${screen}-${lang}`} screen={screen} onFields={applySpeech} />;
   const props: ScreenProps = { draft, update, showErrors, flash };
   const stubCard = (
     <UploadCard
@@ -106,10 +148,10 @@ export function Flow() {
     />
   );
   const screens: Record<number, React.ReactNode> = {
-    1: <HouseholdScreen {...props} />,
-    2: <IncomeScreen {...props} extra={stubCard} />,
-    3: <HousingScreen {...props} />,
-    4: <MoneyScreen {...props} extra={statementCard} />,
+    1: <HouseholdScreen {...props} titleAction={mic('household')} />,
+    2: <IncomeScreen {...props} extra={stubCard} titleAction={mic('income')} />,
+    3: <HousingScreen {...props} titleAction={mic('housing')} />,
+    4: <MoneyScreen {...props} extra={statementCard} titleAction={mic('money')} />,
   };
 
   return (

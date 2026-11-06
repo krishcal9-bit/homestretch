@@ -263,5 +263,19 @@
     "lender": "Lender name",
     "lenderPlaceholder": "Habitat for Humanity of Orange County",
     "name": "Your full name"
+  },
+  "voice": {
+    "speak": "Say your answers",
+    "listening": "Listening. Say it like you'd tell a friend.",
+    "stop": "Done talking",
+    "typeInstead": "Or type what you'd say",
+    "typeLabel": "Or type what you'd say",
+    "typePlaceholder": "We're four, we live in Santa Ana, I make about $5,200 a month and rent is $2,350.",
+    "fill": "Fill in my answers",
+    "filling": "Filling in",
+    "filled": "Filled in {n} answers. Check them below.",
+    "nothing": "We didn't catch any answers. Try again, or type them.",
+    "error": "We couldn't understand that just now. Try typing it.",
+    "close": "Close"
   }
 }

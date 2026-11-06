@@ -263,5 +263,19 @@
     "lender": "Nombre del prestamista",
     "lenderPlaceholder": "Habitat for Humanity of Orange County",
     "name": "Su nombre completo"
+  },
+  "voice": {
+    "speak": "Diga sus respuestas",
+    "listening": "Escuchando. Dígalo como se lo diría a un amigo.",
+    "stop": "Terminé de hablar",
+    "typeInstead": "O escriba lo que diría",
+    "typeLabel": "O escriba lo que diría",
+    "typePlaceholder": "Somos cuatro, vivimos en Santa Ana, gano como cinco mil doscientos al mes y pagamos dos mil trescientos cincuenta de renta.",
+    "fill": "Llenar mis respuestas",
+    "filling": "Llenando",
+    "filled": "Llenamos {n} respuestas. Revíselas abajo.",
+    "nothing": "No entendimos ninguna respuesta. Intente de nuevo o escríbalas.",
+    "error": "No pudimos entender eso ahora. Intente escribirlo.",
+    "close": "Cerrar"
   }
 }

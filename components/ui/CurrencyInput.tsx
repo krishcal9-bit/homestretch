@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { parseMoney } from '@/lib/draft';
+import { AnimatedNumber } from './AnimatedNumber';
 
 const fmt = (n: number | null) => (n === null ? '' : n.toLocaleString('en-US', { maximumFractionDigits: 2 }));
 
@@ -43,7 +44,7 @@ export function CurrencyInput({
         aria-invalid={invalid || undefined}
         aria-describedby={describedBy}
         placeholder={placeholder}
-        className={`field tnum pl-[28px] ${flash ? 'just-filled' : ''} ${invalid ? 'border-signal-red' : ''}`}
+        className={`field tnum pl-[28px] ${flash ? 'just-filled' : ''} ${invalid ? 'border-signal-red' : ''} ${!focused && value !== null ? 'text-transparent' : ''}`}
         value={text}
         onFocus={() => setFocused(true)}
         onChange={(e) => {
@@ -55,6 +56,12 @@ export function CurrencyInput({
           setText(fmt(parseMoney(text)));
         }}
       />
+      {/* filled by scan, voice or a lever: the amount rolls to its new value */}
+      {!focused && value !== null && (
+        <span className="tnum pointer-events-none absolute inset-y-0 left-[28px] flex items-center text-ink" aria-hidden>
+          <AnimatedNumber value={value} format={(n) => fmt(Number.isInteger(value) ? Math.round(n) : Math.round(n * 100) / 100)} />
+        </span>
+      )}
     </div>
   );
 }

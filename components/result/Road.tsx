@@ -131,7 +131,14 @@ function KeyGlyph({ s = 1 }: { s?: number }) {
   );
 }
 
-function Marker({ m, g, delay, play, active, highlighted, onActive, onHover }: { m: Placed; g: (typeof GEOM)[Size]; delay: number; play: boolean; active: boolean; highlighted: boolean; onActive: (k: string | null) => void; onHover: (k: string | null) => void }) {
+function Marker({ m, g, delay, play, active, highlighted, keysGlow = 0, onActive, onHover }: { m: Placed; g: (typeof GEOM)[Size]; delay: number; play: boolean; active: boolean; highlighted: boolean; keysGlow?: number; onActive: (k: string | null) => void; onHover: (k: string | null) => void }) {
+  // A tiny 1.1× pulse when this milestone becomes reachable earlier.
+  const prevMonth = useRef(m.month);
+  const [pulse, setPulse] = useState(0);
+  useEffect(() => {
+    if (m.month < prevMonth.current) setPulse((p) => p + 1);
+    prevMonth.current = m.month;
+  }, [m.month]);
   const reduce = useReducedMotion();
   const x = useSpring(m.x, spring.gentle);
   useEffect(() => {
@@ -141,6 +148,7 @@ function Marker({ m, g, delay, play, active, highlighted, onActive, onHover }: {
   const isKeys = m.key === 'keys';
   return (
     <motion.g style={{ x, y: g.trackY }}>
+      <motion.g key={pulse} initial={false} animate={pulse ? { scale: [1, 1.1, 1] } : undefined} transition={{ duration: 0.28, ease: ease.out }}>
       <motion.g
         initial={play ? { scale: 0.9, opacity: 0 } : false}
         animate={{ scale: highlighted ? 1.15 : 1, opacity: 1 }}
@@ -169,6 +177,10 @@ function Marker({ m, g, delay, play, active, highlighted, onActive, onHover }: {
         ) : (
           <circle r={g.r} fill="var(--surface)" stroke="var(--pine)" strokeWidth={g.r > 5 ? 2.5 : 2} pointerEvents="none" />
         )}
+        {isKeys && keysGlow > 0 && (
+          <motion.circle key={keysGlow} r={g.keysR + 2} fill="none" stroke="var(--brass)" strokeWidth="2" initial={{ opacity: 0.9, scale: 1 }} animate={{ opacity: 0, scale: 1.8 }} transition={{ duration: 0.6, ease: ease.out }} pointerEvents="none" />
+        )}
+      </motion.g>
       </motion.g>
     </motion.g>
   );
@@ -190,13 +202,19 @@ type RoadProps = {
   /** CSS view-transition-name for shared-element transitions. */
   vtName?: string;
   className?: string;
+  /** Pine fill from Today to this month; glides with a spring (the landing demo). */
+  progressTo?: number;
+  /** Bump to flash the Keys marker (the date got earlier). */
+  keysGlow?: number;
+  /** The track is already on screen (the landing opening's line became it): don't redraw it; markers still pop as reached. */
+  trackDrawn?: boolean;
 };
 
 /**
  * The Road: Today → Keys with milestone markers placed proportionally by month. The track draws in;
  * each marker pops in as the line reaches it; markers follow lever changes with spring.gentle.
  */
-export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, entrance = 'session', entranceDelay = 0, drawDuration = dur.long, drawEase = 'out', size = 'md', highlight = [], vtName, className = '' }: RoadProps) {
+export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, entrance = 'session', entranceDelay = 0, drawDuration = dur.long, drawEase = 'out', size = 'md', highlight = [], vtName, className = '', progressTo, keysGlow = 0, trackDrawn = false }: RoadProps) {
   const { t, lang } = useLang();
   const g = GEOM[size];
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -294,10 +312,24 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
             stroke="var(--line)"
             strokeWidth={g.track}
             strokeLinecap="round"
-            initial={play ? { pathLength: 0 } : false}
+            initial={play && !trackDrawn ? { pathLength: 0 } : false}
             animate={{ pathLength: 1 }}
             transition={{ duration: drawDuration, ease: drawEase === 'inOut' ? ease.inOut : ease.out, delay: entranceDelay }}
           />
+          {progressTo !== undefined && (
+            <motion.line
+              x1={PAD}
+              y1={g.trackY}
+              y2={g.trackY}
+              stroke="var(--pine)"
+              strokeWidth={g.track}
+              strokeLinecap="round"
+              initial={play ? { x2: PAD, opacity: 0 } : false}
+              animate={{ x2: PAD + (Math.min(progressTo, maxMonth) / maxMonth) * usable, opacity: 1 }}
+              transition={{ x2: play && !entranceOver ? { duration: drawDuration, ease: drawEase === 'inOut' ? ease.inOut : ease.out, delay: entranceDelay } : spring.gentle, opacity: { duration: 0.2, delay: play && !entranceOver ? entranceDelay : 0 } }}
+              data-testid="road-progress"
+            />
+          )}
           {elapsed > 0 && <line x1={PAD} x2={curX} y1={g.trackY} y2={g.trackY} stroke="var(--pine)" strokeWidth={g.track} strokeLinecap="round" />}
           <motion.text
             x={PAD}
@@ -311,7 +343,7 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
             {todayLabel}
           </motion.text>
           {placed.map((m) => (
-            <Marker key={m.key} m={m} g={g} onHover={onHover} delay={play && !entranceOver ? reachDelay(m.x) : 0} play={play} highlighted={highlight.includes(m.key)} active={active === m.key} onActive={setActive} />
+            <Marker key={m.key} m={m} g={g} onHover={onHover} delay={play && !entranceOver ? reachDelay(m.x) : 0} play={play} highlighted={highlight.includes(m.key)} keysGlow={keysGlow} active={active === m.key} onActive={setActive} />
           ))}
           <AnimatePresence initial={play}>
             {clusters.map((c) => {

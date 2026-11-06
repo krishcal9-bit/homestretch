@@ -365,6 +365,18 @@
     "colDone": "Done",
     "colReady": "Families ready",
     "closing": "Habitat finishes 100 homes. Homestretch helps 100 families be ready to buy them.",
-    "footerPartner": "Built for Habitat for Humanity of Orange County."
+    "footerPartner": "Built for Habitat for Humanity of Orange County.",
+    "sooner": "{n} months sooner",
+    "sooner1": "1 month sooner",
+    "later": "{n} months later",
+    "later1": "1 month later",
+    "hint": "Drag to see what changes",
+    "tickerLabel": "Sample families",
+    "tReady": "{city} family of {n} · ready in {m} months",
+    "tReadyNow": "{city} family of {n} · ready to apply now",
+    "tSaved": "{city} family of {n} · down payment saved",
+    "tMatched": "{city} family of {n} · matched to a {br}-bedroom",
+    "closingA": "Habitat finishes {n} homes.",
+    "closingB": "Homestretch helps {n} families be ready to buy them."
   }
 }

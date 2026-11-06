@@ -7,7 +7,8 @@ import { spring, exit as exitT } from '@/lib/motion';
 import { emptyDraft, type Draft } from '@/lib/draft';
 import { useStored } from '@/lib/useStored';
 import { Button } from '@/components/ui/Button';
-import { ProgressBar } from '@/components/ui/ProgressBar';
+import { ProgressRoad } from '@/components/ui/ProgressRoad';
+import { Skyline } from '@/components/ui/Skyline';
 import { flushSync } from 'react-dom';
 import { useVTRouter, vtSupported, withViewTransition } from '@/lib/vt';
 import { computeReadiness } from '@/lib/engine';
@@ -24,18 +25,6 @@ import { ResultScreen } from '@/components/result/ResultScreen';
 import { FamilyExtras } from '@/components/result/FamilyExtras';
 
 const INTAKE_STEPS = 4;
-
-/** Small Road preview in the last step's footer; it grows into the result Road (shared view transition). */
-function RoadPreview({ draft, label }: { draft: Draft; label: string }) {
-  const result = useMemo(() => computeReadiness(draftToProfile(draft)), [draft]);
-  if (result.noIncome) return null;
-  return (
-    <div className="mt-8" inert data-testid="road-preview">
-      <p className="t-helper mb-1 text-ink-2">{label}</p>
-      <Road result={result} entrance="none" vtName="road" />
-    </div>
-  );
-}
 
 export function Flow() {
   const { t, lang } = useLang();
@@ -61,7 +50,8 @@ export function Flow() {
     (patch: Partial<Draft>, keys: string[]) => {
       setDraft((d) => ({ ...d, ...patch }));
       const now = Date.now();
-      setFlash((f) => ({ ...f, ...Object.fromEntries(keys.map((k) => [k, now])) }));
+      // Each filled field gets its wash one after another (80ms apart), so the form visibly fills itself in.
+      keys.forEach((k, i) => setTimeout(() => setFlash((f) => ({ ...f, [k]: now + i })), i * 80));
     },
     [setDraft],
   );
@@ -192,8 +182,9 @@ export function Flow() {
   return (
     <div ref={containerRef}>
       {step >= 1 && step <= INTAKE_STEPS && (
-        <div className="sticky top-16 z-20 -mx-5 bg-paper" style={{ viewTransitionName: 'cta' }}>
-          <ProgressBar value={step / (INTAKE_STEPS + 1)} label={t('flow.progress', { n: step, total: INTAKE_STEPS })} />
+        <div className="sticky top-16 z-20 -mx-5 bg-paper pt-2">
+          {/* The progress Road: lands from the landing CTA ("cta"); on the last step it grows into the result Road ("road"). */}
+          <ProgressRoad value={step / INTAKE_STEPS} last={step === INTAKE_STEPS} vtName={step === INTAKE_STEPS ? 'road' : 'cta'} label={t('flow.progress', { n: step, total: INTAKE_STEPS })} />
         </div>
       )}
       {step >= 1 && (
@@ -217,8 +208,7 @@ export function Flow() {
               }}
               className="pb-8 pt-2"
             >
-              {screens[step]}
-              {step === INTAKE_STEPS && <RoadPreview draft={draft} label={t('flow.roadPreview')} />}
+              <div className="intake-screen">{screens[step]}</div>
               <div className="mt-10">
                 <Button type="submit" size="lg" full>
                   {step === INTAKE_STEPS ? t('flow.seePath') : t('app.continue')}
@@ -253,8 +243,7 @@ export function Flow() {
               }}
               className="pb-8 pt-2"
             >
-              {screens[step]}
-              {step === INTAKE_STEPS && <RoadPreview draft={draft} label={t('flow.roadPreview')} />}
+              <div className="intake-screen">{screens[step]}</div>
               <div className="mt-10">
                 <Button type="submit" size="lg" full>
                   {step === INTAKE_STEPS ? t('flow.seePath') : t('app.continue')}
@@ -266,6 +255,7 @@ export function Flow() {
         </motion.div>
       </AnimatePresence>
       )}
+      {step <= INTAKE_STEPS && <Skyline mode="static" count={10} height={64} className="-mx-5 mt-6 opacity-40" />}
     </div>
   );
 }

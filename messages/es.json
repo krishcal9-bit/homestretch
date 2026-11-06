@@ -365,6 +365,18 @@
     "colDone": "Lista",
     "colReady": "Familias listas",
     "closing": "Habitat termina 100 casas. Homestretch ayuda a que 100 familias estén listas para comprarlas.",
-    "footerPartner": "Hecho para Habitat for Humanity del Condado de Orange."
+    "footerPartner": "Hecho para Habitat for Humanity del Condado de Orange.",
+    "sooner": "{n} meses antes",
+    "sooner1": "1 mes antes",
+    "later": "{n} meses después",
+    "later1": "1 mes después",
+    "hint": "Arrastre para ver qué cambia",
+    "tickerLabel": "Familias de ejemplo",
+    "tReady": "Familia de {n} en {city} · lista en {m} meses",
+    "tReadyNow": "Familia de {n} en {city} · lista para solicitar",
+    "tSaved": "Familia de {n} en {city} · enganche ahorrado",
+    "tMatched": "Familia de {n} en {city} · asignada a una casa de {br} recámaras",
+    "closingA": "Habitat termina {n} casas.",
+    "closingB": "Homestretch ayuda a que {n} familias estén listas para comprarlas."
   }
 }

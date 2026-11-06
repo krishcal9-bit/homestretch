@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { motion, useInView, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react';
 import { Mic } from 'lucide-react';
 import { useLang } from '@/lib/i18n';
@@ -14,6 +14,9 @@ import { Segmented } from '@/components/ui/Segmented';
 import { AnimatedMonth } from '@/components/ui/AnimatedMonth';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { Road } from '@/components/result/Road';
+import { Skyline } from '@/components/ui/Skyline';
+import { Opening, OPEN, OPEN_TOTAL } from './Opening';
+import { AnimatePresence } from 'motion/react';
 import { StaffLink, Wordmark } from '@/components/FamilyHeader';
 import type { MilestoneKey, Profile } from '@/lib/types';
 
@@ -31,22 +34,30 @@ const SEQ = {
   nudgeAt: 1.4, // slider thumb nudge
 };
 
-type Phase = 'pending' | 'play' | 'static' | 'reduced';
+type Phase = 'pending' | 'opening' | 'play' | 'static' | 'reduced';
+const animated = (p: Phase) => p === 'play' || p === 'opening';
+/** In the opening, the hero assembles under the pull-back, so every hero beat shifts by this much. */
+const offset = (p: Phase) => (p === 'opening' ? OPEN.pull : 0);
 
 /** Decides once per visit whether the intro plays. Before hydration everything holds its final layout, invisibly. */
-function useIntroPhase(): Phase {
+function useIntroPhase(): [Phase, (p: Phase) => void] {
   const reduce = useReducedMotion();
   const [phase, setPhase] = useState<Phase>('pending');
   useEffect(() => {
-    if (reduce) return setPhase('reduced');
-    let played = false;
+    if (reduce) {
+      document.documentElement.classList.remove('hs-veil');
+      return setPhase('reduced');
+    }
+    let opened = false;
     try {
-      played = !!sessionStorage.getItem('hs.landingPlayed');
-      sessionStorage.setItem('hs.landingPlayed', '1');
+      opened = !!sessionStorage.getItem('hs.opened');
+      sessionStorage.setItem('hs.opened', '1');
     } catch {}
-    setPhase(played ? 'static' : 'play');
+    // First visit in a session: the opening sequence. Return visits: the shorter hero sequence.
+    setPhase(opened ? 'play' : 'opening');
+    if (opened) document.documentElement.classList.remove('hs-veil');
   }, [reduce]);
-  return phase;
+  return [phase, setPhase];
 }
 
 /* ------------------------------------------------------------------ */
@@ -109,7 +120,8 @@ function Headline({ text, phase }: { text: string; phase: Phase }) {
         ))}
       </h1>
     );
-  const play = phase === 'play';
+  const play = animated(phase);
+  const stag = phase === 'opening' ? 0.07 : SEQ.lineStagger;
   return (
     <h1 className={cls} aria-label={text} style={{ textWrap: 'wrap' }}>
       {lines.map((line, i) => (
@@ -118,7 +130,7 @@ function Headline({ text, phase }: { text: string; phase: Phase }) {
             className="block whitespace-nowrap"
             initial={play ? { y: '100%' } : phase === 'reduced' ? { opacity: 0 } : false}
             animate={{ y: '0%', opacity: 1 }}
-            transition={play ? { duration: SEQ.line, ease: ease.out, delay: i * SEQ.lineStagger } : { duration: 0.15 }}
+            transition={play ? { duration: SEQ.line, ease: ease.out, delay: offset(phase) + i * stag } : { duration: 0.15 }}
           >
             {line}
           </motion.span>
@@ -133,8 +145,9 @@ function OdometerDate({ iso, phase, lang }: { iso: string; phase: Phase; lang: '
   // Unsettled only while the intro plays; decided when the phase is known (not during the pre-hydration render).
   const [settled, setSettled] = useState(true);
   useEffect(() => {
-    setSettled(phase !== 'play');
+    setSettled(!animated(phase));
   }, [phase]);
+  const at = phase === 'opening' ? OPEN.pull + 0.2 : SEQ.dateAt;
   const final = monthName(iso, lang);
   const lineH = 1.05; // em
   if (!settled) {
@@ -145,7 +158,7 @@ function OdometerDate({ iso, phase, lang }: { iso: string; phase: Phase; lang: '
           className="block"
           initial={{ y: 0, opacity: 0 }}
           animate={{ y: `-${(strip.length - 1) * lineH}em`, opacity: 1 }}
-          transition={{ y: { duration: SEQ.date, ease: ease.out, delay: SEQ.dateAt }, opacity: { duration: 0.12, delay: SEQ.dateAt } }}
+          transition={{ y: { duration: SEQ.date, ease: ease.out, delay: at }, opacity: { duration: 0.12, delay: at } }}
           onAnimationComplete={() => setSettled(true)}
         >
           {strip.map((s, i) => (
@@ -167,14 +180,61 @@ function OdometerDate({ iso, phase, lang }: { iso: string; phase: Phase; lang: '
 /* ------------------------------------------------------------------ */
 /* Hero demo                                                            */
 /* ------------------------------------------------------------------ */
-function HeroDemo({ phase }: { phase: Phase }) {
+function HeroDemo({ phase, onEarlier }: { phase: Phase; onEarlier: () => void }) {
   const { t, lang } = useLang();
   const reduce = useReducedMotion();
   const [family, setFamily] = useState<'reyes' | 'nguyen'>('reyes');
   const [extra, setExtra] = useState<Record<string, number>>({ reyes: FAMILIES.reyes.levers.extraDebt, nguyen: FAMILIES.nguyen.levers.extraDebt });
   const profile = FAMILIES[family];
   const result = useMemo(() => computeReadiness({ ...profile, levers: { ...profile.levers, extraDebt: extra[family] } }), [profile, extra, family]);
-  const play = phase === 'play';
+  const play = animated(phase);
+  const t0 = offset(phase);
+
+  // "7 months sooner" pill: delta since the drag began; fades 1.5s after the last change.
+  const baseline = useRef<number | null>(null);
+  const lastMonths = useRef(result.monthsToReady);
+  const [delta, setDelta] = useState<{ n: number; id: number } | null>(null);
+  const fadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [keysGlow, setKeysGlow] = useState(0);
+  const [dragged, setDragged] = useState(true);
+  useEffect(() => {
+    try {
+      setDragged(!!localStorage.getItem('hs.dragged'));
+    } catch {}
+  }, []);
+  const onSlide = (v: number) => {
+    if (baseline.current === null) baseline.current = result.monthsToReady;
+    setExtra((x) => ({ ...x, [family]: v }));
+    if (!dragged) {
+      setDragged(true);
+      try {
+        localStorage.setItem('hs.dragged', '1');
+      } catch {}
+    }
+  };
+  useEffect(() => {
+    const m = result.monthsToReady;
+    if (m === lastMonths.current) return;
+    const earlier = m < lastMonths.current;
+    lastMonths.current = m;
+    if (baseline.current === null) return; // family switch, not a drag
+    const n = m - baseline.current;
+    if (earlier) {
+      setKeysGlow((k) => k + 1);
+      onEarlier();
+    }
+    if (n !== 0) setDelta({ n, id: Date.now() });
+    if (fadeTimer.current) clearTimeout(fadeTimer.current);
+    fadeTimer.current = setTimeout(() => {
+      setDelta(null);
+      baseline.current = null;
+    }, 1500);
+  }, [result.monthsToReady, onEarlier]);
+  const switchFamily = (f: 'reyes' | 'nguyen') => {
+    baseline.current = null;
+    setDelta(null);
+    setFamily(f);
+  };
 
   // Cursor-aware depth (desktop pointers only): the Road tilts up to 2° toward the cursor.
   const rx = useSpring(0, { stiffness: 120, damping: 20 });
@@ -184,10 +244,8 @@ function HeroDemo({ phase }: { phase: Phase }) {
   const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!fine) return;
     const r = e.currentTarget.getBoundingClientRect();
-    const nx = ((e.clientX - r.left) / r.width) * 2 - 1;
-    const ny = ((e.clientY - r.top) / r.height) * 2 - 1;
-    ry.set(nx * 2);
-    rx.set(-ny * 2);
+    ry.set((((e.clientX - r.left) / r.width) * 2 - 1) * 2);
+    rx.set(-(((e.clientY - r.top) / r.height) * 2 - 1) * 2);
   };
   const reset = () => {
     rx.set(0);
@@ -195,17 +253,20 @@ function HeroDemo({ phase }: { phase: Phase }) {
   };
 
   const fade = (delay: number) =>
-    play ? { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.4, ease: ease.out, delay } } : { initial: phase === 'reduced' ? { opacity: 0 } : false, animate: { opacity: 1 }, transition: { duration: 0.15 } };
+    play
+      ? { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.4, ease: ease.out, delay: t0 + delay } }
+      : { initial: phase === 'reduced' ? { opacity: 0 } : false, animate: { opacity: 1 }, transition: { duration: 0.15 } };
+  const deltaText = delta ? (delta.n < 0 ? (delta.n === -1 ? t('landing.sooner1') : t('landing.sooner', { n: -delta.n })) : delta.n === 1 ? t('landing.later1') : t('landing.later', { n: delta.n })) : '';
 
   return (
     <div className="relative [perspective:1200px]" onPointerMove={onMove} onPointerLeave={reset} data-testid="sample-road" data-intro style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
-      <motion.div {...fade(SEQ.sub)} className="flex flex-wrap items-center justify-between gap-3">
+      <motion.div {...fade(phase === 'opening' ? 0.1 : SEQ.sub)} className="flex flex-wrap items-center justify-between gap-3">
         <div className="w-[280px]">
           <Segmented<'reyes' | 'nguyen'>
             size="sm"
             label={t('landing.families')}
             value={family}
-            onChange={setFamily}
+            onChange={switchFamily}
             options={[
               { value: 'reyes', label: t('landing.reyes') },
               { value: 'nguyen', label: t('landing.nguyen') },
@@ -218,22 +279,53 @@ function HeroDemo({ phase }: { phase: Phase }) {
       </motion.div>
 
       <div className="relative mt-8 [container-type:inline-size]">
-        {/* The only decoration: a faint pine glow behind the date. */}
         <div aria-hidden className="pointer-events-none absolute -left-16 -top-16 h-[260px] w-[520px] max-w-full" style={{ background: 'radial-gradient(closest-side, rgba(30,92,71,0.08), transparent)' }} />
-        <motion.p {...fade(SEQ.dateAt - 0.1)} className="relative text-[15px] text-ink-2">
-          {t('landing.readyBy')}
-        </motion.p>
+        <div className="relative flex min-h-[28px] items-center justify-between gap-3">
+          <motion.p {...fade(phase === 'opening' ? 0.15 : SEQ.dateAt - 0.1)} className="text-[15px] text-ink-2">
+            {t('landing.readyBy')}
+          </motion.p>
+          {/* reserved slot: the pill never shifts layout */}
+          <div className="relative h-[28px]" aria-live="polite">
+            <AnimatePresence>
+              {delta && (
+                <motion.span
+                  key={deltaText}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                  transition={{ duration: 0.16, ease: ease.out }}
+                  className={`tnum absolute right-0 top-0 inline-flex h-[28px] items-center whitespace-nowrap rounded-full px-3 text-[13px] font-medium ${delta.n < 0 ? 'bg-pine text-white' : 'bg-surface text-ink-2 ring-1 ring-line'}`}
+                  data-testid="delta-pill"
+                >
+                  {deltaText}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
         <p className="tnum relative mt-1 text-[min(80px,13cqw)] font-semibold tracking-[-0.02em] text-brass" aria-live="polite">
           <OdometerDate iso={result.readyDate} phase={phase} lang={lang} />
         </p>
       </div>
 
       <motion.div className="mt-6 origin-center" style={{ rotateX: rx, rotateY: ry, transformStyle: 'preserve-3d' }}>
-        {phase !== 'pending' && <Road result={result} size="lg" entrance={play ? 'always' : 'none'} entranceDelay={SEQ.roadAt} drawDuration={SEQ.roadDraw} drawEase="inOut" />}
+        {phase !== 'pending' && (
+          <Road
+            result={result}
+            size="lg"
+            entrance={play ? 'always' : 'none'}
+            entranceDelay={phase === 'opening' ? OPEN.pull + 0.3 : SEQ.roadAt}
+            drawDuration={phase === 'opening' ? 0.5 : SEQ.roadDraw}
+            drawEase="inOut"
+            trackDrawn={phase === 'opening'}
+            progressTo={result.monthsToReady}
+            keysGlow={keysGlow}
+          />
+        )}
         {phase === 'pending' && <div className="h-[92px]" />}
       </motion.div>
 
-      <motion.div {...fade(SEQ.roadAt + 0.3)} className="mt-6">
+      <motion.div {...fade(phase === 'opening' ? 0.35 : SEQ.roadAt + 0.3)} className="mt-6">
         <div className="flex items-center justify-between gap-4">
           <label htmlFor="sample-extra" className="text-[16px] font-medium text-ink">
             {t('landing.lever')}
@@ -249,11 +341,20 @@ function HeroDemo({ phase }: { phase: Phase }) {
           min={0}
           max={400}
           step={10}
-          onChange={(v) => setExtra((x) => ({ ...x, [family]: v }))}
+          onChange={onSlide}
           label={t('landing.lever')}
           valueText={money(extra[family], lang)}
-          nudgeAt={play ? SEQ.nudgeAt : undefined}
+          nudgeAt={play ? (phase === 'opening' ? OPEN_TOTAL + 0.3 : SEQ.nudgeAt) : undefined}
         />
+        <div className="h-[20px]">
+          <AnimatePresence>
+            {!dragged && (
+              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: play ? t0 + 1.6 : 0, duration: 0.3 } }} exit={{ opacity: 0, transition: { duration: 0.15 } }} className="t-helper text-ink-2">
+                {t('landing.hint')}
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
       </motion.div>
     </div>
   );
@@ -263,59 +364,133 @@ function Hero({ phase }: { phase: Phase }) {
   const { t } = useLang();
   const router = useVTRouter();
   const reduce = useReducedMotion();
-  const play = phase === 'play';
+  const play = animated(phase);
+  const t0 = offset(phase);
+  const [flash, setFlash] = useState(0);
+  const onEarlier = useMemo(() => () => setFlash((f) => f + 1), []);
   const fadeUp = play
-    ? { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.4, ease: ease.out, delay: SEQ.sub } }
+    ? { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.4, ease: ease.out, delay: t0 + (phase === 'opening' ? 0.25 : SEQ.sub) } }
     : { initial: phase === 'reduced' ? { opacity: 0 } : false, animate: { opacity: 1 }, transition: { duration: 0.15 } };
   return (
-    <section className="mx-auto grid max-w-[1280px] grid-cols-1 items-center gap-x-8 gap-y-14 px-5 pb-16 pt-10 lg:min-h-[calc(100svh-64px)] lg:grid-cols-12 lg:px-8 lg:py-12">
-      <div className="lg:col-span-6 xl:col-span-5">
-        <motion.p {...fadeUp} transition={play ? { duration: 0.3, ease: ease.out } : fadeUp.transition} className="mb-5 text-[15px] text-ink-2">
-          {t('app.partner')}
-        </motion.p>
-        <Headline text={t('landing.headline')} phase={phase} />
-        <motion.p {...fadeUp} className="mt-6 max-w-[44ch] text-[18px] leading-[28px] text-ink-2 lg:text-[20px] lg:leading-[30px]" data-intro style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
-          {t('landing.sub')}
-        </motion.p>
-        <motion.div {...fadeUp} className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4" data-intro style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
-          <motion.a
-            href="/start"
-            onClick={(e) => {
-              if (e.metaKey || e.ctrlKey || e.shiftKey) return;
-              e.preventDefault();
-              router.push('/start', 'start');
-            }}
-            whileTap={{ scale: 0.97 }}
-            transition={spring.snappy}
-            className="inline-flex min-h-[56px] items-center rounded-[8px] bg-pine px-8 text-[20px] font-medium text-white transition-colors duration-[120ms] hover:bg-pine-hover"
-            style={{ viewTransitionName: 'cta' }}
-            data-testid="find-my-date"
-          >
-            {t('landing.cta')}
-          </motion.a>
-          <a
-            href="#story"
-            onClick={(e) => {
-              e.preventDefault();
-              document.getElementById('story')?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
-            }}
-            className="hit inline-flex min-h-[44px] items-center text-[17px] font-medium text-pine underline-offset-4 hover:underline"
-          >
-            {t('landing.how')}
-          </a>
-        </motion.div>
+    <div className="relative overflow-hidden lg:min-h-[calc(100svh-64px)]">
+      <section className="relative z-[1] mx-auto grid max-w-[1280px] grid-cols-1 items-center gap-x-8 gap-y-14 px-5 pb-40 pt-10 lg:min-h-[calc(100svh-64px)] lg:grid-cols-12 lg:px-8 lg:pb-36 lg:pt-8">
+        <div className="lg:col-span-6 xl:col-span-5">
+          <motion.p {...fadeUp} transition={play ? { duration: 0.3, ease: ease.out, delay: t0 } : fadeUp.transition} className="mb-5 text-[15px] text-ink-2">
+            {t('app.partner')}
+          </motion.p>
+          <Headline text={t('landing.headline')} phase={phase} />
+          <motion.p {...fadeUp} className="mt-6 max-w-[44ch] text-[18px] leading-[28px] text-ink-2 lg:text-[20px] lg:leading-[30px]" data-intro style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
+            {t('landing.sub')}
+          </motion.p>
+          <motion.div {...fadeUp} className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4" data-intro style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
+            <motion.a
+              href="/start"
+              onClick={(e) => {
+                if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+                e.preventDefault();
+                router.push('/start', 'start');
+              }}
+              whileTap={{ scale: 0.97 }}
+              transition={spring.snappy}
+              className="inline-flex min-h-[56px] items-center rounded-[8px] bg-pine px-8 text-[20px] font-medium text-white transition-colors duration-[120ms] hover:bg-pine-hover"
+              style={{ viewTransitionName: 'cta' }}
+              data-testid="find-my-date"
+            >
+              {t('landing.cta')}
+            </motion.a>
+            <a
+              href="#story"
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById('story')?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+              }}
+              className="hit inline-flex min-h-[44px] items-center text-[17px] font-medium text-pine underline-offset-4 hover:underline"
+            >
+              {t('landing.how')}
+            </a>
+          </motion.div>
+        </div>
+        <div className="lg:col-span-6 xl:col-span-7 xl:pl-8">
+          <HeroDemo phase={phase} onEarlier={onEarlier} />
+        </div>
+      </section>
+      {/* The street the Road heads toward. Living: one window glows at a time. */}
+      <div className="absolute inset-x-0 bottom-0 z-0" style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
+        <Skyline mode="living" count={16} parallax drawInAt={phase === 'opening' ? OPEN_TOTAL : phase === 'play' ? 1.3 : false} flashKey={flash} height={120} />
       </div>
-      <div className="lg:col-span-6 xl:col-span-7 xl:pl-8">
-        <HeroDemo phase={phase} />
+    </div>
+  );
+}
+
+/** One line of real sample-family progress from the seed data, crossfading every 3s. */
+function Ticker() {
+  const { t } = useLang();
+  const reduce = useReducedMotion();
+  const lines = useMemo(() => {
+    const out: string[] = [];
+    for (const f of SEED_FAMILIES) {
+      const r = computeReadiness(f.profile);
+      if (!isEligible(r)) continue;
+      const v = { city: f.city, n: f.profile.householdSize };
+      const home = SEED_HOMES.find((h) => homeFits(f.profile.householdSize, h.bedrooms) && r.monthsToReady <= monthsUntil(h.completion));
+      if (home && r.monthsToReady > 0) out.push(t('landing.tMatched', { ...v, br: home.bedrooms }));
+      else if (r.monthsToReady === 0) out.push(t('landing.tReadyNow', v));
+      else if (r.milestones.find((m) => m.key === 'savings')?.month === 0) out.push(t('landing.tSaved', v));
+      else out.push(t('landing.tReady', { ...v, m: r.monthsToReady }));
+    }
+    return out;
+  }, [t]);
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (document.visibilityState === 'visible') setI((x) => (x + 1) % lines.length);
+    }, 3000);
+    return () => clearInterval(id);
+  }, [lines.length]);
+  return (
+    <div className="border-y border-line bg-surface" data-testid="ticker">
+      <div className="mx-auto flex h-[56px] max-w-[1280px] items-center gap-6 px-5 lg:px-8">
+        <span className="t-helper shrink-0 text-ink-2">{t('landing.tickerLabel')}</span>
+        <div className="relative h-[24px] flex-1 overflow-hidden" aria-live="off">
+          <AnimatePresence initial={false}>
+            <motion.p
+              key={i}
+              className="absolute inset-0 flex items-center gap-3 whitespace-nowrap text-[15px] text-ink"
+              initial={reduce ? { opacity: 0 } : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
+              transition={{ duration: 0.25, ease: ease.out }}
+            >
+              <svg width="28" height="12" viewBox="0 0 28 12" aria-hidden className="shrink-0">
+                <path d="M1 9h16" stroke="var(--line)" strokeWidth="2" strokeLinecap="round" />
+                <circle cx="3" cy="9" r="2" fill="var(--brass)" />
+                <path d="M19 10V5.5L23 2l4 3.5V10z" fill="none" stroke="var(--pine)" strokeWidth="1.5" strokeLinejoin="round" />
+              </svg>
+              <span className="tnum truncate">{lines[i]}</span>
+            </motion.p>
+          </AnimatePresence>
+        </div>
       </div>
-    </section>
+    </div>
   );
 }
 
 /* ------------------------------------------------------------------ */
 /* Scroll story                                                         */
 /* ------------------------------------------------------------------ */
-const Caption = ({ children }: { children: React.ReactNode }) => <h2 className="text-[32px] font-semibold leading-[38px] tracking-[-0.02em] text-ink lg:text-[40px] lg:leading-[44px]">{children}</h2>;
+/** Scene headline: rises from a mask the first time its scene enters, like the hero. */
+function Caption({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLHeadingElement>(null);
+  const inView = useInView(ref, { once: true, amount: 0.6 });
+  const reduce = useReducedMotion();
+  return (
+    <h2 ref={ref} className="overflow-hidden pb-[0.06em] text-[32px] font-semibold leading-[38px] tracking-[-0.02em] text-ink lg:text-[40px] lg:leading-[44px]">
+      <motion.span className="block" initial={reduce ? { opacity: 0 } : { y: '100%' }} animate={inView ? { y: '0%', opacity: 1 } : undefined} transition={{ duration: reduce ? 0.15 : SEQ.line, ease: ease.out }}>
+        {children}
+      </motion.span>
+    </h2>
+  );
+}
 
 /** Scene 1: a phone running the intake; fields fill one at a time as if spoken. */
 function PhoneScene() {
@@ -427,6 +602,8 @@ function RoadScene() {
         <div className="sticky top-16 z-10 order-first bg-paper py-6 lg:order-last lg:col-span-7 lg:flex lg:h-[calc(100svh-64px)] lg:items-center lg:bg-transparent lg:py-0">
           <div className="w-full">
             <Road result={result} size="lg" entrance="none" highlight={[active]} />
+            {/* the street again; the last house lights when "Keys" is reached */}
+            <Skyline mode="static" count={12} height={84} className="mt-10 hidden lg:block" litIndex={active === 'keys' ? 11 : null} keysLit={active === 'keys'} />
           </div>
         </div>
         <div className="lg:col-span-5">
@@ -440,6 +617,17 @@ function RoadScene() {
 }
 
 /** Scene 3: the staff Homes view in a browser frame; counts climb from 0 as it scrolls in. */
+/** Small line-drawn house; wider for more bedrooms. */
+function HouseGlyph({ bedrooms }: { bedrooms: number }) {
+  const w = 16 + bedrooms * 5;
+  return (
+    <svg width={w + 2} height="22" viewBox={`-1 -1 ${w + 2} 22`} aria-hidden className="shrink-0">
+      <path d={`M0 20V9L${w / 2} 1L${w} 9V20Z`} fill="none" stroke="var(--pine)" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d={`M${w / 2 - 3} 20v-6h6v6`} fill="none" stroke="var(--pine)" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
 function HomesScene() {
   const { t, lang } = useLang();
   const ref = useRef<HTMLDivElement>(null);
@@ -479,16 +667,25 @@ function HomesScene() {
             <span>{t('landing.colDone')}</span>
             <span className="text-right">{t('landing.colReady')}</span>
           </div>
-          {rows.map(({ h, ready }) => (
-            <div key={h.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-x-8 border-b border-line py-3 text-[15px]">
-              <span className="text-ink">
-                {h.city} · {h.bedrooms}BR <span className="text-ink-2">{h.address}</span>
+          {rows.map(({ h, ready }, i) => (
+            <motion.div
+              key={h.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={inView ? { opacity: 1, y: 0 } : undefined}
+              transition={{ duration: 0.3, ease: ease.out, delay: 0.15 + Math.min(i, 5) * 0.05 }}
+              className="grid grid-cols-[1fr_auto_auto] items-center gap-x-8 border-b border-line py-3 text-[15px]"
+            >
+              <span className="flex items-center gap-3 text-ink">
+                <HouseGlyph bedrooms={h.bedrooms} />
+                <span>
+                  {h.city} · {h.bedrooms}BR <span className="text-ink-2">{h.address}</span>
+                </span>
               </span>
               <span className="tnum text-ink-2">{monthName(h.completion, lang, true)}</span>
               <span className="tnum w-[96px] text-right text-[20px] font-semibold text-ink">
                 <AnimatedNumber value={inView ? ready : 0} format={(n) => String(Math.round(n))} />
               </span>
-            </div>
+            </motion.div>
           ))}
         </div>
       </motion.div>
@@ -496,26 +693,51 @@ function HomesScene() {
   );
 }
 
+/** The only dark section: a pine band; the numbers roll to 100 as it enters. */
 function Closing() {
   const { t } = useLang();
   const router = useVTRouter();
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, amount: 0.5 });
+  const n = (v: number) => String(Math.round(v));
+  const [a1, a2] = t('landing.closingA').split('{n}');
+  const [b1, b2] = t('landing.closingB').split('{n}');
   return (
-    <section className="mx-auto max-w-[1280px] px-5 py-28 lg:px-8">
-      <p className="max-w-[22ch] text-[36px] font-semibold leading-[42px] tracking-[-0.02em] text-ink lg:text-[56px] lg:leading-[60px]">{t('landing.closing')}</p>
-      <motion.a
-        href="/start"
-        onClick={(e) => {
-          if (e.metaKey || e.ctrlKey || e.shiftKey) return;
-          e.preventDefault();
-          router.push('/start', 'start');
-        }}
-        whileTap={{ scale: 0.97 }}
-        transition={spring.snappy}
-        className="mt-10 inline-flex min-h-[56px] items-center rounded-[8px] bg-pine px-8 text-[20px] font-medium text-white transition-colors duration-[120ms] hover:bg-pine-hover"
-      >
-        {t('landing.cta')}
-      </motion.a>
+    <section className="bg-pine text-white" data-testid="closing">
+      <div ref={ref} className="mx-auto max-w-[1280px] px-5 py-28 lg:px-8 lg:py-36">
+        <p className="tnum max-w-[24ch] text-[36px] font-semibold leading-[42px] tracking-[-0.02em] lg:text-[56px] lg:leading-[60px]">
+          {a1}
+          <AnimatedNumber value={inView ? 100 : 0} format={n} />
+          {a2} {b1}
+          <AnimatedNumber value={inView ? 100 : 0} format={n} />
+          {b2}
+        </p>
+        <motion.a
+          href="/start"
+          onClick={(e) => {
+            if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+            e.preventDefault();
+            router.push('/start', 'start');
+          }}
+          whileTap={{ scale: 0.97 }}
+          transition={spring.snappy}
+          className="mt-12 inline-flex min-h-[56px] items-center rounded-[8px] bg-white px-8 text-[20px] font-medium text-pine transition-colors duration-[120ms] hover:bg-pine-soft focus-visible:outline-white"
+        >
+          {t('landing.cta')}
+        </motion.a>
+      </div>
     </section>
+  );
+}
+
+/** A thin pine line down the left margin that draws as you scroll: the page reads as one road. */
+function StorySpine({ target }: { target: React.RefObject<HTMLDivElement | null> }) {
+  const { scrollYProgress } = useScroll({ target, offset: ['start 70%', 'end 70%'] });
+  return (
+    <div className="pointer-events-none absolute bottom-0 left-[max(16px,calc((100vw-1280px)/2+12px))] top-0 hidden w-[2px] lg:block" aria-hidden>
+      <div className="absolute inset-0 bg-line opacity-60" />
+      <motion.div className="absolute inset-0 origin-top bg-pine" style={{ scaleY: scrollYProgress }} />
+    </div>
   );
 }
 
@@ -552,15 +774,26 @@ function Footer() {
 }
 
 export function Landing() {
-  const phase = useIntroPhase();
+  const [phase, setPhase] = useIntroPhase();
+  const [opening, setOpening] = useState(true);
+  const story = useRef<HTMLDivElement>(null);
+  const onOpeningDone = useCallback(() => setOpening(false), []);
+  const onOpeningSkip = useCallback(() => {
+    setOpening(false);
+    setPhase('static');
+  }, [setPhase]);
   return (
     <>
       {/* Without JavaScript the intro never runs: show everything. */}
       <noscript>
         <style>{`[data-intro]{visibility:visible!important}`}</style>
       </noscript>
-      <Hero phase={phase} />
-      <div id="story" className="scroll-mt-16">
+      {phase === 'opening' && opening && <Opening onDone={onOpeningDone} onSkip={onOpeningSkip} />}
+      {/* a skip remounts the hero straight into its final state */}
+      <Hero key={phase === 'static' ? 'static' : 'live'} phase={phase} />
+      <Ticker />
+      <div id="story" ref={story} className="relative scroll-mt-16">
+        <StorySpine target={story} />
         <PhoneScene />
         <RoadScene />
         <HomesScene />

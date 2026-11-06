@@ -7,6 +7,7 @@ import { whyThisDate } from '@/lib/explain';
 import type { Profile } from '@/lib/types';
 import type { PlanOutput } from '@/lib/plan';
 import { Road } from '@/components/result/Road';
+import { Skyline } from '@/components/ui/Skyline';
 import { ReadyHero } from '@/components/result/ResultScreen';
 import { Section, WhyThisDate } from '@/components/result/Panels';
 import { PlanChecklist, PlanSkeleton } from '@/components/result/PlanChecklist';
@@ -69,7 +70,8 @@ export function PlanView({ code, createdAt, profile, initialPlan, initialCheckli
       <h1 className="sr-only">{t('result.roadTitle')}</h1>
       <ReadyHero months={result.monthsToReady} readyDate={result.readyDate} keysDate={addMonths(new Date(), keys)} reveal={revealed} noIncome={result.noIncome} />
       <div className="panel mt-8 !px-5 !pb-2 !pt-4">
-        <Road result={result} elapsed={elapsed} onEntranceDone={() => setRevealed(true)} />
+        <Road result={result} elapsed={elapsed} drawDuration={0.6} onEntranceDone={() => setRevealed(true)} />
+        <Skyline mode="static" count={10} height={56} className="-mx-5 mt-1 opacity-70" keysLit={revealed} litCount={Object.values(checklist).filter(Boolean).length} />
       </div>
       <WhyThisDate sentences={why} />
       <Section title={t('plan.title')} id="plan">

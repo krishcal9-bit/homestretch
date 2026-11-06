@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { useLang } from '@/lib/i18n';
 import { money } from '@/lib/format';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
-import { spring } from '@/lib/motion';
+import { spring, ease } from '@/lib/motion';
 import type { ReadinessResult } from '@/lib/types';
 import type { ReactNode } from 'react';
 
@@ -27,10 +27,10 @@ export function WhyThisDate({ sentences }: { sentences: string[] }) {
     <Section title={t('result.whyTitle')} id="why">
       <motion.ul layout transition={spring.smooth} className="panel flex flex-col gap-3 !p-5" data-testid="why">
         {sentences.map((s, i) => (
-          <li key={i} className="flex gap-3 text-[16px] leading-[24px] text-ink">
+          <motion.li key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: ease.out, delay: i * 0.05 }} className="flex gap-3 text-[16px] leading-[24px] text-ink">
             <span className="mt-[10px] h-[5px] w-[5px] shrink-0 rounded-full bg-pine" aria-hidden />
             <span className="tnum">{s}</span>
-          </li>
+          </motion.li>
         ))}
       </motion.ul>
     </Section>

@@ -69,6 +69,10 @@ export function FamilyExtras({ profile }: ResultExtrasProps) {
   const [phoneOpen, setPhoneOpen] = useState(false);
   const [phone, setPhone] = useState('');
 
+  // Tell the Road's skyline how many windows to light (one per ticked item).
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('hs:ticks', { detail: Object.values(checklist).filter(Boolean).length }));
+  }, [checklist]);
   const toggle = (i: string, done: boolean) => {
     setChecklist((c) => ({ ...c, [i]: done })); // optimistic
     if (code) fetch(`/api/plans/${code}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ index: i, done }) }).catch(() => {});

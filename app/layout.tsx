@@ -19,7 +19,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const c = await cookies();
   const lang: Lang = c.get('hs_lang')?.value === 'es' ? 'es' : 'en';
   return (
-    <html lang={lang}>
+    <html lang={lang} suppressHydrationWarning>
+      <head>
+        {/* First visit in a session on /: veil the page in --paper before first paint so the opening starts blank.
+            Never with reduced motion or without JS; the opening removes the veil as soon as it mounts. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(location.pathname==='/'&&!sessionStorage.getItem('hs.opened')&&!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('hs-veil');setTimeout(function(){document.documentElement.classList.remove('hs-veil')},4000)}}catch(e){}`,
+          }}
+        />
+      </head>
       <body>
         <Providers lang={lang}>{children}</Providers>
       </body>

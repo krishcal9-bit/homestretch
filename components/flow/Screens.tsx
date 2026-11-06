@@ -26,8 +26,9 @@ export type ScreenProps = {
 export function ScreenTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
     <div className="mb-8 flex flex-wrap items-start justify-between gap-x-4">
-      <h1 tabIndex={-1} data-screen-title className="t-title min-w-0 flex-1 text-ink focus:outline-none focus-visible:outline-none">
-        {children}
+      <h1 tabIndex={-1} data-screen-title className="t-title min-w-0 flex-1 overflow-hidden pb-[0.08em] text-ink focus:outline-none focus-visible:outline-none">
+        {/* the question rises from a mask (same language as the landing headline, shorter) */}
+        <span className="mask-rise block">{children}</span>
       </h1>
       {action}
     </div>

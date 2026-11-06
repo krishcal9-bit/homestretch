@@ -15,6 +15,7 @@ import { Levers } from './Levers';
 import { FinancePanel, Section, WhyThisDate } from './Panels';
 import { AimForHome } from './AimForHome';
 import { TwoFutures } from './TwoFutures';
+import { Skyline } from '@/components/ui/Skyline';
 
 export type ResultExtrasProps = { profile: Profile; draft: Draft; setDraft: (d: Draft | ((p: Draft) => Draft)) => void };
 
@@ -56,6 +57,12 @@ export function ResultScreen({
   const raf = useRef<number | null>(null);
   const solving = useRef<{ stop: () => void }[]>([]);
   const [revealed, setRevealed] = useState(false);
+  const [ticks, setTicks] = useState(0);
+  useEffect(() => {
+    const on = (e: Event) => setTicks((e as CustomEvent<number>).detail);
+    window.addEventListener('hs:ticks', on);
+    return () => window.removeEventListener('hs:ticks', on);
+  }, []);
 
   const commit = useCallback(
     (l: LeversT) => {
@@ -150,6 +157,8 @@ export function ResultScreen({
 
       <div className="panel mt-8 !px-5 !pb-2 !pt-4">
         <Road result={result} onEntranceDone={() => setRevealed(true)} vtName="road" />
+        {/* the street: the Keys house lights brass once the date settles; each ticked plan item lights a window */}
+        <Skyline mode="static" count={10} height={56} className="-mx-5 mt-1 opacity-70" keysLit={revealed} litCount={ticks} />
       </div>
 
       <div className="panel mt-4 !p-5">

@@ -177,3 +177,15 @@ html[data-vt="fade"]::view-transition-new(root) { animation: 200ms ease both vt-
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
+
+/* Opening veil (see app/layout.tsx): blank --paper until the landing opening takes over. */
+html.hs-veil::after { content: ''; position: fixed; inset: 0; background: var(--paper); z-index: 69; }
+
+/* Intake: the question rises from its mask, the fields fade up just behind it (under 400ms total). */
+@keyframes mask-rise { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.mask-rise { animation: mask-rise 320ms var(--ease-out) both; }
+.intake-screen > :nth-child(n + 2) { animation: fade-up 300ms var(--ease-out) 60ms both; }
+@media (prefers-reduced-motion: reduce) {
+  .mask-rise, .intake-screen > :nth-child(n + 2) { animation: none; }
+}

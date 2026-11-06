@@ -13,6 +13,7 @@ import type { ResultExtrasProps } from './ResultScreen';
 import { Section } from './Panels';
 import { PlanChecklist, PlanSkeleton, UnderwritersEye } from './PlanChecklist';
 import { LetterEditor } from './LetterEditor';
+import { CounselorHandoff } from '@/components/CounselorHandoff';
 
 type StoredPlan = { lang: Lang | null; plan: PlanOutput | null; source?: string; key?: string };
 
@@ -113,6 +114,8 @@ export function FamilyExtras({ profile }: ResultExtrasProps) {
         {source === 'fallback' && plan && <p className="t-helper mb-3 text-ink-2">{t('plan.error')}</p>}
         {!plan ? loading && !slow ? <div className="h-[320px]" /> : <PlanSkeleton /> : <PlanChecklist plan={plan} checklist={checklist} onToggle={toggle} />}
       </Section>
+
+      <CounselorHandoff profile={profile} code={code ?? undefined} lang={lang} />
 
       <Section title={t('plan.saveTitle')} id="save">
         <div className="panel !p-5">

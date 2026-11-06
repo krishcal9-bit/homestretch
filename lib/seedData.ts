@@ -80,7 +80,7 @@ export const SEED_FAMILIES: SeedFamily[] = [
   {
     code: 'LOP8D2', surname: 'López', givenName: 'Carmen', city: 'Garden Grove', language: 'es', daysSinceActivity: 9,
     profile: { ...base, householdSize: 3, grossMonthlyIncome: 4700, rent: 1950, bedrooms: 1, occupants: 3,
-      debts: [{ kind: 'card', balance: 3900, minPayment: 110 }], savings: 1800, creditBand: 'unknown', levers: L(150, 200) },
+      debts: [{ kind: 'card', balance: 3900, minPayment: 110 }], savings: 1800, creditBand: 'unknown', levers: L(200, 300) },
     ticked: [0, 2],
   },
   {
@@ -98,7 +98,7 @@ export const SEED_FAMILIES: SeedFamily[] = [
     code: 'WIL2C8', surname: 'Williams', givenName: 'Andre', city: 'Santa Ana', language: 'en', daysSinceActivity: 15,
     profile: { ...base, householdSize: 4, grossMonthlyIncome: 6200, rent: 2400, bedrooms: 2, occupants: 4,
       debts: [{ kind: 'card', balance: 6500, minPayment: 190 }, { kind: 'car', balance: 11000, minPayment: 390 }],
-      savings: 4200, creditBand: 'building', creditScore: 612, levers: L(250, 200) },
+      savings: 4200, creditBand: 'building', creditScore: 612, levers: L(300, 300) },
     ticked: [1],
   },
   {

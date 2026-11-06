@@ -14,3 +14,4 @@ Ambiguities resolved during the build, with the choice made.
 - **Good credit with open collections.** A "good" band with listed collections waits for collections to clear (the spec defines "good" as no open collections).
 - **Freed payments.** Each month, any debt budget not needed (because debts are paid off) rolls into savings. This keeps the extra-debt lever monotonic (more never makes the date later), which a "freed minimums at payoff" version broke.
 - **Program cost (D6).** Matched savings cost is counted for each month until the family is ready (max 24); counseling is assumed at $100 per family per month of credit time saved; grants are per eligible family.
+- **No temperature.** The current Anthropic Messages API (SDK 1.6) no longer accepts `temperature`, so the plan call omits the spec's 0.3. Output stays structured through the system prompt and Zod validation.

@@ -13,7 +13,9 @@
     "e2e": "playwright test",
     "db:reset": "prisma db push --force-reset --skip-generate && tsx prisma/seed.ts",
     "seed": "tsx prisma/seed.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "preflight": "tsx --env-file=.env scripts/preflight.ts",
+    "setup": "npm install && cp -n .env.example .env; npx prisma db push && npm run seed"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

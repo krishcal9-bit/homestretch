@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { SEED_FAMILIES, SEED_HOMES } from '../lib/seedData';
+import { snapshotOf } from '../lib/checkin';
 
 const prisma = new PrismaClient();
 
@@ -12,8 +13,14 @@ async function main() {
   for (const f of SEED_FAMILIES) {
     const checklist: Record<string, boolean> = {};
     for (const i of f.ticked ?? []) checklist[String(i)] = true;
+    // Last week's check-in snapshot: before this week's ticks, so the Monday check-in has news.
+    const lastActivity = new Date(now - f.daysSinceActivity * 86400000);
+    const snap = snapshotOf(f.profile, {}, lastActivity, SEED_HOMES);
+    snap.stalled = false;
+    if (f.code === 'JOH5T1') snap.homes = []; // newly matches a home this week
     await prisma.plan.create({
       data: {
+        checkinJson: JSON.stringify(snap),
         code: f.code,
         surname: f.surname,
         givenName: f.givenName,
@@ -22,7 +29,7 @@ async function main() {
         profileJson: JSON.stringify(f.profile),
         checklistJson: JSON.stringify(checklist),
         sharedWithStaff: true,
-        lastActivity: new Date(now - f.daysSinceActivity * 86400000),
+        lastActivity,
       },
     });
   }

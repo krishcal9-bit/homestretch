@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { Search } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useRef, useState } from 'react';
@@ -68,8 +69,9 @@ export function Pipeline({ families }: { families: FamilyRow[] }) {
             <span className="tnum">{families.length}</span> {families.length === 1 ? 'family has' : 'families have'} shared a plan with Habitat OC.
           </p>
         </div>
-        {/* Step 11 mounts "Run Monday check-in" here. */}
-        <div data-slot="checkin" className="min-h-[44px]" />
+        <Link href="/staff/checkin" className="inline-flex min-h-[44px] items-center rounded-[8px] bg-pine px-4 text-[15px] font-medium text-white transition-colors duration-[120ms] hover:bg-pine-hover" data-testid="run-checkin">
+          Run Monday check-in
+        </Link>
       </div>
 
       {families.length === 0 ? (

@@ -10,7 +10,10 @@ import { ease } from '@/lib/motion';
  */
 export const ISO = { W: 60, H: 44, R: 26, dx: 24, dy: 14 };
 const { W, H, R, dx, dy } = ISO;
-export const ISO_VIEWBOX = `-4 ${-(H + R + dy + 6)} ${W + dx + 8} ${H + R + dy + 10}`;
+export const ISO_VB = { x: -4, y: -(H + R + dy + 6), w: W + dx + 8, h: H + R + dy + 10 };
+export const ISO_VIEWBOX = `${ISO_VB.x} ${ISO_VB.y} ${ISO_VB.w} ${ISO_VB.h}`;
+/** Pixel position of a house-space point inside an IsoHouse rendered at `size` px wide. */
+export const isoPx = (size: number, x: number, y: number) => ({ x: ((x - ISO_VB.x) * size) / ISO_VB.w, y: ((y - ISO_VB.y) * size) / ISO_VB.w });
 export const isoPaths = {
   floor: `M0 0H${W}L${W + dx} ${-dy}H${dx}Z`,
   front: `M0 0V${-H}H${W}V0Z`,
@@ -22,9 +25,9 @@ export const isoPaths = {
   sideWin: `M${W + dx * 0.3} ${-dy * 0.3 - H * 0.45}l${dx * 0.4} ${-dy * 0.4}v${-H * 0.26}l${-dx * 0.4} ${dy * 0.4}Z`,
 };
 
-export type IsoBuild = 'none' | 'full' | 'quick' | 'short';
+export type IsoBuild = 'none' | 'full' | 'intro' | 'quick' | 'short';
 /** seconds scale for each build variant: full ≈ 1.25s (intro), quick ≈ 0.6s (result), short ≈ 0.4s (plan page) */
-const SCALE: Record<Exclude<IsoBuild, 'none'>, number> = { full: 1, quick: 0.48, short: 0.32 };
+const SCALE: Record<Exclude<IsoBuild, 'none'>, number> = { full: 1, intro: 0.8, quick: 0.48, short: 0.32 };
 
 export function IsoHouse({
   size = 96,
@@ -59,7 +62,7 @@ export function IsoHouse({
   const d = isoPaths.door;
   const w = isoPaths.win;
   return (
-    <svg width={size} height={size * 0.9} viewBox={ISO_VIEWBOX} className={`overflow-visible ${className}`} role={title ? 'img' : undefined} aria-label={title} aria-hidden={title ? undefined : true}>
+    <svg width={size} height={(size * ISO_VB.h) / ISO_VB.w} viewBox={ISO_VIEWBOX} className={`overflow-visible ${className}`} role={title ? 'img' : undefined} aria-label={title} aria-hidden={title ? undefined : true}>
       <defs>
         <filter id={`g${glowId}`} x="-100%" y="-100%" width="300%" height="300%">
           <feGaussianBlur stdDeviation="3" />
@@ -105,7 +108,7 @@ export function IsoHouse({
       {/* windows draw; the window light turns on with a soft brass glow */}
       <motion.rect x={w.x} y={w.y} width={w.w} height={w.h} {...sw} {...draw(1.0, 0.15)} />
       <motion.path d={isoPaths.sideWin} {...sw} {...draw(1.05, 0.15)} />
-      <motion.g initial={false} animate={{ opacity: lit ? 1 : 0 }} transition={{ duration: lit ? 0.3 : 0.4, ease: ease.out, delay: lit && animate ? at(1.2) : 0 }}>
+      <motion.g initial={animate ? { opacity: 0 } : false} animate={{ opacity: lit ? 1 : 0 }} transition={{ duration: lit ? 0.3 : 0.4, ease: ease.out, delay: lit && animate ? at(1.2) : 0 }}>
         <rect x={w.x - 2} y={w.y - 2} width={w.w + 4} height={w.h + 4} fill="var(--brass)" opacity={0.55} filter={`url(#g${glowId})`} />
         <rect x={w.x} y={w.y} width={w.w} height={w.h} fill="var(--brass)" />
       </motion.g>

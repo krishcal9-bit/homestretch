@@ -377,6 +377,14 @@
     "tSaved": "Familia de {n} en {city} · enganche ahorrado",
     "tMatched": "Familia de {n} en {city} · asignada a una casa de {br} recámaras",
     "closingA": "Habitat termina {n} casas.",
-    "closingB": "Homestretch ayuda a que {n} familias estén listas para comprarlas."
+    "closingB": "Homestretch ayuda a que {n} familias estén listas para comprarlas.",
+    "nav0": "Inicio",
+    "nav1": "Cuéntenos dónde está",
+    "nav2": "El camino a sus llaves",
+    "nav3": "Casas y quién está listo",
+    "nav4": "100 casas",
+    "arrowNext": "Siguiente sección",
+    "arrowTop": "Volver al inicio",
+    "mapReady": "{n} listas"
   }
 }

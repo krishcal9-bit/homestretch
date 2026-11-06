@@ -6,7 +6,7 @@ import { useLang } from '@/lib/i18n';
 import { addMonths } from '@/lib/engine';
 import { monthName, money } from '@/lib/format';
 import type { Milestone, MilestoneKey, ReadinessResult } from '@/lib/types';
-import { IsoHouse, type IsoBuild } from '@/components/illustrations/IsoHouse';
+import { IsoHouse, isoPx, type IsoBuild } from '@/components/illustrations/IsoHouse';
 
 const PAD = 28;
 const MIN_W = 280; // below this the road scrolls horizontally
@@ -68,7 +68,10 @@ function placeMarkers(ms: Milestone[], maxMonth: number, w: number): Placed[] {
  * below the track; if a label would still collide with its same-side neighbour (or with "Today"), it flips
  * side or merges with its neighbour, repeating until nothing overlaps.
  */
-function layoutLabels(placed: Placed[], w: number, charW: number, todayW: number, joinText: (labels: string[]) => string, pinned: MilestoneKey[] = []): Cluster[] {
+function layoutLabels(placed: Placed[], w: number, charW: number, todayW: number, joinText: (labels: string[]) => string, pinned: MilestoneKey[] = [], aboveBlock: [number, number] | null = null): Cluster[] {
+  // a label above the track may not cross the space a tall Keys house occupies
+  const blocked = (c: { left: number; width: number; keys: MilestoneKey[] }, side: 'above' | 'below') =>
+    side === 'above' && !!aboveBlock && !c.keys.includes('keys') && c.left < aboveBlock[1] && c.left + c.width > aboveBlock[0];
   const isPinned = (g: Placed[]) => g.some((m) => pinned.includes(m.key));
   // 1. initial clusters by distance
   let groups: Placed[][] = [];
@@ -92,12 +95,12 @@ function layoutLabels(placed: Placed[], w: number, charW: number, todayW: number
     let conflict = -1;
     for (let i = 0; i < cs.length; i++) {
       const c = cs[i];
-      if (c.left >= lastRight[c.side] + 8) {
+      if (c.left >= lastRight[c.side] + 8 && !blocked(c, c.side)) {
         lastRight[c.side] = c.left + c.width;
         continue;
       }
       const other = c.side === 'above' ? 'below' : 'above';
-      if (c.left >= lastRight[other] + 8) {
+      if (c.left >= lastRight[other] + 8 && !blocked(c, other)) {
         c.side = other;
         lastRight[other] = c.left + c.width;
         continue;
@@ -180,7 +183,7 @@ function Marker({ m, g, delay, play, active, highlighted, keysGlow = 0, keysHous
         {active && <circle r={(isKeys ? g.keysR : g.r) + 5} fill="none" stroke="var(--pine)" strokeWidth="2" pointerEvents="none" />}
         {isKeys && keysHouse ? (
           // the small isometric house from the intro, standing on the road
-          <g transform={`translate(${-g.keysR * 1.9} ${-g.keysR * 3.1})`} pointerEvents="none" data-testid="keys-house">
+          <g transform={`translate(${-(g.keysR * 3.8) / 2} ${-isoPx(g.keysR * 3.8, 0, 0).y})`} pointerEvents="none" data-testid="keys-house">
             <IsoHouse size={g.keysR * 3.8} build={keysBuild} delay={keysBuildDelay} lit={lit} strokeWidth={2.2} />
           </g>
         ) : isKeys ? (
@@ -237,7 +240,10 @@ type RoadProps = {
  */
 export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, entrance = 'session', entranceDelay = 0, drawDuration = dur.long, drawEase = 'out', size = 'md', highlight = [], vtName, className = '', progressTo, keysGlow = 0, trackDrawn = false, keysAt, keysVariant = 'dot', keysBuild = 'none', keysBuildDelay = 0 }: RoadProps) {
   const { t, lang } = useLang();
-  const g = GEOM[size];
+  const g0 = GEOM[size];
+  // A house marker is taller than a dot: add room above the track for the house and its "Keys" label.
+  const houseExtra = keysVariant === 'house' ? Math.max(0, Math.ceil(g0.keysR * 3.8 * 0.98 + 8 + g0.font - g0.trackY)) : 0;
+  const g = houseExtra ? { ...g0, trackY: g0.trackY + houseExtra, h: g0.h + houseExtra } : g0;
   const wrapRef = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(MIN_W);
   const [overflows, setOverflows] = useState(false);
@@ -312,7 +318,13 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
     labels.length === 1 ? labels[0] : labels.length === 2 ? `${labels[0]} + ${labels[1].charAt(0).toLowerCase()}${labels[1].slice(1)}` : `${labels[0]} + ${t('road.more', { n: labels.length - 1 })}`;
   const todayLabel = t('result.today');
   // Keys always keeps its own label: it's the brass marker the levers move.
-  const clusters = useMemo(() => layoutLabels(placed, w, g.charW, todayLabel.length * g.charW, joinText, [...highlight, 'keys']), [placed, w, g.charW, todayLabel, lang, highlight.join()]); // eslint-disable-line react-hooks/exhaustive-deps
+  const keysX = placed.find((p) => p.key === 'keys')?.x ?? w;
+  const houseHalf = keysVariant === 'house' ? (g.keysR * 3.8) / 2 + 6 : 0;
+  const clusters = useMemo(
+    // With the house marker, Keys is labelled above its roof (below), so it leaves the label lanes entirely.
+    () => layoutLabels(houseHalf ? placed.filter((p) => p.key !== 'keys') : placed, w, g.charW, todayLabel.length * g.charW, joinText, [...highlight, 'keys'], houseHalf ? [keysX - houseHalf, keysX + houseHalf] : null),
+    [placed, w, g.charW, todayLabel, lang, highlight.join(), houseHalf, keysX], // eslint-disable-line react-hooks/exhaustive-deps
+  ); // eslint-disable-line react-hooks/exhaustive-deps
   const usable = w - PAD * 2;
   const curX = PAD + (Math.min(elapsed, maxMonth) / maxMonth) * usable;
   const activeM = placed.find((p) => p.key === active);
@@ -387,6 +399,20 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
               );
             })}
           </AnimatePresence>
+          {houseHalf > 0 && (
+            <motion.text
+              y={g.trackY - g.keysR * 3.8 * 0.98 - 6}
+              textAnchor="middle"
+              style={{ fontSize: g.font, fontWeight: 600, fill: 'var(--ink)' }}
+              initial={play ? { opacity: 0, x: keysX } : { opacity: 1, x: keysX }}
+              animate={{ opacity: 1, x: keysX }}
+              transition={{ x: spring.gentle, opacity: { duration: 0.2, ease: ease.out, delay: play && !entranceOver ? (keysAt ?? reachDelay(keysX)) + 0.1 : 0 } }}
+              pointerEvents="none"
+              data-label="keys"
+            >
+              {t('road.labels.keys')}
+            </motion.text>
+          )}
           <motion.circle cx={curX} cy={g.trackY} r={g.r - 1} fill="var(--brass)" initial={play ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: dur.short, delay: play ? entranceDelay : 0 }} />
           </>)}
         </svg>

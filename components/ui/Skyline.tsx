@@ -65,7 +65,7 @@ function housePath(h: House): string {
 }
 
 /** The drawn street: rendered once and memoized, so lighting a window never re-renders the houses. */
-const Street = memo(function Street({ houses, draw, drawInAt, keysLit }: { houses: House[]; draw: boolean; drawInAt: number | false; keysLit: boolean }) {
+const Street = memo(function Street({ houses, draw, drawInAt, keysLit, stagger }: { houses: House[]; draw: boolean; drawInAt: number | false; keysLit: boolean; stagger: number }) {
   return (
     <>
       {houses.map((h, i) => {
@@ -81,9 +81,9 @@ const Street = memo(function Street({ houses, draw, drawInAt, keysLit }: { house
                 vectorEffect="non-scaling-stroke"
                 initial={draw ? { pathLength: 0, opacity: 0 } : false}
                 animate={{ pathLength: 1, opacity: 1 }}
-                transition={{ pathLength: { duration: 0.5, ease: ease.out, delay: draw ? (drawInAt as number) + i * 0.04 : 0 }, opacity: { duration: 0.01, delay: draw ? (drawInAt as number) + i * 0.04 : 0 } }}
+                transition={{ pathLength: { duration: 0.5, ease: ease.out, delay: draw ? (drawInAt as number) + i * stagger : 0 }, opacity: { duration: 0.01, delay: draw ? (drawInAt as number) + i * stagger : 0 } }}
               />
-              <motion.g initial={draw ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: 0.2, delay: draw ? (drawInAt as number) + i * 0.04 + 0.3 : 0 }}>
+              <motion.g initial={draw ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: 0.2, delay: draw ? (drawInAt as number) + i * stagger + 0.3 : 0 }}>
               <rect x={h.win.x} y={h.win.y} width={h.win.w} height={h.win.h} fill="none" stroke="var(--line)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
               <rect x={h.door.x} y={GROUND - h.door.h} width={h.door.w} height={h.door.h} fill={isKeys ? 'var(--brass)' : 'none'} stroke={isKeys ? 'var(--brass)' : 'var(--line)'} strokeWidth="1.5" vectorEffect="non-scaling-stroke" style={{ transition: 'fill 300ms ease, stroke 300ms ease' }} />
               </motion.g>
@@ -111,9 +111,11 @@ export type SkylineProps = {
   parallax?: boolean;
   className?: string;
   height?: number;
+  /** seconds between houses during the draw-in */
+  stagger?: number;
 };
 
-export function Skyline({ mode = 'static', count = 16, drawInAt = false, flashKey = 0, litIndex = null, litCount = 0, keysLit = false, parallax = false, className = '', height = 120 }: SkylineProps) {
+export function Skyline({ mode = 'static', count = 16, drawInAt = false, flashKey = 0, litIndex = null, litCount = 0, keysLit = false, parallax = false, className = '', height = 120, stagger = 0.04 }: SkylineProps) {
   const reduce = useReducedMotion();
   const houses = useMemo(() => buildStreet(count), [count]);
   const [active, setActive] = useState<number | null>(null);
@@ -124,7 +126,7 @@ export function Skyline({ mode = 'static', count = 16, drawInAt = false, flashKe
   useEffect(() => {
     if (mode !== 'living' || reduce) return;
     let last = -1;
-    const start = typeof drawInAt === 'number' ? drawInAt * 1000 + count * 40 + 600 : 0;
+    const start = typeof drawInAt === 'number' ? drawInAt * 1000 + count * stagger * 1000 + 600 : 0;
     const tick = () => {
       if (document.visibilityState === 'visible') {
         let i = Math.floor(Math.random() * count);
@@ -139,7 +141,7 @@ export function Skyline({ mode = 'static', count = 16, drawInAt = false, flashKe
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };
-  }, [mode, reduce, count, drawInAt]);
+  }, [mode, reduce, count, drawInAt, stagger]);
 
   // External flash (the date moved earlier): take over the single glowing window.
   useEffect(() => {
@@ -173,7 +175,7 @@ export function Skyline({ mode = 'static', count = 16, drawInAt = false, flashKe
           animate={{ pathLength: 1 }}
           transition={{ duration: 0.5, ease: ease.inOut, delay: draw ? (drawInAt as number) : 0 }}
         />
-        <Street houses={houses} draw={draw} drawInAt={drawInAt} keysLit={keysLit} />
+        <Street houses={houses} draw={draw} drawInAt={drawInAt} keysLit={keysLit} stagger={stagger} />
         {/* steady lit windows (ticked checklist, the Keys house in a scene): cheap overlays, the street never re-renders */}
         {houses.map((h, i) =>
           i === litIndex || i < litCount ? <rect key={i} x={h.win.x} y={h.win.y} width={h.win.w} height={h.win.h} fill="var(--brass)" /> : null,

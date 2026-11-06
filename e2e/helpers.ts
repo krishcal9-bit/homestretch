@@ -19,13 +19,13 @@ export async function freshStart(page: Page) {
   await page.goto('/start');
 }
 
-/** From a clean state, lands on the marketing page (/). The opening sequence is marked as seen (it has its own test). */
+/** From a clean state, lands on the marketing page (/) with the intro turned off (it has its own test). */
 export async function freshLanding(page: Page) {
   await page.goto('/');
   await page.evaluate(() => {
     localStorage.clear();
     sessionStorage.clear();
-    sessionStorage.setItem('hs.opened', '1');
+    sessionStorage.setItem('hs.nointro', '1');
     localStorage.setItem('hs.dragged', '1');
     document.cookie = 'hs_lang=en; path=/';
   });

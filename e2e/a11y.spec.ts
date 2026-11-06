@@ -13,7 +13,7 @@ async function audit(page: Page, name: string) {
 
 test('family routes have no serious or critical axe violations', async ({ page }) => {
   await page.goto('/');
-  await page.evaluate(() => { localStorage.clear(); sessionStorage.setItem('hs.opened', '1'); });
+  await page.evaluate(() => { localStorage.clear(); sessionStorage.setItem('hs.nointro', '1'); });
   await page.reload();
   await audit(page, 'landing');
   for (const step of [1, 2, 3, 4, 5]) {

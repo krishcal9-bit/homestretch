@@ -1,7 +1,6 @@
 'use client';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { motion, useInView, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react';
-import { Mic } from 'lucide-react';
+import { motion, useReducedMotion, useSpring } from 'motion/react';
 import { useLang } from '@/lib/i18n';
 import { computeReadiness, monthsUntil, isEligible } from '@/lib/engine';
 import { homeFits } from '@/lib/homes';
@@ -15,10 +14,15 @@ import { AnimatedMonth } from '@/components/ui/AnimatedMonth';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { Road } from '@/components/result/Road';
 import { Skyline } from '@/components/ui/Skyline';
-import { Opening, OPEN, OPEN_TOTAL } from './Opening';
+import { Intro, INTRO } from '@/components/Intro';
+import { SectionArrow, SectionDots, SectionNavProvider, useSectionNav } from './SectionNav';
+import { PhoneVoice } from '@/components/illustrations/landing/PhoneVoice';
+import { JourneyRoad } from '@/components/illustrations/landing/JourneyRoad';
+import { NeighborhoodMap } from '@/components/illustrations/landing/NeighborhoodMap';
+import { HundredHouses } from '@/components/illustrations/landing/HundredHouses';
 import { AnimatePresence } from 'motion/react';
 import { StaffLink, Wordmark } from '@/components/FamilyHeader';
-import type { MilestoneKey, Profile } from '@/lib/types';
+import type { Profile } from '@/lib/types';
 
 /* ------------------------------------------------------------------ */
 /* Load sequence (seconds from first paint). One movement, ~1.4s.      */
@@ -37,25 +41,25 @@ const SEQ = {
 type Phase = 'pending' | 'opening' | 'play' | 'static' | 'reduced';
 const animated = (p: Phase) => p === 'play' || p === 'opening';
 /** In the opening, the hero assembles under the pull-back, so every hero beat shifts by this much. */
-const offset = (p: Phase) => (p === 'opening' ? OPEN.pull : 0);
+const offset = (p: Phase) => (p === 'opening' ? INTRO.pull : 0);
 
 /** Decides once per visit whether the intro plays. Before hydration everything holds its final layout, invisibly. */
 function useIntroPhase(): [Phase, (p: Phase) => void] {
   const reduce = useReducedMotion();
   const [phase, setPhase] = useState<Phase>('pending');
   useEffect(() => {
+    const html = document.documentElement;
     if (reduce) {
-      document.documentElement.classList.remove('hs-veil');
+      html.classList.remove('hs-veil');
       return setPhase('reduced');
     }
-    let opened = false;
+    // The intro plays on every load. Tests (and anyone linking past it) can opt out with ?nointro.
+    let skip = false;
     try {
-      opened = !!sessionStorage.getItem('hs.opened');
-      sessionStorage.setItem('hs.opened', '1');
+      skip = !!sessionStorage.getItem('hs.nointro') || new URLSearchParams(location.search).has('nointro');
     } catch {}
-    // First visit in a session: the opening sequence. Return visits: the shorter hero sequence.
-    setPhase(opened ? 'play' : 'opening');
-    if (opened) document.documentElement.classList.remove('hs-veil');
+    if (skip) html.classList.remove('hs-veil');
+    setPhase(skip ? 'play' : 'opening');
   }, [reduce]);
   return [phase, setPhase];
 }
@@ -147,7 +151,7 @@ function OdometerDate({ iso, phase, lang }: { iso: string; phase: Phase; lang: '
   useEffect(() => {
     setSettled(!animated(phase));
   }, [phase]);
-  const at = phase === 'opening' ? OPEN.pull + 0.2 : SEQ.dateAt;
+  const at = phase === 'opening' ? INTRO.pull + 0.2 : SEQ.dateAt;
   const final = monthName(iso, lang);
   const lineH = 1.05; // em
   if (!settled) {
@@ -315,16 +319,17 @@ function HeroDemo({ phase, onEarlier }: { phase: Phase; onEarlier: () => void })
             result={result}
             size="lg"
             entrance={play ? 'always' : 'none'}
-            entranceDelay={phase === 'opening' ? OPEN.pull + 0.3 : SEQ.roadAt}
+            entranceDelay={phase === 'opening' ? INTRO.pull + 0.3 : SEQ.roadAt}
             drawDuration={phase === 'opening' ? 0.5 : SEQ.roadDraw}
             drawEase="inOut"
             trackDrawn={phase === 'opening'}
-            keysAt={phase === 'opening' ? OPEN_TOTAL - 0.12 : undefined}
+            keysAt={phase === 'opening' ? INTRO.total - 0.12 : undefined}
             progressTo={result.monthsToReady}
             keysGlow={keysGlow}
+            keysVariant="house"
           />
         )}
-        {phase === 'pending' && <div className="h-[92px]" />}
+        {phase === 'pending' && <div className="h-[114px]" />}
       </motion.div>
 
       <motion.div {...fade(phase === 'opening' ? 0.35 : SEQ.roadAt + 0.3)} className="mt-6">
@@ -346,7 +351,7 @@ function HeroDemo({ phase, onEarlier }: { phase: Phase; onEarlier: () => void })
           onChange={onSlide}
           label={t('landing.lever')}
           valueText={money(extra[family], lang)}
-          nudgeAt={play ? (phase === 'opening' ? OPEN_TOTAL + 0.3 : SEQ.nudgeAt) : undefined}
+          nudgeAt={play ? (phase === 'opening' ? INTRO.total + 0.3 : SEQ.nudgeAt) : undefined}
         />
         <div className="h-[20px]">
           <AnimatePresence>
@@ -374,8 +379,8 @@ function Hero({ phase }: { phase: Phase }) {
     ? { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.4, ease: ease.out, delay: t0 + (phase === 'opening' ? 0.25 : SEQ.sub) } }
     : { initial: phase === 'reduced' ? { opacity: 0 } : false, animate: { opacity: 1 }, transition: { duration: 0.15 } };
   return (
-    <div className="relative overflow-hidden lg:min-h-[calc(100svh-64px)]">
-      <section className="relative z-[1] mx-auto grid max-w-[1280px] grid-cols-1 items-center gap-x-8 gap-y-14 px-5 pb-40 pt-10 lg:min-h-[calc(100svh-64px)] lg:grid-cols-12 lg:px-8 lg:pb-36 lg:pt-8">
+    <section id="hero" data-testid="hero" className="snap-section relative min-h-[calc(100svh-64px)] overflow-hidden">
+      <div className="relative z-[1] mx-auto grid max-w-[1280px] grid-cols-1 items-center gap-x-8 gap-y-14 px-5 pb-40 pt-10 lg:min-h-[calc(100svh-64px)] lg:grid-cols-12 lg:px-8 lg:pb-36 lg:pt-8">
         <div className="lg:col-span-6 xl:col-span-5">
           <motion.p {...fadeUp} transition={play ? { duration: 0.3, ease: ease.out, delay: t0 } : fadeUp.transition} className="mb-5 text-[15px] text-ink-2">
             {t('app.partner')}
@@ -415,12 +420,13 @@ function Hero({ phase }: { phase: Phase }) {
         <div className="lg:col-span-6 xl:col-span-7 xl:pl-8">
           <HeroDemo phase={phase} onEarlier={onEarlier} />
         </div>
-      </section>
+      </div>
       {/* The street the Road heads toward. Living: one window glows at a time. */}
       <div className="absolute inset-x-0 bottom-0 z-0" style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
-        <Skyline mode="living" count={16} parallax drawInAt={phase === 'opening' ? OPEN_TOTAL : phase === 'play' ? 1.3 : false} flashKey={flash} height={120} />
+        <Skyline mode="living" count={16} parallax stagger={0.03} drawInAt={phase === 'opening' ? INTRO.pull + 0.3 : phase === 'play' ? 1.3 : false} flashKey={flash} height={120} />
       </div>
-    </div>
+      <SectionArrow index={0} label={t('landing.arrowNext')} topLabel={t('landing.arrowTop')} />
+    </section>
   );
 }
 
@@ -450,297 +456,218 @@ function Ticker() {
     return () => clearInterval(id);
   }, [lines.length]);
   return (
-    <div className="border-y border-line bg-surface" data-testid="ticker">
-      <div className="mx-auto flex h-[56px] max-w-[1280px] items-center gap-6 px-5 lg:px-8">
-        <span className="t-helper shrink-0 text-ink-2">{t('landing.tickerLabel')}</span>
-        <div className="relative h-[40px] flex-1 overflow-hidden sm:h-[24px]" aria-live="off">
-          <AnimatePresence initial={false}>
-            <motion.p
-              key={i}
-              className="absolute inset-0 flex items-center gap-3 text-[13px] leading-[18px] text-ink sm:whitespace-nowrap sm:text-[15px]"
-              initial={reduce ? { opacity: 0 } : { opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
-              transition={{ duration: 0.25, ease: ease.out }}
-            >
-              <svg width="28" height="12" viewBox="0 0 28 12" aria-hidden className="shrink-0">
-                <path d="M1 9h16" stroke="var(--line)" strokeWidth="2" strokeLinecap="round" />
-                <circle cx="3" cy="9" r="2" fill="var(--brass)" />
-                <path d="M19 10V5.5L23 2l4 3.5V10z" fill="none" stroke="var(--pine)" strokeWidth="1.5" strokeLinejoin="round" />
-              </svg>
-              <span className="tnum">{lines[i]}</span>
-            </motion.p>
-          </AnimatePresence>
-        </div>
+    <div className="border-l-2 border-line pl-4" data-testid="ticker">
+      <p className="t-helper text-ink-2">{t('landing.tickerLabel')}</p>
+      <div className="relative mt-2 h-[44px] overflow-hidden" aria-live="off">
+        <AnimatePresence initial={false}>
+          <motion.p
+            key={i}
+            className="absolute inset-x-0 top-0 flex items-start gap-3 text-[15px] leading-[22px] text-ink"
+            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
+            transition={{ duration: 0.25, ease: ease.out }}
+          >
+            <svg width="28" height="12" viewBox="0 0 28 12" aria-hidden className="mt-[5px] shrink-0">
+              <path d="M1 9h16" stroke="var(--line)" strokeWidth="2" strokeLinecap="round" />
+              <circle cx="3" cy="9" r="2" fill="var(--brass)" />
+              <path d="M19 10V5.5L23 2l4 3.5V10z" fill="none" stroke="var(--pine)" strokeWidth="1.5" strokeLinejoin="round" />
+            </svg>
+            <span className="tnum">{lines[i]}</span>
+          </motion.p>
+        </AnimatePresence>
       </div>
     </div>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/* Scroll story                                                         */
+/* Sections                                                             */
 /* ------------------------------------------------------------------ */
-/** Scene headline: rises from a mask the first time its scene enters, like the hero. */
-function Caption({ children }: { children: React.ReactNode }) {
-  const ref = useRef<HTMLHeadingElement>(null);
-  const inView = useInView(ref, { once: true, amount: 0.6 });
-  const reduce = useReducedMotion();
+/** Section headline: rises from a mask every time its section becomes active. */
+function MaskHeading({ children, reduce }: { children: React.ReactNode; reduce: boolean }) {
   return (
-    <h2 ref={ref} className="overflow-hidden pb-[0.06em] text-[32px] font-semibold leading-[38px] tracking-[-0.02em] text-ink lg:text-[40px] lg:leading-[44px]">
-      <motion.span className="block" initial={reduce ? { opacity: 0 } : { y: '100%' }} animate={inView ? { y: '0%', opacity: 1 } : undefined} transition={{ duration: reduce ? 0.15 : SEQ.line, ease: ease.out }}>
+    <h2 className="overflow-hidden pb-[0.06em] text-[32px] font-semibold leading-[38px] tracking-[-0.02em] text-ink lg:text-[44px] lg:leading-[48px]">
+      <motion.span className="block" initial={reduce ? { opacity: 0 } : { y: '100%' }} animate={{ y: '0%', opacity: 1 }} transition={{ duration: reduce ? 0.15 : SEQ.line, ease: ease.out }}>
         {children}
       </motion.span>
     </h2>
   );
 }
 
-/** Scene 1: a phone running the intake; fields fill one at a time as if spoken. */
-function PhoneScene() {
+/** A full-viewport section: text on one side, a large illustration on the other (alternating); graphic first on phones. */
+function SceneSection({ id, index, flip = false, bob = false, text, graphic, minGraphic = 420 }: { id: string; index: number; flip?: boolean; bob?: boolean; text: (reduce: boolean) => React.ReactNode; graphic: (reduce: boolean) => React.ReactNode; minGraphic?: number }) {
   const { t } = useLang();
-  const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
-  const [filled, setFilled] = useState(0);
-  const [heard, setHeard] = useState(false);
-  useMotionValueEvent(scrollYProgress, 'change', (p) => {
-    if (p > 0.22) setHeard(true);
-    setFilled(Math.max(0, Math.min(4, Math.floor((p - 0.26) / 0.05) + 1)));
-  });
-  const y = useTransform(scrollYProgress, [0, 1], [40, -40]);
-  const fields: [string, string][] = [
-    [t('landing.phonePeople'), '4'],
-    [t('landing.phoneOC'), t('landing.phoneYes')],
-    [t('landing.phoneIncome'), '$5,200'],
-    [t('landing.phoneRent'), '$2,350'],
-  ];
+  const reduce = !!useReducedMotion();
+  const { activations } = useSectionNav();
+  const n = activations[index] ?? 0; // replays its animation each time the section becomes active
   return (
-    <section ref={ref} className="mx-auto grid min-h-[80vh] max-w-[1280px] grid-cols-1 items-center gap-12 px-5 py-20 lg:grid-cols-12 lg:px-8" data-testid="scene-intake">
-      <div className="lg:col-span-5">
-        <Caption>{t('landing.s1')}</Caption>
-        <p className="mt-4 max-w-[40ch] text-[18px] leading-[28px] text-ink-2">{t('landing.s1b')}</p>
+    <section id={id} data-testid={id} className="snap-section relative flex min-h-[calc(100svh-64px)] items-center overflow-hidden" aria-label={t(`landing.nav${index}`)}>
+      <div className="mx-auto grid w-full max-w-[1280px] grid-cols-1 items-center gap-10 px-5 pb-24 pt-12 lg:grid-cols-12 lg:gap-12 lg:px-8 lg:pb-20 lg:pt-8">
+        <div className={`lg:col-span-5 ${flip ? 'lg:order-2' : ''}`} key={`t${n}`}>
+          {n > 0 ? text(reduce) : <div className="invisible">{text(true)}</div>}
+        </div>
+        <div className={`order-first lg:col-span-7 ${flip ? 'lg:order-1' : 'lg:order-2'}`} style={{ minHeight: minGraphic }}>
+          {n > 0 && <div key={`g${n}`}>{graphic(reduce)}</div>}
+        </div>
       </div>
-      <motion.div style={{ y }} className="flex justify-center lg:col-span-7">
-        {/* Phone: pure CSS frame */}
-        <div className="w-[300px] rounded-[44px] border-[10px] border-ink bg-paper p-4 pt-3" aria-hidden>
-          <div className="mx-auto mb-3 h-[22px] w-[96px] rounded-full bg-ink" />
-          <div className="flex items-center justify-between border-b border-line pb-2">
-            <span className="scale-90 origin-left">
-              <Wordmark />
-            </span>
-          </div>
-          <div className="mt-2 h-[3px] w-full bg-line">
-            <div className="h-full w-1/4 bg-pine" />
-          </div>
-          <div className="mt-4 flex items-start justify-between gap-2">
-            <p className="text-[19px] font-semibold leading-[24px] text-ink">{t('landing.phoneTitle')}</p>
-            <motion.span
-              className="relative flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full border border-line bg-surface text-pine"
-              animate={heard ? { scale: [1, 1.18, 1] } : undefined}
-              transition={{ duration: 0.6, ease: ease.inOut }}
-            >
-              <motion.span className="absolute inset-0 rounded-full bg-pine-soft" initial={{ opacity: 0 }} animate={heard ? { opacity: [0, 1, 0] } : undefined} transition={{ duration: 0.6 }} />
-              <Mic size={16} strokeWidth={1.75} className="relative" />
-            </motion.span>
-          </div>
-          <motion.p className="mt-2 text-[12px] italic leading-[16px] text-ink-2" initial={{ opacity: 0 }} animate={{ opacity: heard ? 1 : 0 }} transition={{ duration: 0.3 }}>
-            {t('landing.phoneSaid')}
+      <SectionArrow index={index} label={t('landing.arrowNext')} topLabel={t('landing.arrowTop')} bob={bob} />
+    </section>
+  );
+}
+
+function SceneIntake() {
+  const { t } = useLang();
+  return (
+    <SceneSection
+      id="scene-intake"
+      index={1}
+      bob
+      minGraphic={560}
+      text={(reduce) => (
+        <>
+          <MaskHeading reduce={reduce}>{t('landing.s1')}</MaskHeading>
+          <motion.p initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: ease.out, delay: 0.15 }} className="mt-5 max-w-[40ch] text-[18px] leading-[28px] text-ink-2">
+            {t('landing.s1b')}
           </motion.p>
-          <div className="mt-3 flex flex-col gap-3 pb-4">
-            {fields.map(([label, value], i) => (
-              <div key={label}>
-                <p className="mb-1 text-[11px] font-medium text-ink">{label}</p>
-                <div className="tnum relative flex h-[34px] items-center overflow-hidden rounded-[6px] border border-line bg-surface px-2 text-[14px] text-ink">
-                  {/* the just-filled pulse: an opacity-only overlay */}
-                  <motion.span className="absolute inset-0 bg-pine-soft" initial={false} animate={{ opacity: i < filled ? [1, 0] : 0 }} transition={{ duration: 0.6 }} />
-                  <motion.span className="relative" initial={false} animate={{ opacity: i < filled ? 1 : 0, y: i < filled ? 0 : 4 }} transition={{ duration: 0.2, ease: ease.out }}>
-                    {value}
-                  </motion.span>
-                </div>
-              </div>
-            ))}
-            <div className="mt-1 flex h-[38px] items-center justify-center rounded-[6px] bg-pine text-[13px] font-medium text-white">{t('app.continue')}</div>
-          </div>
-        </div>
-      </motion.div>
-    </section>
+        </>
+      )}
+      graphic={(reduce) => <PhoneVoice reduce={reduce} />}
+    />
   );
 }
 
-/** One caption in the pinned-road scene; reports when it's the one in view. */
-function StoryCaption({ title, body, onActive }: { title: string; body: string; onActive: () => void }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { amount: 0.6 });
-  useEffect(() => {
-    if (inView) onActive();
-  }, [inView, onActive]);
-  return (
-    <div ref={ref} className="flex min-h-[70vh] items-center">
-      <div>
-        {/* Inactive captions dim only the large title (still ≥ 3:1); body text keeps full contrast. */}
-        <motion.div animate={{ opacity: inView ? 1 : 0.6 }} transition={{ duration: 0.25, ease: ease.out }}>
-          <Caption>{title}</Caption>
-        </motion.div>
-        <p className="mt-3 max-w-[36ch] text-[18px] leading-[28px] text-ink-2">{body}</p>
-      </div>
-    </div>
-  );
-}
-
-/** Scene 2: the Road pinned while captions scroll past, each lighting up its milestone. */
-function RoadScene() {
+function SceneRoad() {
   const { t } = useLang();
-  const [active, setActive] = useState<MilestoneKey>('collections');
-  const result = useMemo(() => computeReadiness(FAMILIES.reyes), []);
-  const caps: { key: MilestoneKey; title: string; body: string }[] = [
-    { key: 'collections', title: t('landing.c1'), body: t('landing.c1b') },
-    { key: 'savings', title: t('landing.c2'), body: t('landing.c2b') },
-    { key: 'keys', title: t('landing.c3'), body: t('landing.c3b') },
+  const caps = [
+    [t('landing.c1'), t('landing.c1b')],
+    [t('landing.c2'), t('landing.c2b')],
+    [t('landing.c3'), t('landing.c3b')],
   ];
   return (
-    <section className="mx-auto max-w-[1280px] px-5 lg:px-8" data-testid="scene-road">
-      <div className="pt-20">
-        <Caption>{t('landing.s2')}</Caption>
-      </div>
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-        <div className="sticky top-16 z-10 order-first bg-paper py-6 lg:order-last lg:col-span-7 lg:flex lg:h-[calc(100svh-64px)] lg:items-center lg:bg-transparent lg:py-0">
-          <div className="w-full">
-            <Road result={result} size="lg" entrance="none" highlight={[active]} />
-            {/* the street again; the last house lights when "Keys" is reached */}
-            <Skyline mode="static" count={12} height={84} className="mt-10 hidden lg:block" litIndex={active === 'keys' ? 11 : null} keysLit={active === 'keys'} />
-          </div>
-        </div>
-        <div className="lg:col-span-5">
-          {caps.map((c) => (
-            <StoryCaption key={c.key} title={c.title} body={c.body} onActive={() => setActive(c.key)} />
-          ))}
-        </div>
-      </div>
-    </section>
+    <SceneSection
+      id="scene-road"
+      index={2}
+      flip
+      bob
+      minGraphic={400}
+      text={(reduce) => (
+        <>
+          <MaskHeading reduce={reduce}>{t('landing.s2')}</MaskHeading>
+          <ul className="mt-6 flex flex-col gap-4">
+            {caps.map(([title, body], i) => (
+              <motion.li key={title} initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: ease.out, delay: 0.2 + i * 0.6 }} className="border-l-2 border-pine pl-4">
+                <span className="block text-[17px] font-semibold text-ink">{title}</span>
+                <span className="mt-1 block text-[16px] leading-[24px] text-ink-2">{body}</span>
+              </motion.li>
+            ))}
+          </ul>
+        </>
+      )}
+      graphic={(reduce) => <JourneyRoad reduce={reduce} />}
+    />
   );
 }
 
-/** Scene 3: the staff Homes view in a browser frame; counts climb from 0 as it scrolls in. */
-/** Small line-drawn house; wider for more bedrooms. */
-function HouseGlyph({ bedrooms }: { bedrooms: number }) {
-  const w = 16 + bedrooms * 5;
-  return (
-    <svg width={w + 2} height="22" viewBox={`-1 -1 ${w + 2} 22`} aria-hidden className="shrink-0">
-      <path d={`M0 20V9L${w / 2} 1L${w} 9V20Z`} fill="none" stroke="var(--pine)" strokeWidth="1.5" strokeLinejoin="round" />
-      <path d={`M${w / 2 - 3} 20v-6h6v6`} fill="none" stroke="var(--pine)" strokeWidth="1.5" />
-    </svg>
-  );
-}
-
-function HomesScene() {
-  const { t, lang } = useLang();
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { amount: 0.4, once: true });
-  const rows = useMemo(() => {
+function SceneHomes() {
+  const { t } = useLang();
+  const lots = useMemo(() => {
     const fams = SEED_FAMILIES.map((f) => ({ f, r: computeReadiness(f.profile) })).filter((x) => isEligible(x.r));
     return SEED_HOMES.slice(0, 6).map((h) => ({
-      h,
+      id: h.id,
+      label: `${h.city} · ${h.bedrooms}BR`,
       ready: fams.filter((x) => homeFits(x.f.profile.householdSize, h.bedrooms) && x.r.monthsToReady <= monthsUntil(h.completion)).length,
     }));
   }, []);
   return (
-    <section className="mx-auto grid min-h-[80vh] max-w-[1280px] grid-cols-1 items-center gap-12 px-5 py-20 lg:grid-cols-12 lg:px-8" data-testid="scene-homes">
-      <div className="lg:col-span-4">
-        <Caption>{t('landing.s3')}</Caption>
-        <p className="mt-4 max-w-[36ch] text-[18px] leading-[28px] text-ink-2">{t('landing.s3b')}</p>
-      </div>
-      <motion.div
-        ref={ref}
-        initial={{ opacity: 0, y: 24 }}
-        animate={inView ? { opacity: 1, y: 0 } : undefined}
-        transition={{ duration: 0.6, ease: ease.out }}
-        className="overflow-hidden rounded-[14px] border border-line bg-surface lg:col-span-8"
-        aria-hidden
-      >
-        {/* Browser frame */}
-        <div className="flex items-center gap-2 border-b border-line bg-paper px-4 py-3">
-          <span className="h-[10px] w-[10px] rounded-full bg-line" />
-          <span className="h-[10px] w-[10px] rounded-full bg-line" />
-          <span className="h-[10px] w-[10px] rounded-full bg-line" />
-          <span className="ml-4 rounded-[6px] bg-surface px-3 py-1 text-[12px] text-ink-2">homestretch · staff · homes</span>
-        </div>
-        <div className="p-6">
-          <p className="text-[20px] font-semibold text-ink">{t('landing.browserTitle')}</p>
-          <div className="mt-4 grid grid-cols-[1fr_auto_auto] gap-x-8 border-b border-line pb-2 text-[13px] text-ink-2">
-            <span>{t('landing.colHome')}</span>
-            <span>{t('landing.colDone')}</span>
-            <span className="text-right">{t('landing.colReady')}</span>
+    <SceneSection
+      id="scene-homes"
+      index={3}
+      minGraphic={380}
+      text={(reduce) => (
+        <>
+          <MaskHeading reduce={reduce}>{t('landing.s3')}</MaskHeading>
+          <motion.p initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: ease.out, delay: 0.15 }} className="mt-5 max-w-[40ch] text-[18px] leading-[28px] text-ink-2">
+            {t('landing.s3b')}
+          </motion.p>
+          <div className="mt-8">
+            <Ticker />
           </div>
-          {rows.map(({ h, ready }, i) => (
-            <motion.div
-              key={h.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={inView ? { opacity: 1, y: 0 } : undefined}
-              transition={{ duration: 0.3, ease: ease.out, delay: 0.15 + Math.min(i, 5) * 0.05 }}
-              className="grid grid-cols-[1fr_auto_auto] items-center gap-x-8 border-b border-line py-3 text-[15px]"
-            >
-              <span className="flex items-center gap-3 text-ink">
-                <HouseGlyph bedrooms={h.bedrooms} />
-                <span>
-                  {h.city} · {h.bedrooms}BR <span className="text-ink-2">{h.address}</span>
-                </span>
-              </span>
-              <span className="tnum text-ink-2">{monthName(h.completion, lang, true)}</span>
-              <span className="tnum w-[96px] text-right text-[20px] font-semibold text-ink">
-                <AnimatedNumber value={inView ? ready : 0} format={(n) => String(Math.round(n))} />
-              </span>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
-    </section>
+        </>
+      )}
+      graphic={(reduce) => <NeighborhoodMap lots={lots} reduce={reduce} />}
+    />
   );
 }
 
-/** The only dark section: a pine band; the numbers roll to 100 as it enters. */
+/** The only dark section: 100 houses fill in white while the counter rolls to 100; then the sentence and button rise. */
 function Closing() {
   const { t } = useLang();
   const router = useVTRouter();
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, amount: 0.5 });
-  const n = (v: number) => String(Math.round(v));
+  const reduce = !!useReducedMotion();
+  const { activations } = useSectionNav();
+  const n = activations[4] ?? 0;
   const [a1, a2] = t('landing.closingA').split('{n}');
   const [b1, b2] = t('landing.closingB').split('{n}');
+  const fmt = (v: number) => String(Math.round(v));
   return (
-    <section className="bg-pine text-white" data-testid="closing">
-      <div ref={ref} className="mx-auto max-w-[1280px] px-5 py-28 lg:px-8 lg:py-36">
-        <p className="tnum max-w-[24ch] text-[36px] font-semibold leading-[42px] tracking-[-0.02em] lg:text-[56px] lg:leading-[60px]">
-          {a1}
-          <AnimatedNumber value={inView ? 100 : 0} format={n} />
-          {a2} {b1}
-          <AnimatedNumber value={inView ? 100 : 0} format={n} />
-          {b2}
-        </p>
-        <motion.a
-          href="/start"
-          onClick={(e) => {
-            if (e.metaKey || e.ctrlKey || e.shiftKey) return;
-            e.preventDefault();
-            router.push('/start', 'start');
-          }}
-          whileTap={{ scale: 0.97 }}
-          transition={spring.snappy}
-          className="mt-12 inline-flex min-h-[56px] items-center rounded-[8px] bg-white px-8 text-[20px] font-medium text-pine transition-colors duration-[120ms] hover:bg-pine-soft focus-visible:outline-white"
-        >
-          {t('landing.cta')}
-        </motion.a>
+    <section id="closing" data-testid="closing" className="snap-section relative flex min-h-[calc(100svh-64px)] flex-col bg-pine text-white" aria-label={t('landing.nav4')}>
+      <div className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col justify-center px-5 py-16 lg:px-8" key={n}>
+        {n > 0 && (
+          <>
+            <div className="flex flex-wrap items-end gap-x-10 gap-y-6">
+              <HundredHouses reduce={reduce} />
+              <p className="tnum text-[72px] font-semibold leading-none tracking-[-0.02em] lg:text-[96px]">
+                <RollTo to={100} reduce={reduce} format={fmt} />
+              </p>
+            </div>
+            <motion.p
+              initial={reduce ? false : { opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, ease: ease.out, delay: reduce ? 0 : 0.9 }}
+              className="tnum mt-12 max-w-[24ch] text-[34px] font-semibold leading-[40px] tracking-[-0.02em] lg:text-[52px] lg:leading-[56px]"
+            >
+              {a1}
+              <RollTo to={100} reduce={reduce} format={fmt} />
+              {a2} {b1}
+              <RollTo to={100} reduce={reduce} format={fmt} />
+              {b2}
+            </motion.p>
+            <motion.div initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: ease.out, delay: reduce ? 0 : 1.1 }}>
+              <motion.a
+                href="/start"
+                onClick={(e) => {
+                  if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+                  e.preventDefault();
+                  router.push('/start', 'start');
+                }}
+                whileTap={{ scale: 0.97 }}
+                transition={spring.snappy}
+                className="mt-10 inline-flex min-h-[56px] items-center rounded-[8px] bg-white px-8 text-[20px] font-medium text-pine transition-colors duration-[120ms] hover:bg-pine-soft focus-visible:outline-white"
+              >
+                {t('landing.cta')}
+              </motion.a>
+            </motion.div>
+          </>
+        )}
       </div>
+      {/* the up arrow sits in the pine band, above the footer */}
+      <div className="relative h-[76px]">
+        <SectionArrow index={4} label={t('landing.arrowNext')} topLabel={t('landing.arrowTop')} tone="dark" />
+      </div>
+      <Footer />
     </section>
   );
 }
 
-/** A thin pine line down the left margin that draws as you scroll: the page reads as one road. */
-function StorySpine({ target }: { target: React.RefObject<HTMLDivElement | null> }) {
-  const { scrollYProgress } = useScroll({ target, offset: ['start 70%', 'end 70%'] });
-  return (
-    <div className="pointer-events-none absolute bottom-0 left-[max(16px,calc((100vw-1280px)/2+12px))] top-0 hidden w-[2px] lg:block" aria-hidden>
-      <div className="absolute inset-0 bg-line opacity-60" />
-      <motion.div className="absolute inset-0 origin-top bg-pine" style={{ scaleY: scrollYProgress }} />
-    </div>
-  );
+/** Starts at 0 and rolls to `to` (springs), unless reduced motion. */
+function RollTo({ to, reduce, format }: { to: number; reduce: boolean; format: (n: number) => string }) {
+  const [v, setV] = useState(reduce ? to : 0);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setV(to));
+    return () => cancelAnimationFrame(id);
+  }, [to]);
+  return <AnimatedNumber value={v} format={format} />;
 }
 
 function Footer() {
@@ -748,7 +675,7 @@ function Footer() {
   const router = useVTRouter();
   const [code, setCode] = useState('');
   return (
-    <footer className="border-t border-line">
+    <footer className="border-t border-white/20 bg-paper text-ink">
       <div className="mx-auto flex max-w-[1280px] flex-col gap-8 px-5 py-10 lg:flex-row lg:items-end lg:justify-between lg:px-8">
         <div>
           <Wordmark />
@@ -775,33 +702,37 @@ function Footer() {
   );
 }
 
+const SECTIONS = ['hero', 'scene-intake', 'scene-road', 'scene-homes', 'closing'];
+
 export function Landing() {
+  const { t } = useLang();
   const [phase, setPhase] = useIntroPhase();
-  const [opening, setOpening] = useState(true);
-  const story = useRef<HTMLDivElement>(null);
-  const onOpeningDone = useCallback(() => setOpening(false), []);
-  const onOpeningSkip = useCallback(() => {
-    setOpening(false);
+  const [intro, setIntro] = useState(true);
+  const onIntroDone = useCallback(() => setIntro(false), []);
+  const onIntroSkip = useCallback(() => {
+    setIntro(false);
     setPhase('static');
   }, [setPhase]);
   return (
-    <>
+    <SectionNavProvider ids={SECTIONS} enabled={!(phase === 'opening' && intro)}>
       {/* Without JavaScript the intro never runs: show everything. */}
       <noscript>
         <style>{`[data-intro]{visibility:visible!important}`}</style>
       </noscript>
-      {phase === 'opening' && opening && <Opening onDone={onOpeningDone} onSkip={onOpeningSkip} />}
+      <AnimatePresence>
+        {phase === 'opening' && intro && (
+          <motion.div key="intro" exit={{ opacity: 0, transition: { duration: 0.2 } }}>
+            <Intro onDone={onIntroDone} onSkip={onIntroSkip} />
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* a skip remounts the hero straight into its final state */}
       <Hero key={phase === 'static' ? 'static' : 'live'} phase={phase} />
-      <Ticker />
-      <div id="story" ref={story} className="relative scroll-mt-16">
-        <StorySpine target={story} />
-        <PhoneScene />
-        <RoadScene />
-        <HomesScene />
-      </div>
+      <SceneIntake />
+      <SceneRoad />
+      <SceneHomes />
       <Closing />
-      <Footer />
-    </>
+      <SectionDots labels={SECTIONS.map((_, i) => t(`landing.nav${i}`))} />
+    </SectionNavProvider>
   );
 }

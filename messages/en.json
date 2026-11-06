@@ -377,6 +377,14 @@
     "tSaved": "{city} family of {n} · down payment saved",
     "tMatched": "{city} family of {n} · matched to a {br}-bedroom",
     "closingA": "Habitat finishes {n} homes.",
-    "closingB": "Homestretch helps {n} families be ready to buy them."
+    "closingB": "Homestretch helps {n} families be ready to buy them.",
+    "nav0": "Overview",
+    "nav1": "Tell us where you are",
+    "nav2": "The road to your keys",
+    "nav3": "Homes and who's ready",
+    "nav4": "100 homes",
+    "arrowNext": "Next section",
+    "arrowTop": "Back to the top",
+    "mapReady": "{n} ready"
   }
 }

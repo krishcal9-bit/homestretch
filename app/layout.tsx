@@ -21,11 +21,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={lang} suppressHydrationWarning>
       <head>
-        {/* First visit in a session on /: veil the page in --paper before first paint so the opening starts blank.
+        {/* Every load of /: veil the page in --paper before first paint so the opening starts blank.
             Never with reduced motion or without JS; the opening removes the veil as soon as it mounts. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{if(location.pathname==='/'&&!sessionStorage.getItem('hs.opened')&&!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('hs-veil');setTimeout(function(){document.documentElement.classList.remove('hs-veil')},4000)}}catch(e){}`,
+            __html: `try{if(location.pathname==='/'&&!sessionStorage.getItem('hs.nointro')&&location.search.indexOf('nointro')<0&&!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('hs-veil');setTimeout(function(){document.documentElement.classList.remove('hs-veil')},4500)}}catch(e){}`,
           }}
         />
       </head>

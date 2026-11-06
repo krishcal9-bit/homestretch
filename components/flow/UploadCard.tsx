@@ -37,6 +37,8 @@ export function UploadCard({ id, title, body, button, endpoint, onResult }: { id
       <input
         ref={input}
         id={`file-${id}`}
+        aria-label={button}
+        tabIndex={-1}
         type="file"
         accept="image/*,application/pdf,.heic,.heif"
         className="sr-only"

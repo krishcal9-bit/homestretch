@@ -75,3 +75,16 @@ export async function next(page: Page) {
   await page.waitForTimeout(50);
   await page.waitForFunction(() => document.querySelectorAll('[data-step]').length === 1);
 }
+
+export async function staffLogin(page: Page) {
+  await page.goto('/staff/login');
+  await page.locator('input[type=password]').fill(process.env.STAFF_PASSWORD ?? 'habitat2026');
+  await page.keyboard.press('Enter');
+  await page.waitForSelector('[data-testid=family-row]', { timeout: 60_000 });
+}
+
+export const DEMO_DRAFT = {
+  householdSize: 4, inOC: true, residentOrCitizen: true, grossMonthlyIncome: 5200, otherIncomeOn: false, otherMonthlyIncome: null, rent: 2350, bedrooms: 1, occupants: 4, unsafeConditions: false,
+  debts: { car: { payment: null, balance: null }, card: { payment: 65, balance: 2100 }, student: { payment: null, balance: null }, collection: { payment: null, balance: 1900 }, other: { payment: null, balance: null } },
+  savings: 3100, creditBand: 'needs_work', levers: { extraDebt: 0, monthlySavings: 150, coApplicantIncome: 0 },
+};

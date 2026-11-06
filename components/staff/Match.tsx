@@ -117,7 +117,7 @@ export function Match({ homes, families }: { homes: Home[]; families: FamilyRow[
 function CandidateRow({ rank, c, home, reason, open, onToggle }: { rank: number; c: Candidate; home: Home; reason: string | null; open: boolean; onToggle: () => void }) {
   const f = c.family;
   return (
-    <motion.div layout="position" transition={spring.smooth} role="listitem" className="border-b border-line" data-testid="match-row" data-code={f.code}>
+    <motion.div layout="position" transition={spring.smooth} role="listitem" className="border-b border-line" data-testid="match-row" data-code={f.code} data-surname={f.surname}>
       <div className="grid grid-cols-[40px_220px_120px_1fr_160px] items-center gap-4 px-3 py-3 text-[15px]">
         <span className="tnum text-ink-2">{rank}</span>
         <span>

@@ -1,0 +1,109 @@
+@import 'tailwindcss';
+
+/* Homestretch design tokens (BUILD_SPEC §4). One light theme, no shadows, one brass accent. */
+:root {
+  --paper: #f6f7f5;
+  --surface: #ffffff;
+  --ink: #182420;
+  --ink-2: #4a5753;
+  --line: #dde3df;
+  --pine: #1e5c47;
+  --pine-hover: #174a39;
+  --pine-soft: #e4efea;
+  --brass: #b8862b;
+  --signal-red: #b3362b;
+  --signal-amber: #9a6b12;
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-line: var(--line);
+  --color-pine: var(--pine);
+  --color-pine-hover: var(--pine-hover);
+  --color-pine-soft: var(--pine-soft);
+  --color-brass: var(--brass);
+  --color-signal-red: var(--signal-red);
+  --color-signal-amber: var(--signal-amber);
+  --font-sans: 'Public Sans', ui-sans-serif, system-ui, sans-serif;
+  --radius-control: 8px;
+  --radius-panel: 14px;
+}
+
+html,
+body {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 24px;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Type scale */
+.t-helper { font-size: 13px; line-height: 15px; }
+.t-body { font-size: 16px; line-height: 24px; }
+.t-section { font-size: 20px; line-height: 28px; font-weight: 600; }
+.t-title { font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.01em; }
+.t-display { font-size: 56px; line-height: 60px; font-weight: 600; letter-spacing: -0.01em; }
+.tnum { font-variant-numeric: tabular-nums; }
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+/* Visible 2px pine focus ring that fades in over 120ms */
+:focus-visible {
+  outline: 2px solid var(--pine);
+  outline-offset: 2px;
+  transition: outline-color 120ms;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.field {
+  width: 100%;
+  min-height: 48px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 14px;
+  color: var(--ink);
+  transition: border-color 120ms, box-shadow 120ms;
+}
+.field:hover { border-color: #c5cec9; }
+.field:focus { outline: none; border-color: var(--pine); box-shadow: 0 0 0 2px var(--pine); }
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--line) 25%, #e9eeeb 50%, var(--line) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+  border-radius: 8px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+}
+
+@keyframes filled-pulse {
+  0% { background-color: var(--pine-soft); }
+  100% { background-color: var(--surface); }
+}
+.just-filled { animation: filled-pulse 600ms ease-out; }

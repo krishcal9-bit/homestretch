@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// A family's saved plan. Seeded families and families who shared their code
+/// at orientation have sharedWithStaff = true; everything else is private.
+model Plan {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  surname         String?
+  givenName       String?
+  city            String?
+  language        String   @default("en")
+  profileJson     String
+  planJson        String?
+  checklistJson   String   @default("{}")
+  sharedWithStaff Boolean  @default(false)
+  /// Readiness snapshot from the last Monday check-in (JSON), for change detection.
+  checkinJson     String?
+  lastActivity    DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Home {
+  id             String @id
+  address        String
+  city           String
+  bedrooms       Int
+  /// ISO month, e.g. "2027-03"
+  completion     String
+  status         String
+}
+
+/// Cache of Claude-generated plans keyed by (profileHash, language).
+model PlanCache {
+  key       String   @id
+  json      String
+  createdAt DateTime @default(now())
+}

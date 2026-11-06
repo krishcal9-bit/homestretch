@@ -1,0 +1,19 @@
+{
+  "app": {
+    "name": "Homestretch",
+    "partner": "Habitat for Humanity del Condado de Orange",
+    "language": "Idioma",
+    "back": "Atrás",
+    "continue": "Continuar",
+    "skipToContent": "Saltar al contenido"
+  },
+  "welcome": {
+    "title": "Vea qué tan cerca está de una casa de Habitat y exactamente qué hacer después.",
+    "sub": "Toma unos 4 minutos. No se envía nada a una agencia de crédito.",
+    "start": "Empezar",
+    "haveCode": "¿Ya tiene un plan?",
+    "openWithCode": "Ábralo con su código",
+    "codeLabel": "Código del plan",
+    "openPlan": "Abrir plan"
+  }
+}

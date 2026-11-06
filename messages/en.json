@@ -1,0 +1,19 @@
+{
+  "app": {
+    "name": "Homestretch",
+    "partner": "Habitat for Humanity of Orange County",
+    "language": "Language",
+    "back": "Back",
+    "continue": "Continue",
+    "skipToContent": "Skip to content"
+  },
+  "welcome": {
+    "title": "See how close you are to a Habitat home, and exactly what to do next.",
+    "sub": "Takes about 4 minutes. Nothing is sent to a credit bureau.",
+    "start": "Start",
+    "haveCode": "Already have a plan?",
+    "openWithCode": "Open it with your code",
+    "codeLabel": "Plan code",
+    "openPlan": "Open plan"
+  }
+}

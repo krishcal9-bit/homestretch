@@ -15,7 +15,8 @@
     "seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate",
     "preflight": "tsx --env-file=.env scripts/preflight.ts",
-    "setup": "npm install && cp -n .env.example .env; npx prisma db push && npm run seed"
+    "setup": "npm install && cp -n .env.example .env; npx prisma db push && npm run seed",
+    "turso:setup": "tsx scripts/turso-setup.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -23,6 +24,8 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^1.6.0",
     "@fontsource/public-sans": "^5.3.0",
+    "@libsql/client": "^0.18.0",
+    "@prisma/adapter-libsql": "^6.19.3",
     "@prisma/client": "^6.19.3",
     "@react-pdf/renderer": "^4.9.0",
     "lucide-react": "^1.70.0",

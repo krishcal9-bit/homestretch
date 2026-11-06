@@ -79,9 +79,22 @@ Open http://localhost:3000 (family) and http://localhost:3000/staff (staff). `MO
 
 Quality gates: `npm run check` (tsc, eslint, vitest, prisma validate, next build) and `npm run e2e` (Playwright, mocked Claude: family flow, Spanish, staff, uploads, accessibility).
 
+## Deploy to Vercel with Turso
+
+Serverless functions have no persistent disk, so the live site stores plans in [Turso](https://turso.tech) (hosted libSQL). Prisma talks to it through `@prisma/adapter-libsql`; locally the app keeps using the SQLite file.
+
+1. Create a database: `turso db create homestretch`, then `turso db show homestretch --url` and `turso db tokens create homestretch`.
+2. Create the tables and demo data once, from your machine:
+```bash
+TURSO_DATABASE_URL=libsql://YOUR-DB.turso.io TURSO_AUTH_TOKEN=YOUR-TOKEN npm run turso:setup
+```
+3. In Vercel, import `krishcal9-bit/homestretch` and set `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `APP_ANTHROPIC_API_KEY` and `STAFF_PASSWORD`. Deploy. Every push to `main` redeploys.
+
+`npm run turso:setup -- --reset` drops and recreates the tables (wipes saved plans).
+
 ## Demo script (3 minutes)
 
-1. Open `/` at phone size, toggle **ES**, tap the microphone (or "O escriba lo que diría") and say *"somos cuatro, vivimos en Santa Ana, gano como cinco mil doscientos al mes, pagamos dos mil trescientos cincuenta de renta."* Watch the fields fill. Switch back to English.
+1. Open `/` at phone size and let the landing page load: the headline rises, the sample road draws and the date rolls in. Drag **Extra toward debt** on the sample family. Then tap **Start**, toggle **ES**, tap the microphone (or "O escriba lo que diría") and say *"somos cuatro, vivimos en Santa Ana, gano como cinco mil doscientos al mes, pagamos dos mil trescientos cincuenta de renta."* Watch the fields fill. Switch back to English.
 2. On the income screen, upload `public/samples/paystub.png` and watch income fill. On the money screen add a $1,900 collection and $3,100 saved (credit: needs work).
 3. Land on the result. Let the Road draw. Read the date aloud. Drag **Extra toward debt** to $150 and watch the date pull years closer. *"That's the conversation Habitat has never been able to have in a number."*
 4. **Aim for a specific home**: pick the Westminster 4-bedroom. The sliders glide to the solved plan, the Road redraws, and the sentence says exactly what it takes. Scroll to **Ten years from now** and read the equity number.

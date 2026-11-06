@@ -26,7 +26,12 @@ export function FamilyHeader() {
         <Link href="/" className="-ml-1 rounded px-1" aria-label="Homestretch">
           <Wordmark />
         </Link>
-        <LanguageToggle />
+        <div className="flex items-center gap-3">
+          <Link href="/staff/login" className="hit inline-flex min-h-[36px] items-center text-[13px] font-medium text-ink-2 underline-offset-4 transition-colors duration-[120ms] hover:text-pine hover:underline" data-testid="staff-link">
+            {t('welcome.staff')}
+          </Link>
+          <LanguageToggle />
+        </div>
       </div>
     </header>
   );

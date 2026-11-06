@@ -28,6 +28,10 @@ export function Flow() {
   const [showErrors, setShowErrors] = useState(false);
   const [flash, setFlash] = useState<Record<string, number>>({});
   const containerRef = useRef<HTMLDivElement>(null);
+  const firstPaint = useRef(true);
+  useEffect(() => {
+    if (ready) firstPaint.current = false;
+  });
 
   const update = useCallback((patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch })), [setDraft]);
   /** Fill fields from voice or a scan, with a 600ms highlight on each. */
@@ -170,7 +174,7 @@ export function Flow() {
           {step <= INTAKE_STEPS && <span className="t-helper tnum text-ink-2">{t('flow.progress', { n: step, total: INTAKE_STEPS })}</span>}
         </div>
       )}
-      <AnimatePresence mode="popLayout" initial={false} custom={dir}>
+      <AnimatePresence mode="popLayout" custom={dir}>
         <motion.div
           key={step}
           data-step={step}
@@ -180,7 +184,8 @@ export function Flow() {
             center: { x: 0, opacity: 1 },
             exit: (d: number) => ({ x: d * -24, opacity: 0, transition: exitT }),
           }}
-          initial="enter"
+          // First paint: no wrapper slide, so screens (the landing page) run their own entrance.
+          initial={firstPaint.current ? false : 'enter'}
           animate="center"
           exit="exit"
           transition={spring.smooth}

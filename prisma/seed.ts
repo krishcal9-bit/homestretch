@@ -1,8 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/db';
 import { SEED_FAMILIES, SEED_HOMES } from '../lib/seedData';
 import { snapshotOf } from '../lib/checkin';
 
-const prisma = new PrismaClient();
 
 async function main() {
   await prisma.plan.deleteMany();

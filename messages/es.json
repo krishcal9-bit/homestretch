@@ -14,7 +14,21 @@
     "haveCode": "¿Ya tiene un plan?",
     "openWithCode": "Ábralo con su código",
     "codeLabel": "Código del plan",
-    "openPlan": "Abrir plan"
+    "openPlan": "Abrir plan",
+    "staff": "Acceso del personal",
+    "sampleTitle": "Pruébelo con una familia de ejemplo",
+    "sampleWho": "Cuatro personas en Santa Ana, $5,200 al mes, $1,900 en cobranzas.",
+    "sampleLever": "Extra para deudas cada mes",
+    "sampleReady": "Lista para hipoteca en",
+    "sampleNote": "Su propio camino usa sus números.",
+    "howTitle": "Cómo funciona",
+    "how1": "Responda unas preguntas",
+    "how1b": "Escriba, toque o dígalo en voz alta en inglés o español. Escanee un talón de pago para ahorrarse las cuentas.",
+    "how2": "Vea su camino a las llaves",
+    "how2b": "Una fecha, las metas intermedias y los pasos exactos que la acercan.",
+    "how3": "Siga un plan de 90 días",
+    "how3b": "Pasos pequeños con ayuda local de SparkPoint OC y Habitat OC, guardados con un código que puede compartir.",
+    "privacy": "Privado por defecto. Habitat OC ve su plan solo si usted comparte su código."
   },
   "flow": {
     "progress": "Paso {n} de {total}",

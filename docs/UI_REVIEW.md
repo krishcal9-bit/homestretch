@@ -28,3 +28,13 @@ Already correct (no change): no `transition: all`, no `ease-in`, no `scale(0)` e
 | One-accessory rule, result screen | "Ten years from now" chart replayed its draw animation after every slider drag (lever save re-rendered it), competing with the Road | Chart data is memoized on the inputs that change it (rent, income, co-applicant); debt and savings sliders no longer replay it | Remove the least necessary effect; the Road is the one thing that should move |
 | Intake screen titles (found in the 390×844 screenshots) | A heavy 2px ring boxed the title after every Continue, because focus moves there for screen readers | Ring hidden on the programmatically focused title (focus still moves, still announced); controls keep their rings | A focus ring on a non-interactive heading reads as a bug, not as guidance |
 | Road on phones (found in the 390×844 screenshots) | The right-edge scroll fade sat on top of the Keys marker and the last label even when the road fit the screen | Fade shows only when the road actually overflows and scrolls | A scroll hint with nothing to scroll hides the most important marker |
+
+## Landing page (flagship) pass
+
+| Where | Before | After | Why |
+|---|---|---|---|
+| Landing load | Static text and a button | One ~1.2s sequence: headline lines rise blur-to-sharp (0–0.5s), sample Road draws (0.3–0.8s), markers pop (0.8–1.0s), sample date rolls up (1.0–1.2s) | Flagship surface: motion is the substance, but it is one scene, not effects on every element |
+| Landing interaction | Nothing to try before starting | "Extra toward debt" slider on a sample family moves the Keys marker and the date live | Show the product's best moment before asking for anything |
+| Landing sections | (considered) scroll-reveal on "How it works" | Static | Fade-up on every section reads as template; one scene is enough |
+| Reduced motion | n/a | No rise, blur or draw; short fades only | Respect the setting |
+| Header | Staff console only at /staff (separate link) | Quiet "Staff sign in" text link top-right on every family page; login links back | One site, one link |

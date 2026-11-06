@@ -14,7 +14,21 @@
     "haveCode": "Already have a plan?",
     "openWithCode": "Open it with your code",
     "codeLabel": "Plan code",
-    "openPlan": "Open plan"
+    "openPlan": "Open plan",
+    "staff": "Staff sign in",
+    "sampleTitle": "Try it with a sample family",
+    "sampleWho": "Four people in Santa Ana, $5,200 a month, $1,900 in collections.",
+    "sampleLever": "Extra toward debt each month",
+    "sampleReady": "Mortgage-ready by",
+    "sampleNote": "Your own road uses your numbers.",
+    "howTitle": "How it works",
+    "how1": "Answer a few questions",
+    "how1b": "Type, tap, or say it out loud in English or Spanish. Scan a pay stub to skip the math.",
+    "how2": "See your road to keys",
+    "how2b": "A date, the milestones in between, and the exact moves that bring it closer.",
+    "how3": "Follow a 90-day plan",
+    "how3b": "Small steps with local help from SparkPoint OC and Habitat OC, saved to a code you can share.",
+    "privacy": "Private by default. Habitat OC sees your plan only if you share your code."
   },
   "flow": {
     "progress": "Step {n} of {total}",

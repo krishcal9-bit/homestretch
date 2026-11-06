@@ -124,7 +124,7 @@ function Marker({ m, w, delay, play, active, onActive, onHover }: { m: Placed; w
  * The Road: Today → Keys with milestone markers placed proportionally by month.
  * Draws in once per visit; markers follow lever changes every frame with spring.gentle.
  */
-export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone }: { result: ReadinessResult; today?: Date; elapsed?: number; onEntranceDone?: () => void }) {
+export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, entrance = 'session', entranceDelay = 0, drawDuration = dur.long, markerStagger = 0.06 }: { result: ReadinessResult; today?: Date; elapsed?: number; onEntranceDone?: () => void; /** 'always' replays the draw-in (landing page) without using up the result screen's once-per-visit play. */ entrance?: 'session' | 'always' | 'none'; entranceDelay?: number; drawDuration?: number; markerStagger?: number }) {
   const { t, lang } = useLang();
   const wrapRef = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(MIN_W);
@@ -146,6 +146,8 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone }
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
   }, []);
   const [play] = useState(() => {
+    if (entrance === 'always') return true;
+    if (entrance === 'none') return false;
     try {
       if (sessionStorage.getItem('hs.roadPlayed')) return false;
       sessionStorage.setItem('hs.roadPlayed', '1');
@@ -168,10 +170,10 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone }
   useEffect(() => {
     if (!play) onEntranceDone?.();
     else {
-      const id = setTimeout(() => onEntranceDone?.(), dur.long * 1000 + 6 * 60);
+      const id = setTimeout(() => onEntranceDone?.(), (entranceDelay + drawDuration) * 1000 + 6 * markerStagger * 1000);
       return () => clearTimeout(id);
     }
-  }, [play, onEntranceDone]);
+  }, [play, onEntranceDone, entranceDelay, drawDuration, markerStagger]);
 
   const keysMonth = result.milestones.find((m) => m.key === 'keys')?.month ?? 9;
   // Domain: stable-ish so markers glide rather than rescale wildly; round up to 6 months.
@@ -205,7 +207,7 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone }
             strokeLinecap="round"
             initial={play ? { pathLength: 0 } : false}
             animate={{ pathLength: 1 }}
-            transition={{ duration: dur.long, ease: ease.out }}
+            transition={{ duration: drawDuration, ease: ease.out, delay: entranceDelay }}
           />
           {elapsed > 0 && <line x1={PAD} x2={curX} y1={TRACK_Y} y2={TRACK_Y} stroke="var(--pine)" strokeWidth="3" strokeLinecap="round" />}
           {/* Today label + current position (brass) */}
@@ -213,7 +215,7 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone }
             {t('result.today')}
           </text>
           {placed.map((m, i) => (
-            <Marker key={m.key} m={m} w={w} onHover={onHover} delay={play ? dur.long + i * 0.06 : 0} play={play} active={active === m.key} onActive={setActive} />
+            <Marker key={m.key} m={m} w={w} onHover={onHover} delay={play ? entranceDelay + drawDuration + i * markerStagger : 0} play={play} active={active === m.key} onActive={setActive} />
           ))}
           <motion.circle cx={curX} cy={TRACK_Y} r="4" fill="var(--brass)" initial={play ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: dur.short }} />
         </svg>

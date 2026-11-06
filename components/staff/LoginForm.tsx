@@ -1,4 +1,6 @@
 'use client';
+import Link from 'next/link';
+import { ChevronLeft } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { Wordmark } from '@/components/FamilyHeader';
@@ -33,7 +35,13 @@ export function LoginForm() {
 
   return (
     <form onSubmit={submit} className="mx-auto w-full max-w-[360px]" noValidate>
-      <Wordmark />
+      <div className="flex items-center justify-between">
+        <Wordmark />
+        <Link href="/" className="hit inline-flex min-h-[36px] items-center gap-1 rounded-[8px] px-2 text-[13px] font-medium text-pine transition-colors duration-[120ms] hover:bg-pine-soft">
+          <ChevronLeft size={16} strokeWidth={1.75} aria-hidden />
+          Family site
+        </Link>
+      </div>
       <h1 className="t-title mt-10">Staff console</h1>
       <p className="mt-2 text-[15px] text-ink-2">Habitat OC family services. Sign in to see the plans families have shared.</p>
       <label htmlFor="staff-pw" className="mt-8 block text-[15px] font-medium">

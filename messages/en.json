@@ -103,7 +103,8 @@
       "building": "Building",
       "needs_work": "Needs work",
       "unknown": "Not sure"
-    }
+    },
+    "roadPreview": "Your road so far"
   },
   "result": {
     "eyebrow": "You could be mortgage-ready by",
@@ -180,7 +181,8 @@
       "keys": "Finish your sweat equity hours and close on your Habitat home."
     },
     "monthOf": "{month}",
-    "now": "Now"
+    "now": "Now",
+    "more": "{n} more"
   },
   "why": {
     "needRent": "Your rent is {pct} of income, which qualifies as need.",
@@ -327,5 +329,42 @@
       "habitat": "Habitat OC",
       "counselor": "Counselor"
     }
+  },
+  "landing": {
+    "headline": "See exactly when your family can get the keys.",
+    "sub": "Answer a few questions and get a date, the steps that bring it closer, and the Habitat home it fits.",
+    "cta": "Find my date",
+    "how": "See how it works",
+    "reyes": "Reyes family",
+    "nguyen": "Nguyen family",
+    "families": "Sample family",
+    "readyBy": "Mortgage-ready by",
+    "lever": "Extra toward debt each month",
+    "reyesWho": "Four people in Santa Ana. $5,200 a month, $1,900 in collections.",
+    "nguyenWho": "Three people in Garden Grove. $6,400 a month, good credit, saving $300.",
+    "s1": "Tell us where you are.",
+    "s1b": "Type it, tap it, or just say it. A pay stub fills in the income for you.",
+    "phoneTitle": "Tell us about your household",
+    "phonePeople": "People in your household",
+    "phoneOC": "Live or work in Orange County",
+    "phoneIncome": "Monthly income",
+    "phoneRent": "Monthly rent",
+    "phoneYes": "Yes",
+    "phoneSaid": "“We're four, in Santa Ana. I make about fifty-two hundred a month and rent is twenty-three fifty.”",
+    "s2": "See the road to your keys.",
+    "c1": "Clear the collection",
+    "c1b": "It's the first thing a lender checks, so it goes first.",
+    "c2": "Save the down payment",
+    "c2b": "Once debts are paid, that money rolls into savings on its own.",
+    "c3": "Keys",
+    "c3b": "About nine months after you apply, the home is yours.",
+    "s3": "Habitat sees who's ready for each home.",
+    "s3b": "Every upcoming build, with the families projected to be ready by the day it's finished.",
+    "browserTitle": "Upcoming homes",
+    "colHome": "Home",
+    "colDone": "Done",
+    "colReady": "Families ready",
+    "closing": "Habitat finishes 100 homes. Homestretch helps 100 families be ready to buy them.",
+    "footerPartner": "Built for Habitat for Humanity of Orange County."
   }
 }

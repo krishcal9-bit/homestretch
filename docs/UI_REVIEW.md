@@ -38,3 +38,25 @@ Already correct (no change): no `transition: all`, no `ease-in`, no `scale(0)` e
 | Landing sections | (considered) scroll-reveal on "How it works" | Static | Fade-up on every section reads as template; one scene is enough |
 | Reduced motion | n/a | No rise, blur or draw; short fades only | Respect the setting |
 | Header | Staff console only at /staff (separate link) | Quiet "Staff sign in" text link top-right on every family page; login links back | One site, one link |
+
+## Landing redesign (flagship) — Part 5 pass
+
+| Where | Before | After | Why |
+|---|---|---|---|
+| Layout at 1440 | 560px phone column centered on desktop | 1280px 12-column grid; hero 5/7 from 1280px, 6/6 on tablets, stacked on phones; vertically centered in the first viewport | A narrow column floating in space reads as unfinished |
+| Hero demo | Demo boxed in a bordered card | Uncontained: 80px brass date (scales down with its container), large Road, big slider; one faint pine glow behind the date | Cards around the hero read as template; the product is the hero |
+| Road labels | Labels stacked and collided ("Orientation / Down payment saved / …") | Markers < 72px apart share one label ("Orientation + application", "A + 3 more"); labels alternate above/below; collisions flip side or merge until nothing overlaps; Keys and highlighted milestones always keep their own label | Never overlap; the Keys marker is what the slider moves |
+| "How it works" | Icon-in-a-square list | Deleted; replaced by three scroll scenes with real product UI | The most common AI pattern |
+| Load sequence | Blur on the headline only | One ~1.4s movement: lines slide up through masks (80ms stagger, no blur) → subline/buttons fade up 12px at 350ms → Road draws 500–1300ms with `--ease-in-out`, each marker popping in when the line reaches it → date odometers through three earlier months 900–1400ms → slider thumb nudges once at 1400ms. Once per visit; reduced motion gets the final state with a 150ms fade | Orchestrated, not decorative |
+| Date odometer (found on video) | Showed the final date immediately; settle state was decided before hydration | Settles only after the intro plays | The signature beat was missing |
+| Road on first paint (found on video) | Rendered at a fallback width, so marker springs slid into place; labels popped before the line arrived | Nothing draws until measured; label entrances wait for the line | Nothing should pop or slide without a reason |
+| Interaction | One slider | Bigger slider, family toggle (Reyes · Nguyen) with gliding highlight that morphs the Road and rolls the date, marker label cards that grow from the marker (160ms), 2° cursor tilt on fine pointers only (spring 120/20) | Alive, not gimmicky |
+| Scroll story | — | Phone intake fills field by field as it scrolls in (mic pulses once); Road pinned while three captions pass and light up their milestone (scale 1.15, label to ink); browser-frame staff Homes view with counts climbing from 0 | Real product, transform/opacity only; 60fps at 4× CPU throttle (p95 16.7ms) |
+| Phone scene | Animated `background-color` on fields and mic | Opacity-only overlays | Animate only transform and opacity |
+| Pinned captions (axe) | Inactive captions at 25% opacity failed contrast | Only the large title dims (to 60%, ≥ 3:1); body text stays full contrast | Contrast floor |
+| Family line on phones | Clipped (single-line swap) | Wraps | Never truncate |
+| Footer code field | Placeholder in tracked caps | Sentence-case placeholder | No caps labels |
+| No JavaScript | Intro-hidden content would stay invisible | `<noscript>` reveals it | Content first |
+| Header | 56px solid bar | 64px; transparent at the top of the landing, surface + hairline after 24px (200ms fade); wide on the landing | Chrome recedes |
+| Page transitions | Hard cuts | View Transitions: "Find my date" morphs into the intake progress bar; steps slide 24px (forward left, back right, 280ms enter / 200ms exit); last step → result shares the Road (small preview grows into the result Road); staff gets a crisp 200ms fade; browser back reverses. Motion fallback where unsupported | Spatial continuity |
+| Intake Road preview (axe) | `aria-hidden` but focusable markers | `inert` | Hidden content can't take focus |

@@ -19,7 +19,7 @@
 - brass #B8862B ONLY for ready date, Keys marker, current road position. signal-red/amber as text + 2px left rule.
 - Public Sans 400/500/600 (self-hosted via @fontsource). Tabular nums for money/dates. Scale 13/16/20/28/56.
 - Radius 8 controls, 14 panels. No shadows (except staff drawer). No dark mode, glass, gradients, emoji, caps eyebrows, "→" in buttons.
-- Motion: only `motion/react` with tokens from lib/motion.ts; MotionConfig reducedMotion="user". Load animations: the Road on the result screen, and the landing page's one ~1.2s sequence (headline → sample Road → markers → date). The landing page is the one flagship surface.
+- Motion: only `motion/react` with tokens from lib/motion.ts; MotionConfig reducedMotion="user". Load animations: the Road on the result screen, and the landing page's one ~1.4s sequence (headline lines → Road draw, markers pop as reached → date odometer → slider nudge) plus its scroll story. The landing page is the one flagship surface.
 - Copy: sentence case, verbs that say what happens. All UI strings in messages/{en,es}.json.
 - Load the apple-design skill before UI work (steps 1, 4, 7, 13).
 
@@ -31,6 +31,7 @@
 Cut order: D8 → D7 → D3 → D5 → D4 → D6. Never cut Road, levers, D1, D2, Pipeline.
 
 ## Conventions
+- Routes: `/` landing (flagship, components/landing), `/start` intake + result, `/plan/[code]`, `/staff`. Page/step changes go through lib/vt.ts (View Transitions, Motion fallback).
 - DB: lib/db.ts uses Turso via @prisma/adapter-libsql when TURSO_DATABASE_URL is set (Vercel), else the SQLite file. `npm run turso:setup` creates tables + seeds.
 - Claude client only in lib/claude.ts (APP_ANTHROPIC_API_KEY, MOCK_CLAUDE=1 → fixtures/). Model claude-sonnet-5-5.
 - Every API route: Zod-validated input, `{ error: { code, message } }` on failure, 20s timeout, 1 retry, rules fallback.

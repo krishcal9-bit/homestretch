@@ -1,12 +1,12 @@
 import { FamilyHeader } from '@/components/FamilyHeader';
-import { Flow } from '@/components/flow/Flow';
+import { Landing } from '@/components/landing/Landing';
 
 export default function Home() {
   return (
     <>
-      <FamilyHeader />
-      <main id="main" className="mx-auto max-w-[560px] px-5 pb-16">
-        <Flow />
+      <FamilyHeader variant="landing" />
+      <main id="main">
+        <Landing />
       </main>
     </>
   );

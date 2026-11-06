@@ -1,20 +1,33 @@
-// Records the landing page load + slider play to docs/motion/landing.webm and screenshots it.
+// Records landing load (2s) + one full scroll at 1440×900 to docs/motion/landing-1440.webm,
+// and takes viewport screenshots inside each scroll scene.
 import { chromium } from 'playwright';
 import fs from 'fs';
 (async () => {
   const b = await chromium.launch();
   const warm = await b.newPage(); await warm.goto('http://localhost:3000/'); await warm.close();
-  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, recordVideo: { dir: 'docs/motion/tmp', size: { width: 390, height: 844 } } });
+  const ctx = await b.newContext({ viewport: { width: 1440, height: 900 }, recordVideo: { dir: 'docs/motion/tmp', size: { width: 1440, height: 900 } } });
   const p = await ctx.newPage();
-  await p.goto('http://localhost:3000/'); await p.waitForTimeout(1800);
-  await p.screenshot({ path: 'docs/screenshots/landing-mobile.png' });
-  const s = (await p.locator('#sample-extra').boundingBox())!;
-  await p.mouse.move(s.x + s.width * 0.375, s.y + s.height / 2); await p.mouse.down();
-  for (let i = 0; i <= 25; i++) { await p.mouse.move(s.x + s.width * (0.375 + (0.6 * i) / 25), s.y + s.height / 2); await p.waitForTimeout(30); }
-  await p.mouse.up(); await p.waitForTimeout(900);
-  await p.screenshot({ path: 'docs/screenshots/landing-after-slider-mobile.png' });
+  p.on('pageerror', (e) => console.log('PAGEERROR', e.message.slice(0, 200)));
+  await p.goto('http://localhost:3000/'); await p.waitForTimeout(2200);
+  const sceneTop = async (id: string) => p.evaluate((i) => document.querySelector(`[data-testid=${i}]`)!.getBoundingClientRect().top + window.scrollY, id);
+  const shots: [string, number][] = [];
+  const phone = await sceneTop('scene-intake'); shots.push(['scene1', phone - 80]);
+  const road = await sceneTop('scene-road');
+  shots.push(['scene2-a', road + 400], ['scene2-b', road + 400 + 0.7 * 900], ['scene2-c', road + 400 + 1.4 * 900]);
+  const homes = await sceneTop('scene-homes'); shots.push(['scene3', homes - 40]);
+  // smooth scroll through the page
+  const total = await p.evaluate(() => document.body.scrollHeight);
+  for (let y = 0; y < total; y += 60) { await p.mouse.wheel(0, 60); await p.waitForTimeout(16); }
   await ctx.close();
-  const f = fs.readdirSync('docs/motion/tmp')[0]; fs.renameSync(`docs/motion/tmp/${f}`, 'docs/motion/landing.webm'); fs.rmdirSync('docs/motion/tmp');
-  const d = await b.newPage({ viewport: { width: 1440, height: 900 } }); await d.goto('http://localhost:3000/'); await d.waitForTimeout(1800);
-  await d.screenshot({ path: 'docs/screenshots/landing-desktop.png' }); await b.close();
+  const f = fs.readdirSync('docs/motion/tmp')[0]; fs.renameSync(`docs/motion/tmp/${f}`, 'docs/motion/landing-1440.webm'); fs.rmdirSync('docs/motion/tmp');
+  const q = await b.newPage({ viewport: { width: 1440, height: 900 } });
+  await q.goto('http://localhost:3000/'); await q.waitForTimeout(1800);
+  for (const [name, y] of shots) {
+    // approach each point by wheel so scroll-linked scenes update naturally
+    const cur = await q.evaluate(() => window.scrollY);
+    for (let s = cur; s < y; s += 120) { await q.mouse.wheel(0, 120); await q.waitForTimeout(20); }
+    await q.waitForTimeout(700);
+    await q.screenshot({ path: `docs/screenshots/landing-${name}-1440.png` });
+  }
+  await b.close();
 })();

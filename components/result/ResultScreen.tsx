@@ -149,7 +149,7 @@ export function ResultScreen({
       <ReadyHero months={result.monthsToReady} readyDate={result.readyDate} keysDate={addMonths(new Date(), keysMonth)} reveal={revealed} />
 
       <div className="panel mt-8 !px-5 !pb-2 !pt-4">
-        <Road result={result} onEntranceDone={() => setRevealed(true)} />
+        <Road result={result} onEntranceDone={() => setRevealed(true)} vtName="road" />
       </div>
 
       <div className="panel mt-4 !p-5">

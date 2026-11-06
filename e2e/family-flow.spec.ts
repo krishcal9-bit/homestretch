@@ -1,13 +1,15 @@
 import { test, expect } from '@playwright/test';
-import { completeIntakeByKeyboard, freshStart, monthIndex } from './helpers';
+import { completeIntakeByKeyboard, freshLanding, freshStart, monthIndex } from './helpers';
 
 test('family completes intake by keyboard, explores levers, aims for a home, saves and reopens the plan', async ({ page }) => {
-  await freshStart(page);
+  await freshLanding(page);
   await completeIntakeByKeyboard(page);
 
   // Result
   const date = page.getByTestId('ready-date');
   await expect(date).toHaveText(/[A-Z][a-z]+ \d{4}/, { timeout: 10_000 });
+  // wait for the step → result view transition to finish (the page takes no input during one)
+  await page.waitForFunction(() => !document.documentElement.dataset.vt);
   const before = monthIndex(await date.innerText());
   expect(before).not.toBeNaN();
 
@@ -65,7 +67,6 @@ test('unknown plan code shows a friendly message', async ({ page }) => {
 
 test('refresh mid-flow restores the screen', async ({ page }) => {
   await freshStart(page);
-  await page.getByRole('button', { name: 'Start' }).click();
   await page.getByRole('button', { name: 'Continue' }).click();
   await page.fill('#gross', '4800');
   await page.reload();

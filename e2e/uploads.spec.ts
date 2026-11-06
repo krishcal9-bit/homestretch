@@ -4,7 +4,6 @@ import path from 'path';
 
 test('pay stub scan prefills income with a tag', async ({ page }) => {
   await freshStart(page);
-  await page.getByRole('button', { name: 'Start' }).click();
   await next(page);
   await page.locator('#file-paystub').setInputFiles(path.join(__dirname, '../fixtures/paystub.png'));
   await expect(page.getByTestId('upload-paystub-done')).toBeVisible({ timeout: 20_000 });
@@ -14,7 +13,6 @@ test('pay stub scan prefills income with a tag', async ({ page }) => {
 
 test('a text file gets a friendly error, not a crash', async ({ page }) => {
   await freshStart(page);
-  await page.getByRole('button', { name: 'Start' }).click();
   for (let i = 0; i < 3; i++) {
     if (i === 1) await page.fill('#gross', '5200');
     if (i === 2) await page.fill('#rent', '2000');
@@ -29,7 +27,6 @@ test('a text file gets a friendly error, not a crash', async ({ page }) => {
 
 test('statement upload drives Underwriter\'s eye and a letter of explanation', async ({ page }) => {
   await freshStart(page);
-  await page.getByRole('button', { name: 'Start' }).click();
   for (let i = 0; i < 3; i++) {
     if (i === 1) await page.fill('#gross', '5200');
     if (i === 2) await page.fill('#rent', '2350');

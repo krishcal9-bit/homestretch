@@ -10,7 +10,7 @@ const draft = JSON.parse(fs.readFileSync('fixtures/demo-draft.json', 'utf8'));
     const p = await ctx.newPage();
     const shot = async (name: string) => { await p.waitForTimeout(1600); await p.screenshot({ path: `docs/screenshots/review-${name}-${vp}.png`, fullPage: name !== 'drawer' }); };
     const family = async (step: number) => { await p.evaluate(([d, s]) => { localStorage.setItem('hs.draft', JSON.stringify(d)); localStorage.setItem('hs.step', String(s)); }, [draft, step] as const); await p.reload(); };
-    await p.goto(B + '/'); await p.evaluate(() => localStorage.clear()); await p.reload(); await shot('welcome');
+    await p.goto(B + '/'); await p.evaluate(() => localStorage.clear()); await p.reload(); await shot('welcome'); await p.goto(B + '/start');
     for (const s of [1, 2, 3, 4, 5]) { await family(s); await shot(`step${s}`); }
     await p.goto(B + '/plan/NGU7P3'); await shot('plan');
     await p.goto(B + '/plan/notarealcode'); await shot('plan-404');

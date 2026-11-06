@@ -140,3 +140,40 @@ textarea {
 .slider-input:focus-visible::-webkit-slider-thumb { opacity: 0; }
 .slider-input:focus-visible::-moz-range-thumb { opacity: 0; }
 .slider-input::-webkit-slider-runnable-track { background: transparent; }
+
+/* ---------- View transitions (lib/vt.ts) ---------- */
+@keyframes vt-fade-out { to { opacity: 0; } }
+@keyframes vt-fade-in { from { opacity: 0; } }
+@keyframes vt-out-left { to { opacity: 0; transform: translateX(-24px); } }
+@keyframes vt-in-right { from { opacity: 0; transform: translateX(24px); } }
+@keyframes vt-out-right { to { opacity: 0; transform: translateX(24px); } }
+@keyframes vt-in-left { from { opacity: 0; transform: translateX(-24px); } }
+
+::view-transition-group(*) { animation-duration: 250ms; animation-timing-function: var(--ease-out); }
+::view-transition-old(root) { animation: 180ms var(--ease-out) both vt-fade-out; }
+::view-transition-new(root) { animation: 250ms var(--ease-out) both vt-fade-in; }
+
+/* Intake steps: forward slides left, back slides right (exit ~30% faster than enter). */
+.vt-flow { view-transition-name: flow; }
+html[data-vt="forward"]::view-transition-old(flow), html[data-vt="result"]::view-transition-old(flow) { animation: 200ms var(--ease-out) both vt-out-left; }
+html[data-vt="forward"]::view-transition-new(flow), html[data-vt="result"]::view-transition-new(flow) { animation: 280ms var(--ease-out) both vt-in-right; }
+html[data-vt="back"]::view-transition-old(flow) { animation: 200ms var(--ease-out) both vt-out-right; }
+html[data-vt="back"]::view-transition-new(flow) { animation: 280ms var(--ease-out) both vt-in-left; }
+
+/* Landing → intake: the CTA morphs into the progress bar. */
+html[data-vt="start"]::view-transition-group(cta) { animation-duration: 420ms; animation-timing-function: var(--ease-in-out); }
+
+/* Last step → result: the small Road grows into the result Road. */
+html[data-vt="result"]::view-transition-group(road) { animation-duration: 480ms; animation-timing-function: var(--ease-in-out); }
+
+/* Staff: crisp 200ms fade. */
+html[data-vt="fade"]::view-transition-old(root) { animation: 140ms ease both vt-fade-out; }
+html[data-vt="fade"]::view-transition-new(root) { animation: 200ms ease both vt-fade-in; }
+
+/* The header stays put during page transitions. */
+.vt-header { view-transition-name: header; }
+::view-transition-group(header) { animation: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}

@@ -15,10 +15,10 @@ test('family routes have no serious or critical axe violations', async ({ page }
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  await audit(page, 'welcome');
+  await audit(page, 'landing');
   for (const step of [1, 2, 3, 4, 5]) {
     await page.evaluate(([d, s]) => { localStorage.setItem('hs.draft', JSON.stringify(d)); localStorage.setItem('hs.step', String(s)); }, [DEMO_DRAFT, step] as const);
-    await page.reload();
+    await page.goto('/start');
     await audit(page, `step-${step}`);
   }
   await page.goto('/plan/NGU7P3');

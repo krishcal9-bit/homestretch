@@ -16,6 +16,17 @@ export async function freshStart(page: Page) {
     sessionStorage.clear();
     document.cookie = 'hs_lang=en; path=/';
   });
+  await page.goto('/start');
+}
+
+/** From a clean state, lands on the marketing page (/). */
+export async function freshLanding(page: Page) {
+  await page.goto('/');
+  await page.evaluate(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    document.cookie = 'hs_lang=en; path=/';
+  });
   await page.reload();
 }
 
@@ -28,7 +39,7 @@ export async function completeIntakeByKeyboard(page: Page) {
     }
     throw new Error(`could not tab to ${selector}`);
   };
-  await tabTo('main button.bg-pine');
+  await tabTo('[data-testid=find-my-date]');
   await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { name: 'Tell us about your household' })).toBeFocused();
   // household size: 4

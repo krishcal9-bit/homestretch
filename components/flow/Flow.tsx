@@ -1,14 +1,19 @@
 'use client';
 import { AnimatePresence, motion } from 'motion/react';
 import { ChevronLeft } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLang } from '@/lib/i18n';
 import { spring, exit as exitT } from '@/lib/motion';
 import { emptyDraft, type Draft } from '@/lib/draft';
 import { useStored } from '@/lib/useStored';
 import { Button } from '@/components/ui/Button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { Welcome } from './Welcome';
+import { flushSync } from 'react-dom';
+import { useVTRouter, vtSupported, withViewTransition } from '@/lib/vt';
+import { computeReadiness } from '@/lib/engine';
+import { draftToProfile } from '@/lib/draft';
+import { Road } from '@/components/result/Road';
+import { ease } from '@/lib/motion';
 import { HouseholdScreen, HousingScreen, IncomeScreen, MoneyScreen, validate, type ScreenProps } from './Screens';
 import { UploadCard } from './UploadCard';
 import { VoiceControl } from './Voice';
@@ -20,10 +25,27 @@ import { FamilyExtras } from '@/components/result/FamilyExtras';
 
 const INTAKE_STEPS = 4;
 
+/** Small Road preview in the last step's footer; it grows into the result Road (shared view transition). */
+function RoadPreview({ draft, label }: { draft: Draft; label: string }) {
+  const result = useMemo(() => computeReadiness(draftToProfile(draft)), [draft]);
+  if (result.noIncome) return null;
+  return (
+    <div className="mt-8" inert data-testid="road-preview">
+      <p className="t-helper mb-1 text-ink-2">{label}</p>
+      <Road result={result} entrance="none" vtName="road" />
+    </div>
+  );
+}
+
 export function Flow() {
   const { t, lang } = useLang();
   const [draft, setDraft, ready] = useStored<Draft>('hs.draft', emptyDraft());
-  const [step, setStep] = useStored<number>('hs.step', 0);
+  const [rawStep, setStep] = useStored<number>('hs.step', 1);
+  const step = Math.max(1, rawStep); // the landing page lives at / now
+  const vtRouter = useVTRouter();
+  // View Transitions where supported (and motion allowed); Motion AnimatePresence otherwise.
+  const [useVT, setUseVT] = useState(false);
+  useEffect(() => setUseVT(vtSupported()), []);
   const [dir, setDir] = useState(1);
   const [showErrors, setShowErrors] = useState(false);
   const [flash, setFlash] = useState<Record<string, number>>({});
@@ -45,10 +67,19 @@ export function Flow() {
   );
 
   const go = (to: number) => {
-    setDir(to > step ? 1 : -1);
-    setShowErrors(false);
-    setStep(to);
-    window.scrollTo({ top: 0 });
+    if (to < 1) {
+      vtRouter.push('/', 'back');
+      return;
+    }
+    const kind = to < step ? 'back' : to > INTAKE_STEPS ? 'result' : 'forward';
+    const apply = () => {
+      setDir(to > step ? 1 : -1);
+      setShowErrors(false);
+      setStep(to);
+      window.scrollTo({ top: 0 });
+    };
+    if (useVT) withViewTransition(kind, () => flushSync(apply));
+    else apply();
   };
   const next = () => {
     if (!validate(step, draft)) {
@@ -161,7 +192,7 @@ export function Flow() {
   return (
     <div ref={containerRef}>
       {step >= 1 && step <= INTAKE_STEPS && (
-        <div className="sticky top-14 z-20 -mx-5 bg-paper">
+        <div className="sticky top-16 z-20 -mx-5 bg-paper" style={{ viewTransitionName: 'cta' }}>
           <ProgressBar value={step / (INTAKE_STEPS + 1)} label={t('flow.progress', { n: step, total: INTAKE_STEPS })} />
         </div>
       )}
@@ -174,23 +205,9 @@ export function Flow() {
           {step <= INTAKE_STEPS && <span className="t-helper tnum text-ink-2">{t('flow.progress', { n: step, total: INTAKE_STEPS })}</span>}
         </div>
       )}
-      <AnimatePresence mode="popLayout" custom={dir}>
-        <motion.div
-          key={step}
-          data-step={step}
-          custom={dir}
-          variants={{
-            enter: (d: number) => ({ x: d * 24, opacity: 0 }),
-            center: { x: 0, opacity: 1 },
-            exit: (d: number) => ({ x: d * -24, opacity: 0, transition: exitT }),
-          }}
-          // First paint: no wrapper slide, so screens (the landing page) run their own entrance.
-          initial={firstPaint.current ? false : 'enter'}
-          animate="center"
-          exit="exit"
-          transition={spring.smooth}
-        >
-          {step === 0 && <Welcome onStart={() => go(1)} />}
+      {useVT ? (
+        // View Transitions animate the swap; no AnimatePresence, so only one "flow" element ever exists.
+        <div key={step} data-step={step} className="vt-flow">
           {step >= 1 && step <= INTAKE_STEPS && (
             <form
               noValidate
@@ -201,6 +218,43 @@ export function Flow() {
               className="pb-8 pt-2"
             >
               {screens[step]}
+              {step === INTAKE_STEPS && <RoadPreview draft={draft} label={t('flow.roadPreview')} />}
+              <div className="mt-10">
+                <Button type="submit" size="lg" full>
+                  {step === INTAKE_STEPS ? t('flow.seePath') : t('app.continue')}
+                </Button>
+              </div>
+            </form>
+          )}
+          {step > INTAKE_STEPS && <ResultScreen draft={draft} setDraft={setDraft} onEdit={() => go(1)} Extras={FamilyExtras} />}
+        </div>
+      ) : (
+      <AnimatePresence mode="popLayout" custom={dir}>
+        <motion.div
+          key={step}
+          data-step={step}
+          custom={dir}
+          variants={{
+            enter: (d: number) => ({ x: d * 24, opacity: 0 }),
+            center: { x: 0, opacity: 1 },
+            exit: (d: number) => ({ x: d * -24, opacity: 0, transition: exitT }),
+          }}
+          initial={firstPaint.current ? false : 'enter'}
+          animate="center"
+          exit="exit"
+          transition={{ duration: 0.28, ease: ease.out }}
+        >
+          {step >= 1 && step <= INTAKE_STEPS && (
+            <form
+              noValidate
+              onSubmit={(e) => {
+                e.preventDefault();
+                next();
+              }}
+              className="pb-8 pt-2"
+            >
+              {screens[step]}
+              {step === INTAKE_STEPS && <RoadPreview draft={draft} label={t('flow.roadPreview')} />}
               <div className="mt-10">
                 <Button type="submit" size="lg" full>
                   {step === INTAKE_STEPS ? t('flow.seePath') : t('app.continue')}
@@ -211,6 +265,7 @@ export function Flow() {
           {step > INTAKE_STEPS && <ResultScreen draft={draft} setDraft={setDraft} onEdit={() => go(1)} Extras={FamilyExtras} />}
         </motion.div>
       </AnimatePresence>
+      )}
     </div>
   );
 }

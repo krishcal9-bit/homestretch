@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { freshStart, next } from './helpers';
+import { freshLanding, next } from './helpers';
 
 // Known English strings that must never appear once Spanish is on (screens 1–6).
 const ENGLISH = [
@@ -14,11 +14,12 @@ async function noEnglish(page: Page) {
 }
 
 test('Spanish everywhere on screens 1–6 and the PDF is Spanish', async ({ page }) => {
-  await freshStart(page);
+  await freshLanding(page);
   await page.getByTestId('lang-toggle').getByRole('radio', { name: 'ES' }).click();
-  await expect(page.getByRole('button', { name: 'Empezar' })).toBeVisible();
+  await expect(page.getByTestId('find-my-date')).toHaveText('Encontrar mi fecha');
   await noEnglish(page);
-  await page.getByRole('button', { name: 'Empezar' }).click();
+  await expect(page.locator('main')).not.toContainText('See exactly when');
+  await page.getByTestId('find-my-date').click();
   await expect(page.getByRole('heading', { name: 'Cuéntenos sobre su hogar' })).toBeVisible();
   await noEnglish(page);
   await next(page);

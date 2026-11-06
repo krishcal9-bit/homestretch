@@ -103,7 +103,8 @@
       "building": "En progreso",
       "needs_work": "Necesita trabajo",
       "unknown": "No sé"
-    }
+    },
+    "roadPreview": "Su camino hasta ahora"
   },
   "result": {
     "eyebrow": "Podría estar listo para una hipoteca en",
@@ -180,7 +181,8 @@
       "keys": "Termine sus horas de trabajo voluntario y cierre la compra de su casa de Habitat."
     },
     "monthOf": "{month}",
-    "now": "Ahora"
+    "now": "Ahora",
+    "more": "{n} más"
   },
   "why": {
     "needRent": "Su renta es el {pct} de su ingreso, lo que califica como necesidad.",
@@ -327,5 +329,42 @@
       "habitat": "Habitat OC",
       "counselor": "Asesor"
     }
+  },
+  "landing": {
+    "headline": "Vea exactamente cuándo su familia puede recibir las llaves.",
+    "sub": "Responda unas preguntas y obtenga una fecha, los pasos que la acercan y la casa de Habitat que le corresponde.",
+    "cta": "Encontrar mi fecha",
+    "how": "Vea cómo funciona",
+    "reyes": "Familia Reyes",
+    "nguyen": "Familia Nguyen",
+    "families": "Familia de ejemplo",
+    "readyBy": "Lista para hipoteca en",
+    "lever": "Extra para deudas cada mes",
+    "reyesWho": "Cuatro personas en Santa Ana. $5,200 al mes, $1,900 en cobranzas.",
+    "nguyenWho": "Tres personas en Garden Grove. $6,400 al mes, buen crédito, ahorrando $300.",
+    "s1": "Cuéntenos dónde está.",
+    "s1b": "Escríbalo, tóquelo o simplemente dígalo. Un talón de pago llena el ingreso por usted.",
+    "phoneTitle": "Cuéntenos sobre su hogar",
+    "phonePeople": "Personas en su hogar",
+    "phoneOC": "Vive o trabaja en el Condado de Orange",
+    "phoneIncome": "Ingreso mensual",
+    "phoneRent": "Renta mensual",
+    "phoneYes": "Sí",
+    "phoneSaid": "“Somos cuatro, en Santa Ana. Gano como cinco mil doscientos al mes y la renta es dos mil trescientos cincuenta.”",
+    "s2": "Vea el camino a sus llaves.",
+    "c1": "Pagar la cobranza",
+    "c1b": "Es lo primero que revisa un prestamista, así que va primero.",
+    "c2": "Ahorrar el enganche",
+    "c2b": "Cuando termina de pagar deudas, ese dinero pasa solo a ahorro.",
+    "c3": "Llaves",
+    "c3b": "Unos nueve meses después de solicitar, la casa es suya.",
+    "s3": "Habitat ve quién está listo para cada casa.",
+    "s3b": "Cada construcción próxima, con las familias que estarán listas el día que se termine.",
+    "browserTitle": "Próximas casas",
+    "colHome": "Casa",
+    "colDone": "Lista",
+    "colReady": "Familias listas",
+    "closing": "Habitat termina 100 casas. Homestretch ayuda a que 100 familias estén listas para comprarlas.",
+    "footerPartner": "Hecho para Habitat for Humanity del Condado de Orange."
   }
 }

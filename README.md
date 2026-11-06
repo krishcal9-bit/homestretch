@@ -75,7 +75,7 @@ npm run setup
 npm run dev
 ```
 
-Open http://localhost:3000 (family) and http://localhost:3000/staff (staff). `MOCK_CLAUDE=1 npm run dev` runs without a key. Before a demo: `npm run preflight` (reseed, all checks, e2e, one real Claude call, then READY).
+Open http://localhost:3000 (landing), http://localhost:3000/start (family intake) and http://localhost:3000/staff (staff, also linked as "Staff sign in" in the header). `MOCK_CLAUDE=1 npm run dev` runs without a key. Before a demo: `npm run preflight` (reseed, all checks, e2e, one real Claude call, then READY).
 
 Quality gates: `npm run check` (tsc, eslint, vitest, prisma validate, next build) and `npm run e2e` (Playwright, mocked Claude: family flow, Spanish, staff, uploads, accessibility).
 
@@ -94,7 +94,7 @@ TURSO_DATABASE_URL=libsql://YOUR-DB.turso.io TURSO_AUTH_TOKEN=YOUR-TOKEN npm run
 
 ## Demo script (3 minutes)
 
-1. Open `/` at phone size and let the landing page load: the headline rises, the sample road draws and the date rolls in. Drag **Extra toward debt** on the sample family. Then tap **Start**, toggle **ES**, tap the microphone (or "O escriba lo que diría") and say *"somos cuatro, vivimos en Santa Ana, gano como cinco mil doscientos al mes, pagamos dos mil trescientos cincuenta de renta."* Watch the fields fill. Switch back to English.
+1. Open `/` on a laptop and let the landing page load: the headline rises line by line, the Road draws, each milestone pops in, the date odometers to December 2028. Drag **Extra toward debt**, switch to the Nguyen family, then scroll the story. Tap **Find my date** (it morphs into the intake), toggle **ES**, tap the microphone (or "O escriba lo que diría") and say *"somos cuatro, vivimos en Santa Ana, gano como cinco mil doscientos al mes, pagamos dos mil trescientos cincuenta de renta."* Watch the fields fill. Switch back to English.
 2. On the income screen, upload `public/samples/paystub.png` and watch income fill. On the money screen add a $1,900 collection and $3,100 saved (credit: needs work).
 3. Land on the result. Let the Road draw. Read the date aloud. Drag **Extra toward debt** to $150 and watch the date pull years closer. *"That's the conversation Habitat has never been able to have in a number."*
 4. **Aim for a specific home**: pick the Westminster 4-bedroom. The sliders glide to the solved plan, the Road redraws, and the sentence says exactly what it takes. Scroll to **Ten years from now** and read the equity number.

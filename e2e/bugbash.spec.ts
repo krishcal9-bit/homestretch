@@ -5,7 +5,7 @@ const base = { ...DEMO_DRAFT, debts: { car: { payment: null, balance: null }, ca
 async function result(page: Page, d: Record<string, unknown>) {
   await page.goto('/');
   await page.evaluate((x) => { localStorage.clear(); localStorage.setItem('hs.draft', JSON.stringify(x)); localStorage.setItem('hs.step', '5'); }, d);
-  await page.reload();
+  await page.goto('/start');
   await page.waitForTimeout(1500);
   const text = await page.locator('main').innerText();
   expect(text).not.toMatch(/NaN|Infinity|undefined/);

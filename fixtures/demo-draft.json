@@ -1,0 +1,41 @@
+{
+  "householdSize": 4,
+  "inOC": true,
+  "residentOrCitizen": true,
+  "grossMonthlyIncome": 5200,
+  "otherIncomeOn": false,
+  "otherMonthlyIncome": null,
+  "rent": 2350,
+  "bedrooms": 1,
+  "occupants": 4,
+  "unsafeConditions": false,
+  "debts": {
+    "car": {
+      "payment": null,
+      "balance": null
+    },
+    "card": {
+      "payment": 65,
+      "balance": 2100
+    },
+    "student": {
+      "payment": null,
+      "balance": null
+    },
+    "collection": {
+      "payment": null,
+      "balance": 1900
+    },
+    "other": {
+      "payment": null,
+      "balance": null
+    }
+  },
+  "savings": 3100,
+  "creditBand": "needs_work",
+  "levers": {
+    "extraDebt": 0,
+    "monthlySavings": 150,
+    "coApplicantIncome": 0
+  }
+}

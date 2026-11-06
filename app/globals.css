@@ -110,3 +110,9 @@ textarea {
   100% { background-color: var(--surface); }
 }
 .just-filled { animation: filled-pulse 600ms ease-out; }
+
+/* Slider: keep the native input for a11y; show a focus ring on the custom thumb's track */
+.slider-input:focus-visible { opacity: 1; background: transparent; outline: 2px solid var(--pine); outline-offset: 2px; border-radius: 8px; }
+.slider-input:focus-visible::-webkit-slider-thumb { opacity: 0; }
+.slider-input:focus-visible::-moz-range-thumb { opacity: 0; }
+.slider-input::-webkit-slider-runnable-track { background: transparent; }

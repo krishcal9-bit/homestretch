@@ -1,22 +1,9 @@
 'use client';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import en from '@/messages/en.json';
-import es from '@/messages/es.json';
+import { translate, dictionaries } from './i18n-core';
 import type { Lang } from './types';
 
-export const dictionaries = { en, es } as const;
-export type Messages = typeof en;
-
-export function translate(lang: Lang, key: string, vars?: Record<string, string | number>): string {
-  const walk = (dict: unknown) =>
-    key.split('.').reduce<unknown>((o, k) => (o && typeof o === 'object' ? (o as Record<string, unknown>)[k] : undefined), dict);
-  let s = walk(dictionaries[lang]);
-  if (typeof s !== 'string') s = walk(dictionaries.en);
-  if (typeof s !== 'string') return key;
-  let out = s;
-  if (vars) for (const [k, v] of Object.entries(vars)) out = out.replaceAll(`{${k}}`, String(v));
-  return out;
-}
+export { translate, dictionaries };
 
 type Ctx = { lang: Lang; setLang: (l: Lang) => void; t: (key: string, vars?: Record<string, string | number>) => string };
 const LangContext = createContext<Ctx | null>(null);

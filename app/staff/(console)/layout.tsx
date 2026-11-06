@@ -1,0 +1,16 @@
+import type { Metadata } from 'next';
+import { StaffNav } from '@/components/staff/StaffNav';
+
+export const metadata: Metadata = { title: 'Staff · Homestretch' };
+export const dynamic = 'force-dynamic';
+
+export default function StaffLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen min-w-[1024px] bg-paper">
+      <StaffNav />
+      <main id="main" className="max-w-[1280px] px-8 pb-24 pt-8">
+        {children}
+      </main>
+    </div>
+  );
+}

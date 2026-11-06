@@ -277,5 +277,16 @@
     "nothing": "We didn't catch any answers. Try again, or type them.",
     "error": "We couldn't understand that just now. Try typing it.",
     "close": "Close"
+  },
+  "handoff": {
+    "title": "Send my plan to a counselor",
+    "sub": "A free counselor can help with credit and savings. They get a one-page summary of your plan, and nothing else.",
+    "choose": "Choose a counselor",
+    "sparkpoint": "Free credit and savings coaching in Santa Ana, in English and Spanish.",
+    "hope": "Free one-on-one credit and money coaching, in person or by phone.",
+    "send": "Send to {org}",
+    "sent": "Sent to {org}",
+    "download": "Download packet",
+    "error": "We couldn’t send that. Check your connection and try again."
   }
 }

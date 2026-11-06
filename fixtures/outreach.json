@@ -1,0 +1,4 @@
+{
+  "subject": "A {bedrooms}-bedroom home in {city} for the {surname} family",
+  "body": "Hi {givenName},\n\nThis is the Habitat OC team checking in on the {surname} family plan. We're building a {bedrooms}-bedroom home in {city} that should be finished in {completion}, and your plan puts you on track for {readyDate}.\n\nOne thing to do next: {nextAction}\n\nReply here if anything has changed or if you'd like help with that step.\n\nHabitat for Humanity of Orange County"
+}

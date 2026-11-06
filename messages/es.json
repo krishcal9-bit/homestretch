@@ -277,5 +277,16 @@
     "nothing": "No entendimos ninguna respuesta. Intente de nuevo o escríbalas.",
     "error": "No pudimos entender eso ahora. Intente escribirlo.",
     "close": "Cerrar"
+  },
+  "handoff": {
+    "title": "Enviar mi plan a un consejero",
+    "sub": "Un consejero gratuito puede ayudarle con su crédito y sus ahorros. Recibe un resumen de una página de su plan, y nada más.",
+    "choose": "Elija un consejero",
+    "sparkpoint": "Asesoría gratuita de crédito y ahorro en Santa Ana, en inglés y español.",
+    "hope": "Asesoría gratuita y personal sobre crédito y dinero, en persona o por teléfono.",
+    "send": "Enviar a {org}",
+    "sent": "Enviado a {org}",
+    "download": "Descargar resumen",
+    "error": "No pudimos enviarlo. Revise su conexión e intente de nuevo."
   }
 }

@@ -187,5 +187,16 @@
     "bottomReady": "Nothing stands between you and an application, so your date is now.",
     "keys": "After you apply, a Habitat home typically takes about 9 months to build and close.",
     "collectionsLater": "A {amount} collection is the first thing to clear; once your other payments free up money, it clears in month {n}. Extra money toward debt gets there sooner."
+  },
+  "handoff": {
+    "title": "Send my plan to a counselor",
+    "sub": "A free counselor can help with credit and savings. They get a one-page summary of your plan, and nothing else.",
+    "choose": "Choose a counselor",
+    "sparkpoint": "Free credit and savings coaching in Santa Ana, in English and Spanish.",
+    "hope": "Free one-on-one credit and money coaching, in person or by phone.",
+    "send": "Send to {org}",
+    "sent": "Sent to {org}",
+    "download": "Download packet",
+    "error": "We couldn’t send that. Check your connection and try again."
   }
 }

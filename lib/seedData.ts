@@ -56,13 +56,13 @@ export const SEED_FAMILIES: SeedFamily[] = [
   {
     code: 'JOH5T1', surname: 'Johnson', givenName: 'Keisha', city: 'Costa Mesa', language: 'en', daysSinceActivity: 6,
     profile: { ...base, householdSize: 3, grossMonthlyIncome: 5600, rent: 2050, bedrooms: 2, occupants: 3,
-      debts: [{ kind: 'card', balance: 2600, minPayment: 80 }], savings: 6200, creditBand: 'building', levers: L(100, 300) },
+      debts: [{ kind: 'card', balance: 2600, minPayment: 80 }], savings: 6200, creditBand: 'building', levers: L(300, 300) },
     ticked: [0, 1],
   },
   {
     code: 'TRA9Q4', surname: 'Tran', givenName: 'Linh', city: 'Westminster', language: 'en', daysSinceActivity: 41,
     profile: { ...base, householdSize: 2, grossMonthlyIncome: 4500, rent: 1750, bedrooms: 1, occupants: 2,
-      debts: [{ kind: 'student', balance: 18000, minPayment: 190 }], savings: 9500, creditBand: 'good', creditScore: 668, levers: L(0, 250) },
+      debts: [{ kind: 'student', balance: 18000, minPayment: 190 }], savings: 5200, creditBand: 'good', creditScore: 668, levers: L(0, 250) },
   },
   {
     code: 'HER3W6', surname: 'Hernández', givenName: 'Rosa', city: 'Santa Ana', language: 'es', daysSinceActivity: 38,
@@ -74,13 +74,13 @@ export const SEED_FAMILIES: SeedFamily[] = [
   {
     code: 'PAT6H9', surname: 'Patel', givenName: 'Anjali', city: 'Anaheim', language: 'en', daysSinceActivity: 2,
     profile: { ...base, householdSize: 4, grossMonthlyIncome: 7000, rent: 2500, bedrooms: 2, occupants: 4,
-      debts: [{ kind: 'car', balance: 4000, minPayment: 310 }], savings: 11000, creditBand: 'good', creditScore: 690, levers: L(0, 500) },
+      debts: [{ kind: 'car', balance: 4000, minPayment: 310 }], savings: 7000, creditBand: 'good', creditScore: 690, levers: L(0, 500) },
     ticked: [0],
   },
   {
     code: 'LOP8D2', surname: 'López', givenName: 'Carmen', city: 'Garden Grove', language: 'es', daysSinceActivity: 9,
     profile: { ...base, householdSize: 3, grossMonthlyIncome: 4700, rent: 1950, bedrooms: 1, occupants: 3,
-      debts: [{ kind: 'card', balance: 3900, minPayment: 110 }], savings: 1800, creditBand: 'unknown', levers: L(50, 150) },
+      debts: [{ kind: 'card', balance: 3900, minPayment: 110 }], savings: 1800, creditBand: 'unknown', levers: L(150, 200) },
     ticked: [0, 2],
   },
   {
@@ -98,13 +98,13 @@ export const SEED_FAMILIES: SeedFamily[] = [
     code: 'WIL2C8', surname: 'Williams', givenName: 'Andre', city: 'Santa Ana', language: 'en', daysSinceActivity: 15,
     profile: { ...base, householdSize: 4, grossMonthlyIncome: 6200, rent: 2400, bedrooms: 2, occupants: 4,
       debts: [{ kind: 'card', balance: 6500, minPayment: 190 }, { kind: 'car', balance: 11000, minPayment: 390 }],
-      savings: 4200, creditBand: 'building', creditScore: 612, levers: L(100, 200) },
+      savings: 4200, creditBand: 'building', creditScore: 612, levers: L(250, 200) },
     ticked: [1],
   },
   {
     code: 'SAN5F3', surname: 'Sánchez', givenName: 'Elena', city: 'Anaheim', language: 'en', daysSinceActivity: 7,
     profile: { ...base, householdSize: 1, grossMonthlyIncome: 4100, rent: 1650, bedrooms: 1, occupants: 1,
-      debts: [{ kind: 'card', balance: 1200, minPayment: 40 }], savings: 5200, creditBand: 'building', levers: L(60, 250) },
+      debts: [{ kind: 'card', balance: 1200, minPayment: 40 }], savings: 5200, creditBand: 'building', levers: L(150, 250) },
     ticked: [0],
   },
   // Not eligible: over income.

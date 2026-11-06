@@ -37,8 +37,8 @@ export function Insights({ homes, families }: { homes: Home[]; families: Fam[] }
     [profiles, program.matchedSavings, program.counselingMonths, program.grant, today],
   );
 
-  // Headline target: 18 months out, the far edge of the pipeline's "6–18 months" stage.
-  const target = 18;
+  // Headline target: December of next year (the board's planning horizon, per the demo script).
+  const target = (today.getUTCFullYear() + 1 - today.getUTCFullYear()) * 12 + (11 - today.getUTCMonth());
   const more = sim.moreReadyBy(target);
 
   const eligible = families.filter((f) => f.eligible);

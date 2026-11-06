@@ -38,7 +38,7 @@ describe('staff logic', () => {
   });
   it('program simulator: 0 more with nothing on, > 0 with matched savings', () => {
     const profiles = SEED_FAMILIES.map((f) => f.profile);
-    expect(simulateProgram(profiles, { matchedSavings: 0, counselingMonths: 0, grant: 0 }, 24, { today }).moreReadyBy(18)).toBe(0);
-    expect(simulateProgram(profiles, { matchedSavings: 100, counselingMonths: 0, grant: 0 }, 24, { today }).moreReadyBy(18)).toBeGreaterThan(0);
+    expect(simulateProgram(profiles, { matchedSavings: 0, counselingMonths: 0, grant: 0 }, 24, { today }).moreReadyBy(13)).toBe(0);
+    expect(simulateProgram(profiles, { matchedSavings: 100, counselingMonths: 0, grant: 0 }, 24, { today }).moreReadyBy(13)).toBeGreaterThan(0);
   });
 });

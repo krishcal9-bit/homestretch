@@ -124,7 +124,7 @@ export function ResultScreen({
   if (result.noIncome) {
     return (
       <section className="pt-4">
-        <h1 data-screen-title tabIndex={-1} className="t-title text-ink focus:outline-none">
+        <h1 data-screen-title tabIndex={-1} className="t-title text-ink focus:outline-none focus-visible:outline-none">
           {t('result.noIncomeTitle')}
         </h1>
         <p className="mt-3 text-ink-2">{t('result.noIncomeBody')}</p>

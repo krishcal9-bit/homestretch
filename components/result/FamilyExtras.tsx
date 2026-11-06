@@ -104,7 +104,7 @@ export function FamilyExtras({ profile }: ResultExtrasProps) {
         id="plan"
         action={
           plan && (
-            <Button variant="quiet" onClick={regenerate} loading={loading} className="!min-h-[36px] !px-2 text-[13px]">
+            <Button variant="quiet" onClick={regenerate} loading={loading} className="hit !min-h-[36px] !px-2 text-[13px]">
               <RefreshCw size={16} strokeWidth={1.75} aria-hidden />
               {t('plan.regenerate')}
             </Button>
@@ -161,7 +161,7 @@ export function FamilyExtras({ profile }: ResultExtrasProps) {
                     href={`/api/pdf/plan/${code}?lang=${lang}`}
                     download={`homestretch-plan-${code}-${lang}.pdf`}
                     data-testid="download-pdf"
-                    className="inline-flex min-h-[44px] items-center gap-2 rounded-[8px] border border-line bg-surface px-4 text-[15px] font-medium text-ink transition-colors duration-[120ms] hover:bg-paper"
+                    className="press inline-flex min-h-[44px] items-center gap-2 rounded-[8px] border border-line bg-surface px-4 text-[15px] font-medium text-ink hover:bg-paper"
                   >
                     <Download size={18} strokeWidth={1.75} aria-hidden />
                     {t('plan.downloadPdf')}
@@ -203,13 +203,13 @@ export function FamilyExtras({ profile }: ResultExtrasProps) {
         <Section title={t('share.title')} id="share">
           <div className="panel flex items-start gap-5 !p-5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`/api/card/${code}?lang=${lang}`} alt={t('share.alt')} width={108} height={192} className="h-[192px] w-[108px] shrink-0 rounded-[8px] border border-line bg-paper" />
+            <img src={`/api/card/${code}?lang=${lang}`} alt={t('share.alt')} width={108} height={192} className="img-edge h-[192px] w-[108px] shrink-0 rounded-[8px] bg-paper" />
             <div>
               <p className="text-[15px] leading-[22px] text-ink-2">{t('share.help')}</p>
               <a
                 href={`/api/card/${code}?lang=${lang}`}
                 download={`homestretch-${code}-${lang}.png`}
-                className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-[8px] border border-line bg-surface px-4 text-[15px] font-medium text-ink transition-colors duration-[120ms] hover:bg-paper"
+                className="press mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-[8px] border border-line bg-surface px-4 text-[15px] font-medium text-ink hover:bg-paper"
               >
                 <Download size={18} strokeWidth={1.75} aria-hidden />
                 {t('share.download')}

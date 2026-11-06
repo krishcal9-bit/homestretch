@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { Upload } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useLang } from '@/lib/i18n';
-import { spring } from '@/lib/motion';
+import { spring, exit as exitT } from '@/lib/motion';
 import { Spinner } from '@/components/ui/Spinner';
 
 type State = { kind: 'idle' } | { kind: 'reading' } | { kind: 'done'; message: string } | { kind: 'error'; message: string };
@@ -52,7 +52,7 @@ export function UploadCard({ id, title, body, button, endpoint, onResult }: { id
         type="button"
         onClick={() => input.current?.click()}
         disabled={state.kind === 'reading'}
-        className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-[8px] border border-line bg-surface px-4 text-[15px] font-medium text-pine transition-colors duration-[120ms] hover:bg-pine-soft disabled:opacity-60"
+        className="press mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-[8px] border border-line bg-surface px-4 text-[15px] font-medium text-pine hover:bg-pine-soft disabled:opacity-60"
       >
         {state.kind === 'reading' ? <Spinner /> : <Upload size={18} strokeWidth={1.75} aria-hidden />}
         {state.kind === 'reading' ? t('upload.reading') : state.kind === 'idle' ? button : t('upload.tryAgain')}
@@ -64,7 +64,7 @@ export function UploadCard({ id, title, body, button, endpoint, onResult }: { id
               key={state.kind + state.message}
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
+              exit={{ opacity: 0, transition: exitT }}
               transition={spring.smooth}
               role={state.kind === 'error' ? 'alert' : undefined}
               data-testid={`upload-${id}-${state.kind}`}

@@ -10,3 +10,7 @@ export const ease = {
 };
 export const dur = { micro: 0.12, short: 0.2, medium: 0.32, long: 0.9 }; // seconds
 export const stagger = 0.04;
+
+/** Exits are ~30% faster than entrances (pro-ui-craft). */
+export const exit = { type: 'tween', duration: 0.16, ease: ease.out } as const;
+export const exitDrawer = { type: 'tween', duration: 0.22, ease: [0.32, 0.72, 0, 1] as [number, number, number, number] } as const;

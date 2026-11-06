@@ -9,9 +9,9 @@ export function AnimatedMonth({ text, className = '', testId }: { text: string; 
       <AnimatePresence initial={false} mode="popLayout">
         <motion.span
           key={text}
-          initial={{ y: 8, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -8, opacity: 0 }}
+          initial={{ y: 8, opacity: 0, filter: 'blur(2px)' }}
+          animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
+          exit={{ y: -8, opacity: 0, filter: 'blur(2px)' }}
           transition={{ duration: dur.short, ease: ease.out }}
           className="col-start-1 row-start-1 whitespace-nowrap"
         >

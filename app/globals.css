@@ -14,7 +14,31 @@
   --signal-red: #b3362b;
   --signal-amber: #8a5f0e;
   color-scheme: light;
+  /* pro-ui-craft easing: custom curves for every CSS transform transition */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 }
+
+::selection { background: var(--pine-soft); color: var(--ink); }
+input, textarea { caret-color: var(--pine); }
+h1, h2 { text-wrap: balance; }
+p, li { text-wrap: pretty; }
+
+/* Press feedback for links styled as buttons (Motion handles <Button>). */
+.press { transition: transform 160ms var(--ease-out), background-color 120ms ease, color 120ms ease; }
+.press:active { transform: scale(0.97); }
+
+/* Extend a small control's hit area to at least 44×44 without changing its look. */
+.hit { position: relative; }
+.hit::before { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%); }
+
+/* Images keep their edge on light surfaces. */
+.img-edge { outline: 1px solid rgba(24, 36, 32, 0.06); outline-offset: -1px; }
+
+@keyframes spin-fast { to { transform: rotate(360deg); } }
+.spin-fast { animation: spin-fast 0.7s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .spin-fast { animation: none; } }
 
 @theme inline {
   --color-paper: var(--paper);
@@ -86,7 +110,7 @@ textarea {
   color: var(--ink);
   transition: border-color 120ms, box-shadow 120ms;
 }
-.field:hover { border-color: #c5cec9; }
+@media (hover: hover) and (pointer: fine) { .field:hover { border-color: #c5cec9; } }
 .field:focus { outline: none; border-color: var(--pine); box-shadow: 0 0 0 2px var(--pine); }
 
 }

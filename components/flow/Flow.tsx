@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { ChevronLeft } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLang } from '@/lib/i18n';
-import { spring } from '@/lib/motion';
+import { spring, exit as exitT } from '@/lib/motion';
 import { emptyDraft, type Draft } from '@/lib/draft';
 import { useStored } from '@/lib/useStored';
 import { Button } from '@/components/ui/Button';
@@ -178,7 +178,7 @@ export function Flow() {
           variants={{
             enter: (d: number) => ({ x: d * 24, opacity: 0 }),
             center: { x: 0, opacity: 1 },
-            exit: (d: number) => ({ x: d * -24, opacity: 0 }),
+            exit: (d: number) => ({ x: d * -24, opacity: 0, transition: exitT }),
           }}
           initial="enter"
           animate="center"

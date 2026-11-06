@@ -1,7 +1,7 @@
 'use client';
 import { AnimatePresence, motion } from 'motion/react';
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
-import { spring } from '@/lib/motion';
+import { spring, exit as exitT } from '@/lib/motion';
 
 const ToastCtx = createContext<(msg: string) => void>(() => {});
 
@@ -23,7 +23,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               key={msg.id}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
+              exit={{ opacity: 0, y: 8, transition: exitT }}
               transition={spring.snappy}
               className="rounded-[8px] bg-ink px-4 py-3 text-[15px] text-white"
             >

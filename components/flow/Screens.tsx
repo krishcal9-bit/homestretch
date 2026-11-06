@@ -7,7 +7,7 @@ import { Stepper } from '@/components/ui/Stepper';
 import { Segmented } from '@/components/ui/Segmented';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { AnimatePresence, motion } from 'motion/react';
-import { spring } from '@/lib/motion';
+import { spring, exit as exitT } from '@/lib/motion';
 import type { CreditBand } from '@/lib/types';
 import type { ReactNode } from 'react';
 
@@ -26,7 +26,7 @@ export type ScreenProps = {
 export function ScreenTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
     <div className="mb-8 flex flex-wrap items-start justify-between gap-x-4">
-      <h1 tabIndex={-1} data-screen-title className="t-title min-w-0 flex-1 text-ink focus:outline-none">
+      <h1 tabIndex={-1} data-screen-title className="t-title min-w-0 flex-1 text-ink focus:outline-none focus-visible:outline-none">
         {children}
       </h1>
       {action}
@@ -43,7 +43,7 @@ function InlineNote({ show, text }: { show: boolean; text: string }) {
         <motion.p
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
+          exit={{ opacity: 0, height: 0, transition: exitT }}
           transition={spring.smooth}
           className="overflow-hidden"
         >
@@ -132,7 +132,7 @@ export function IncomeScreen({ draft, update, showErrors, titleAction, flash, ex
         <Checkbox id="otherOn" checked={draft.otherIncomeOn} onChange={(v) => update({ otherIncomeOn: v })} label={t('flow.income.addOther')} help={t('flow.income.otherHelp')} />
         <AnimatePresence initial={false}>
           {draft.otherIncomeOn && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={spring.smooth} className="overflow-hidden px-[2px]">
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0, transition: exitT }} transition={spring.smooth} className="overflow-hidden px-[2px]">
               <div className="pt-2">
                 <Field id="other" label={t('flow.income.other')}>
                   <CurrencyInput id="other" value={draft.otherMonthlyIncome} flash={flash.otherMonthlyIncome} onChange={(v) => update({ otherMonthlyIncome: v })} />

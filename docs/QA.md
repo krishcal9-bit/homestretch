@@ -39,3 +39,5 @@ Removed or never added (decoration only):
 - Static fixture plans in mock mode (they "explained" blockers a family didn't have).
 
 Kept because they carry meaning: the Road draw-in (once per visit; shows the journey), rolling numbers and month crossfade (show what changed), slider thumb growth (confirms the grab), D1 slider glide (shows the plan being solved), drawer slide, chart growth/morph, check-in rows rising as they stream.
+
+See also [UI_REVIEW.md](UI_REVIEW.md) for the pro-ui-craft Part 5 pass.

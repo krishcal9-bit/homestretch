@@ -13,8 +13,10 @@ const compact = (n: number) => (n >= 1000 ? `$${Math.round(n / 1000)}k` : `$${n}
 
 export function TwoFutures({ profile }: { profile: Profile }) {
   const { t, lang } = useLang();
-  // Rent/home comparison uses the base levers so the chart doesn't jitter while sliders move.
-  const cmp = useMemo(() => tenYearComparison(profile), [profile]);
+  // Only rent, income and the co-applicant change this chart; debt and savings sliders must not replay it.
+  const key = JSON.stringify([profile.rent, profile.grossMonthlyIncome, profile.otherMonthlyIncome, profile.levers.coApplicantIncome, profile.householdSize]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const cmp = useMemo(() => tenYearComparison(profile), [key]);
   const data = cmp.points.map((p) => ({ year: p.year, rent: p.rentCost, habitat: p.habitatCost }));
   const diff = cmp.rentTotal - cmp.habitatTotal;
   const sentence =

@@ -1,5 +1,5 @@
 'use client';
-import { motion, useReducedMotion, useSpring } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion, useSpring } from 'motion/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { dur, ease, spring } from '@/lib/motion';
 import { useLang } from '@/lib/i18n';
@@ -62,7 +62,7 @@ function KeyGlyph() {
   );
 }
 
-function Marker({ m, w, delay, play, active, onActive }: { m: Placed; w: number; delay: number; play: boolean; active: boolean; onActive: (k: string | null) => void }) {
+function Marker({ m, w, delay, play, active, onActive, onHover }: { m: Placed; w: number; delay: number; play: boolean; active: boolean; onActive: (k: string | null) => void; onHover: (k: string | null) => void }) {
   const reduce = useReducedMotion();
   const x = useSpring(m.x, spring.gentle);
   useEffect(() => {
@@ -88,8 +88,8 @@ function Marker({ m, w, delay, play, active, onActive }: { m: Placed; w: number;
             aria-label={m.label}
             data-milestone={m.key}
             className="cursor-pointer outline-none"
-            onPointerEnter={() => onActive(m.key)}
-            onPointerLeave={() => onActive(null)}
+            onPointerEnter={(e) => (e.pointerType === 'mouse' ? onHover(m.key) : undefined)}
+            onPointerLeave={(e) => (e.pointerType === 'mouse' ? onHover(null) : undefined)}
             onFocus={() => onActive(m.key)}
             onBlur={() => onActive(null)}
             onClick={() => onActive(active ? null : m.key)}
@@ -128,8 +128,23 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone }
   const { t, lang } = useLang();
   const wrapRef = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(MIN_W);
+  const [overflows, setOverflows] = useState(false);
   const [ready, setReady] = useState(false);
   const [active, setActive] = useState<string | null>(null);
+  // Tooltip etiquette: first hover waits 400ms; once one is open, neighbours open instantly.
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onHover = (k: string | null) => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    if (k === null) {
+      hoverTimer.current = setTimeout(() => setActive(null), 80);
+      return;
+    }
+    if (active) setActive(k);
+    else hoverTimer.current = setTimeout(() => setActive(k), 400);
+  };
+  useEffect(() => () => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+  }, []);
   const [play] = useState(() => {
     try {
       if (sessionStorage.getItem('hs.roadPlayed')) return false;
@@ -142,7 +157,10 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone }
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(([e]) => setW(Math.max(MIN_W, Math.round(e.contentRect.width))));
+    const ro = new ResizeObserver(([e]) => {
+      setW(Math.max(MIN_W, Math.round(e.contentRect.width)));
+      setOverflows(e.contentRect.width < MIN_W);
+    });
     ro.observe(el);
     setReady(true);
     return () => ro.disconnect();
@@ -195,25 +213,32 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone }
             {t('result.today')}
           </text>
           {placed.map((m, i) => (
-            <Marker key={m.key} m={m} w={w} delay={play ? dur.long + i * 0.06 : 0} play={play} active={active === m.key} onActive={setActive} />
+            <Marker key={m.key} m={m} w={w} onHover={onHover} delay={play ? dur.long + i * 0.06 : 0} play={play} active={active === m.key} onActive={setActive} />
           ))}
           <motion.circle cx={curX} cy={TRACK_Y} r="4" fill="var(--brass)" initial={play ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: dur.short }} />
         </svg>
+        <AnimatePresence>
         {activeM && (
-          <div
+          <motion.div
+            key="tip"
             role="tooltip"
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.1 } }}
+            transition={{ duration: 0.15, ease: ease.out }}
             className="pointer-events-none absolute top-[64px] z-10 w-[240px] rounded-[8px] bg-ink px-3 py-2 text-[13px] leading-[18px] text-white"
-            style={{ left: Math.min(Math.max(activeM.x - 120, 8), w - 248) }}
+            style={{ left: Math.min(Math.max(activeM.x - 120, 8), w - 248), transformOrigin: `${activeM.x - Math.min(Math.max(activeM.x - 120, 8), w - 248)}px 0px` }}
           >
             <span className="tnum block font-medium">
               {activeM.label} · {monthName(addMonths(today, activeM.month), lang, true)}
             </span>
             <span className="mt-1 block text-white/85">{activeM.action}</span>
-          </div>
+          </motion.div>
         )}
+        </AnimatePresence>
       </div>
       {/* faint fade at the right edge on mobile, where the road scrolls */}
-      <div className="pointer-events-none absolute inset-y-0 -right-5 w-10 bg-gradient-to-l from-[var(--surface)] to-transparent sm:hidden" aria-hidden />
+      {overflows && <div className="pointer-events-none absolute inset-y-0 -right-5 w-10 bg-gradient-to-l from-[var(--surface)] to-transparent" aria-hidden />}
     </div>
   );
 }

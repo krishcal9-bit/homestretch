@@ -29,7 +29,7 @@ export function StaffNav() {
                 key={t.href}
                 href={t.href}
                 aria-current={on ? 'page' : undefined}
-                className={`relative inline-flex min-h-[36px] items-center rounded-[8px] px-3 text-[15px] font-medium transition-colors duration-[120ms] ${on ? 'text-ink' : 'text-ink-2 hover:text-ink'}`}
+                className={`hit relative inline-flex min-h-[36px] items-center rounded-[8px] px-3 text-[15px] font-medium transition-colors duration-[120ms] ${on ? 'text-ink' : 'text-ink-2 hover:text-ink'}`}
               >
                 {on && <motion.span layoutId="staff-tab" transition={spring.snappy} className="absolute inset-0 rounded-[8px] bg-pine-soft" aria-hidden />}
                 <span className="relative">{t.label}</span>

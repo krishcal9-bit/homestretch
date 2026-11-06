@@ -5,7 +5,7 @@ import { useLang } from '@/lib/i18n';
 import { computeReadiness, monthsUntil, solveForDate } from '@/lib/engine';
 import { fittingHomes } from '@/lib/homes';
 import { monthName, money } from '@/lib/format';
-import { spring } from '@/lib/motion';
+import { spring, exit as exitT } from '@/lib/motion';
 import type { Home, Levers, Profile } from '@/lib/types';
 import { Section } from './Panels';
 
@@ -70,7 +70,7 @@ export function AimForHome({ profile, onSolve }: { profile: Profile; onSolve: (l
                   type="button"
                   onClick={() => pick(h)}
                   aria-pressed={selected}
-                  className={`relative flex min-h-[60px] w-full items-center justify-between gap-4 px-4 py-3 text-left transition-colors duration-[120ms] first:rounded-t-[14px] last:rounded-b-[14px] ${selected ? 'bg-pine-soft' : 'hover:bg-paper'}`}
+                  className={`relative flex min-h-[60px] w-full items-center justify-between gap-4 px-4 py-3 text-left transition-colors duration-[120ms] first:rounded-t-[13px] last:rounded-b-[13px] ${selected ? 'bg-pine-soft' : 'hover:bg-paper'}`}
                 >
                   <span>
                     <span className="block text-[16px] font-medium text-ink">
@@ -91,7 +91,7 @@ export function AimForHome({ profile, onSolve }: { profile: Profile; onSolve: (l
             key={outcome.homeId + outcome.text.join()}
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
+            exit={{ opacity: 0, height: 0, transition: exitT }}
             transition={spring.smooth}
             className="overflow-hidden"
           >

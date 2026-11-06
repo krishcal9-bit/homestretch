@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Road } from '@/components/result/Road';
 import { Segmented } from '@/components/ui/Segmented';
 import { money, monthName, pct } from '@/lib/format';
-import { spring } from '@/lib/motion';
+import { spring, exitDrawer } from '@/lib/motion';
 import { ORG_NAME, type ReferralOrg } from '@/lib/referral';
 import type { FamilyRow } from '@/lib/staffData';
 import { TIER_LABEL } from '@/lib/staffLogic';
@@ -42,7 +42,7 @@ export function FamilyDrawer({ family, onClose }: { family: FamilyRow | null; on
             style={{ background: 'rgba(24,36,32,0.2)' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0, transition: exitDrawer }}
             transition={spring.smooth}
             onClick={onClose}
             aria-hidden
@@ -56,7 +56,7 @@ export function FamilyDrawer({ family, onClose }: { family: FamilyRow | null; on
             style={{ boxShadow: '0 12px 40px rgba(24,36,32,0.12)' }}
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
-            exit={{ x: '100%' }}
+            exit={{ x: '100%', transition: exitDrawer }}
             transition={spring.smooth}
           >
             <DrawerBody family={family} onClose={onClose} closeRef={closeRef} />

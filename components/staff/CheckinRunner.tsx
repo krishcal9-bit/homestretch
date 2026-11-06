@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'motion/react';
 import { ChevronLeft } from 'lucide-react';
-import { spring, stagger } from '@/lib/motion';
+import { spring } from '@/lib/motion';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/Toast';
@@ -100,8 +100,8 @@ export function CheckinRunner() {
 
       <ul className="mt-8 flex flex-col gap-4" data-testid="checkin-list">
         <AnimatePresence initial={false}>
-          {items.map((it, i) => (
-            <motion.li key={it.familyId} layout initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring.smooth, delay: (i % 3) * stagger }} className="panel grid grid-cols-1 gap-6 !p-5 lg:grid-cols-[1fr_1.2fr]" data-testid="checkin-item">
+          {items.map((it) => (
+            <motion.li key={it.familyId} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={spring.smooth} className="panel grid grid-cols-1 gap-6 !p-5 lg:grid-cols-[1fr_1.2fr]" data-testid="checkin-item">
               <div>
                 <p className="text-[16px] font-semibold text-ink">
                   {it.name} <span className="t-helper tnum font-normal text-ink-2">· {it.familyId} · {it.language === 'es' ? 'Spanish' : 'English'}</span>

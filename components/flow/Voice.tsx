@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Mic, X } from 'lucide-react';
 import { useLang } from '@/lib/i18n';
-import { spring } from '@/lib/motion';
+import { spring, exit as exitT } from '@/lib/motion';
 import { Button } from '@/components/ui/Button';
 import type { SpeechFields } from '@/lib/speech';
 
@@ -112,7 +112,7 @@ export function VoiceControl({ screen, onFields }: { screen: 'household' | 'inco
         )}
         <AnimatePresence initial={false}>
           {open && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={spring.smooth} className="overflow-hidden">
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0, transition: exitT }} transition={spring.smooth} className="overflow-hidden">
               <div className="panel mt-4 !p-4">
                 <div className="flex items-start justify-between gap-3">
                   <label htmlFor="voice-text" className="text-[15px] font-medium text-ink">

@@ -69,7 +69,7 @@ export function Pipeline({ families }: { families: FamilyRow[] }) {
             <span className="tnum">{families.length}</span> {families.length === 1 ? 'family has' : 'families have'} shared a plan with Habitat OC.
           </p>
         </div>
-        <Link href="/staff/checkin" className="inline-flex min-h-[44px] items-center rounded-[8px] bg-pine px-4 text-[15px] font-medium text-white transition-colors duration-[120ms] hover:bg-pine-hover" data-testid="run-checkin">
+        <Link href="/staff/checkin" className="press inline-flex min-h-[44px] items-center rounded-[8px] bg-pine px-4 text-[15px] font-medium text-white transition-colors duration-[120ms] hover:bg-pine-hover" data-testid="run-checkin">
           Run Monday check-in
         </Link>
       </div>
@@ -105,7 +105,7 @@ export function Pipeline({ families }: { families: FamilyRow[] }) {
             {filtersOn && (
               <button
                 type="button"
-                className="min-h-[36px] rounded-[8px] px-2 text-[13px] font-medium text-pine hover:bg-pine-soft"
+                className="hit min-h-[36px] rounded-[8px] px-2 text-[13px] font-medium text-pine hover:bg-pine-soft"
                 onClick={() => {
                   setQ('');
                   setStage('all');

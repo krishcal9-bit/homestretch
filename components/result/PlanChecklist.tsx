@@ -7,7 +7,7 @@ import { spring, stagger } from '@/lib/motion';
 import { CheckMark } from '@/components/ui/Checkbox';
 import type { PlanOutput } from '@/lib/plan';
 import { ExternalLink } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export function PlanSkeleton() {
   return (
@@ -30,6 +30,9 @@ export function PlanChecklist({ plan, checklist, onToggle, today = new Date() }:
   // Server-rendered checkboxes stay disabled until hydration, so an early tap can't toggle without saving.
   const [ready, setReady] = useState(false);
   useEffect(() => setReady(true), []);
+  // Entrances play once; a regenerated plan swaps in place instead of replaying the stagger.
+  const firstPlan = useRef(plan);
+  const animateIn = firstPlan.current === plan;
   const done = plan.actions.filter((_, i) => checklist[String(i)]).length;
   return (
     <motion.div layout transition={spring.smooth} className="panel !p-0" data-testid="checklist">
@@ -40,7 +43,7 @@ export function PlanChecklist({ plan, checklist, onToggle, today = new Date() }:
             const checked = !!checklist[String(i)];
             const id = `action-${i}`;
             return (
-              <motion.li key={a.title + i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring.smooth, delay: i * stagger }}>
+              <motion.li key={a.title + i} initial={animateIn ? { opacity: 0, y: 12 } : false} animate={{ opacity: 1, y: 0 }} transition={{ ...spring.smooth, delay: Math.min(i, 5) * stagger }}>
                 <div className="flex gap-3 px-5 py-4">
                   <label htmlFor={id} className="flex min-h-[44px] min-w-[44px] -translate-x-[11px] -translate-y-[11px] cursor-pointer items-center justify-center self-start">
                     <input id={id} type="checkbox" className="peer sr-only" disabled={!ready} checked={checked} onChange={(e) => onToggle(String(i), e.target.checked)} />
@@ -60,7 +63,7 @@ export function PlanChecklist({ plan, checklist, onToggle, today = new Date() }:
                       {a.resource && (
                         <>
                           <span aria-hidden>·</span>
-                          <a href={a.resource.url} target="_blank" rel="noreferrer" className="inline-flex min-h-[24px] items-center gap-1 font-medium text-pine underline-offset-4 hover:underline">
+                          <a href={a.resource.url} target="_blank" rel="noreferrer" className="hit inline-flex min-h-[24px] items-center gap-1 font-medium text-pine underline-offset-4 hover:underline">
                             {a.resource.name}
                             <ExternalLink size={13} strokeWidth={1.75} aria-hidden />
                           </a>

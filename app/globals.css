@@ -189,3 +189,7 @@ html.hs-veil::after { content: ''; position: fixed; inset: 0; background: var(--
 @media (prefers-reduced-motion: reduce) {
   .mask-rise, .intake-screen > :nth-child(n + 2) { animation: none; }
 }
+
+/* Screen titles receive focus programmatically (so screen readers announce the new step); they are not
+   controls, so no ring. Must be unlayered to beat the global :focus-visible rule above. */
+[data-screen-title]:focus-visible { outline: none; }

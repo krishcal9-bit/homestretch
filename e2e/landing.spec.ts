@@ -1,9 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test('first visit plays the opening; any key skips it; it does not replay in the session', async ({ page }) => {
+  // a fresh context has empty session storage: this is a first visit
   await page.goto('/');
-  await page.evaluate(() => sessionStorage.clear());
-  await page.reload();
   await expect(page.getByTestId('opening')).toBeVisible();
   await page.waitForTimeout(400);
   await page.keyboard.press('Escape');

@@ -1,6 +1,6 @@
 'use client';
 import { motion, useReducedMotion, useSpring } from 'motion/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { ease } from '@/lib/motion';
 
 /**
@@ -63,6 +63,36 @@ function housePath(h: House): string {
     ? `M${l} ${GROUND}V${top}H${rt}V${GROUND}`
     : `M${l} ${GROUND}V${top}L${l + h.w / 2} ${top - peak}L${rt} ${top}V${GROUND}`;
 }
+
+/** The drawn street: rendered once and memoized, so lighting a window never re-renders the houses. */
+const Street = memo(function Street({ houses, draw, drawInAt, keysLit }: { houses: House[]; draw: boolean; drawInAt: number | false; keysLit: boolean }) {
+  return (
+    <>
+      {houses.map((h, i) => {
+          const isKeys = keysLit && i === houses.length - 1;
+          return (
+            <g key={i}>
+              <motion.path
+                d={housePath(h)}
+                fill="none"
+                stroke="var(--line)"
+                strokeWidth="1.5"
+                strokeLinejoin="round"
+                vectorEffect="non-scaling-stroke"
+                initial={draw ? { pathLength: 0, opacity: 0 } : false}
+                animate={{ pathLength: 1, opacity: 1 }}
+                transition={{ pathLength: { duration: 0.5, ease: ease.out, delay: draw ? (drawInAt as number) + i * 0.04 : 0 }, opacity: { duration: 0.01, delay: draw ? (drawInAt as number) + i * 0.04 : 0 } }}
+              />
+              <motion.g initial={draw ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: 0.2, delay: draw ? (drawInAt as number) + i * 0.04 + 0.3 : 0 }}>
+              <rect x={h.win.x} y={h.win.y} width={h.win.w} height={h.win.h} fill="none" stroke="var(--line)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+              <rect x={h.door.x} y={GROUND - h.door.h} width={h.door.w} height={h.door.h} fill={isKeys ? 'var(--brass)' : 'none'} stroke={isKeys ? 'var(--brass)' : 'var(--line)'} strokeWidth="1.5" vectorEffect="non-scaling-stroke" style={{ transition: 'fill 300ms ease, stroke 300ms ease' }} />
+              </motion.g>
+            </g>
+          );
+        })}
+    </>
+  );
+});
 
 export type SkylineProps = {
   mode?: 'living' | 'static';
@@ -143,31 +173,11 @@ export function Skyline({ mode = 'static', count = 16, drawInAt = false, flashKe
           animate={{ pathLength: 1 }}
           transition={{ duration: 0.5, ease: ease.inOut, delay: draw ? (drawInAt as number) : 0 }}
         />
-        {houses.map((h, i) => {
-          const lit = i === litIndex || i < litCount;
-          const isKeys = keysLit && i === houses.length - 1;
-          return (
-            <g key={i}>
-              <motion.path
-                d={housePath(h)}
-                fill="none"
-                stroke="var(--line)"
-                strokeWidth="1.5"
-                strokeLinejoin="round"
-                vectorEffect="non-scaling-stroke"
-                initial={draw ? { pathLength: 0, opacity: 0 } : false}
-                animate={{ pathLength: 1, opacity: 1 }}
-                transition={{ pathLength: { duration: 0.5, ease: ease.out, delay: draw ? (drawInAt as number) + i * 0.04 : 0 }, opacity: { duration: 0.01, delay: draw ? (drawInAt as number) + i * 0.04 : 0 } }}
-              />
-              <motion.g initial={draw ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: 0.2, delay: draw ? (drawInAt as number) + i * 0.04 + 0.3 : 0 }}>
-              <rect x={h.win.x} y={h.win.y} width={h.win.w} height={h.win.h} fill="none" stroke="var(--line)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-              <rect x={h.door.x} y={GROUND - h.door.h} width={h.door.w} height={h.door.h} fill={isKeys ? 'var(--brass)' : 'none'} stroke={isKeys ? 'var(--brass)' : 'var(--line)'} strokeWidth="1.5" vectorEffect="non-scaling-stroke" style={{ transition: 'fill 300ms ease, stroke 300ms ease' }} />
-              {/* steady lit window (static uses: ticked checklist, the Keys house in a scene) */}
-              <rect x={h.win.x} y={h.win.y} width={h.win.w} height={h.win.h} fill="var(--brass)" style={{ opacity: lit ? 1 : 0, transition: 'opacity 300ms ease' }} />
-              </motion.g>
-            </g>
-          );
-        })}
+        <Street houses={houses} draw={draw} drawInAt={drawInAt} keysLit={keysLit} />
+        {/* steady lit windows (ticked checklist, the Keys house in a scene): cheap overlays, the street never re-renders */}
+        {houses.map((h, i) =>
+          i === litIndex || i < litCount ? <rect key={i} x={h.win.x} y={h.win.y} width={h.win.w} height={h.win.h} fill="var(--brass)" /> : null,
+        )}
         {/* the single glowing window: the only thing that moves on its own */}
         {active !== null && (
           <motion.rect

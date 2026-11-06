@@ -60,3 +60,29 @@ Already correct (no change): no `transition: all`, no `ease-in`, no `scale(0)` e
 | Header | 56px solid bar | 64px; transparent at the top of the landing, surface + hairline after 24px (200ms fade); wide on the landing | Chrome recedes |
 | Page transitions | Hard cuts | View Transitions: "Find my date" morphs into the intake progress bar; steps slide 24px (forward left, back right, 280ms enter / 200ms exit); last step → result shares the Road (small preview grows into the result Road); staff gets a crisp 200ms fade; browser back reverses. Motion fallback where unsupported | Spatial continuity |
 | Intake Road preview (axe) | `aria-hidden` but focusable markers | `inert` | Hidden content can't take focus |
+
+## Round 3 — opening, living street, carry-through (Part 5 pass)
+
+Volume order kept: landing > result and plan > intake > staff. Only one thing moves on its own at a time (the skyline's single glowing window, every 2.5s for 1.2s, paused when the tab is hidden or motion is reduced).
+
+| Where | Before | After | Why |
+|---|---|---|---|
+| Landing first visit | Hero animated in; no opening moment | ~2.4s opening on blank paper: a pine line draws across the middle, rises into a one-stroke house, the door fills brass, "Homestretch" fades in; then the camera pulls back — the line scales into the real Road track and the house shrinks onto the Keys marker (spring, bounce 0) while the headline rises (70ms stagger), the date odometers, and the pine fill passes each marker. Once per session; click or any key skips straight to the final hero; reduced motion: 150ms fade | One subject-specific signature moment |
+| Opening first paint (found on video) | Header and partner line flashed before the overlay mounted | Inline pre-paint veil in `--paper` on first-session visits to `/` only (not reduced motion, not without JS) | "Starts as plain paper" |
+| Opening handoff (found on video) | The house faded at the Keys spot, then Keys popped last | The Keys marker and its label appear the moment the house lands | The house becomes Keys |
+| Hero horizon | Empty bottom of the first viewport | A street of 16 line-drawn houses on a ground line, drawn in left to right (40ms stagger); one window glows at a time; ≤8px parallax opposite the cursor on fine pointers | The horizon the Road heads toward |
+| Demo feedback | Date changed silently | "7 months sooner" pine pill (scale 0.95→1, 160ms, fades 1.5s after the last change), "3 months later" in `--ink-2`; pine fill from Today to the ready date glides with the slider; markers that become reachable sooner pulse 1.1×; the Keys marker flashes brass and one street window lights together; "Drag to see what changes" until the first drag | Make the play rewarding |
+| Delta pill (found by e2e) | Every value mounted a new pill; up to 10 stacked during a fast drag | One pill; only its text swaps | No overlap |
+| Ticker | — | 56px strip under the hero, labelled "Sample families", one line from the seed data every 3s (old rises out 8px, new rises in, 250ms); wraps to two lines on phones instead of truncating | Real product activity, no invented names |
+| Scroll scenes | Captions static | Captions rise from masks on entry; the pinned Road scene has the street under it and lights the last house at "Keys"; Homes rows stagger in with house glyphs and counts climbing; a pine spine down the left margin draws with scroll (scaleY) | One road through the page |
+| Closing | Light band | The only dark section: pine band, white sentence, both 100s roll up from 0 on entry, white button | A closing beat |
+| Skyline performance (4× throttle) | Lighting a window re-rendered 16 animated houses; 7 slow frames on a full scroll | Street memoized; lit windows are cheap overlays; second pass 0 slow frames, median/p95 16.7ms; first pass 4 one-time mount frames | Animate only what moves |
+| Intake progress | Thin bar | A small Road: pine line growing toward a house; the door turns brass on the last step; it is the shared element that grows into the result Road | Same language, calmer |
+| Intake questions | Static title | Question rises from a mask (320ms), fields fade up 60ms behind it; faint static street at 40% at the bottom | Under 400ms, nothing delays the user |
+| Steppers, currency fields | Numbers jumped | Values roll to the new number when changed by a tap, scan or voice (typing shows plain text) | Numbers count |
+| Pay-stub / voice fill | All fields washed at once | Each filled field washes pine-soft one after another, 80ms apart | You see the form fill itself in |
+| Intake title focus ring (found in screenshots) | A heavy ring boxed the title after Continue (the earlier fix lost to the unlayered global rule) | Exempted in the same unlayered layer | Headings aren't controls |
+| Result | — | Street under the Road: the Keys house door turns brass when the date settles; each ticked plan item lights a window; "Why this date" lines rise 50ms apart; "Aim for a specific home" lifts the chosen home's card from its row into place beside the Keys marker of a small Road that re-flows as the sliders glide; "Ten years from now" lines draw when scrolled into view and equity counts up | Calmer than the landing, same language |
+| Result Road at 390 (found in screenshots) | Keys marker clipped (min width 340 > panel) | Min width 280; labels merge as needed | Keys always visible |
+| Plan page | Full 900ms draw | 600ms draw (families revisit it), same street with windows per ticked item | Shorter for return visits |
+| Staff (merged from the staff pass) | Hard cuts between tabs | 12px slide + crossfade (200ms in, 140ms out); Pipeline rows stagger on first load only (20ms, max 8); filtering fades/reflows; drawer Road draws in 400ms; Homes rows get line-drawn houses and counts that roll up when visible; nothing moves on its own | The calmest surface |

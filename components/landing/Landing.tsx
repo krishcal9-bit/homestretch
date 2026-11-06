@@ -289,15 +289,16 @@ function HeroDemo({ phase, onEarlier }: { phase: Phase; onEarlier: () => void })
             <AnimatePresence>
               {delta && (
                 <motion.span
-                  key={deltaText}
+                  key="pill"
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, transition: { duration: 0.2 } }}
                   transition={{ duration: 0.16, ease: ease.out }}
-                  className={`tnum absolute right-0 top-0 inline-flex h-[28px] items-center whitespace-nowrap rounded-full px-3 text-[13px] font-medium ${delta.n < 0 ? 'bg-pine text-white' : 'bg-surface text-ink-2 ring-1 ring-line'}`}
+                  className={`tnum absolute right-0 top-0 inline-flex h-[28px] items-center whitespace-nowrap rounded-full px-3 text-[13px] font-medium transition-colors duration-200 ${delta.n < 0 ? 'bg-pine text-white' : 'bg-surface text-ink-2 ring-1 ring-line'}`}
                   data-testid="delta-pill"
                 >
-                  {deltaText}
+                  {/* one pill; only its text swaps while the drag continues */}
+                  <AnimatedMonth text={deltaText} />
                 </motion.span>
               )}
             </AnimatePresence>
@@ -318,6 +319,7 @@ function HeroDemo({ phase, onEarlier }: { phase: Phase; onEarlier: () => void })
             drawDuration={phase === 'opening' ? 0.5 : SEQ.roadDraw}
             drawEase="inOut"
             trackDrawn={phase === 'opening'}
+            keysAt={phase === 'opening' ? OPEN_TOTAL - 0.12 : undefined}
             progressTo={result.monthsToReady}
             keysGlow={keysGlow}
           />
@@ -451,11 +453,11 @@ function Ticker() {
     <div className="border-y border-line bg-surface" data-testid="ticker">
       <div className="mx-auto flex h-[56px] max-w-[1280px] items-center gap-6 px-5 lg:px-8">
         <span className="t-helper shrink-0 text-ink-2">{t('landing.tickerLabel')}</span>
-        <div className="relative h-[24px] flex-1 overflow-hidden" aria-live="off">
+        <div className="relative h-[40px] flex-1 overflow-hidden sm:h-[24px]" aria-live="off">
           <AnimatePresence initial={false}>
             <motion.p
               key={i}
-              className="absolute inset-0 flex items-center gap-3 whitespace-nowrap text-[15px] text-ink"
+              className="absolute inset-0 flex items-center gap-3 text-[13px] leading-[18px] text-ink sm:whitespace-nowrap sm:text-[15px]"
               initial={reduce ? { opacity: 0 } : { opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
@@ -466,7 +468,7 @@ function Ticker() {
                 <circle cx="3" cy="9" r="2" fill="var(--brass)" />
                 <path d="M19 10V5.5L23 2l4 3.5V10z" fill="none" stroke="var(--pine)" strokeWidth="1.5" strokeLinejoin="round" />
               </svg>
-              <span className="tnum truncate">{lines[i]}</span>
+              <span className="tnum">{lines[i]}</span>
             </motion.p>
           </AnimatePresence>
         </div>

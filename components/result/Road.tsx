@@ -8,7 +8,7 @@ import { monthName, money } from '@/lib/format';
 import type { Milestone, MilestoneKey, ReadinessResult } from '@/lib/types';
 
 const PAD = 28;
-const MIN_W = 340; // below this the road scrolls horizontally
+const MIN_W = 280; // below this the road scrolls horizontally
 const MERGE_GAP = 72; // markers closer than this share one label
 const MIN_MARKER_GAP = 22; // markers stay at least this far apart so each stays tappable
 
@@ -208,13 +208,15 @@ type RoadProps = {
   keysGlow?: number;
   /** The track is already on screen (the landing opening's line became it): don't redraw it; markers still pop as reached. */
   trackDrawn?: boolean;
+  /** Override when the Keys marker appears (seconds): the landing opening's house becomes it on landing. */
+  keysAt?: number;
 };
 
 /**
  * The Road: Today → Keys with milestone markers placed proportionally by month. The track draws in;
  * each marker pops in as the line reaches it; markers follow lever changes with spring.gentle.
  */
-export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, entrance = 'session', entranceDelay = 0, drawDuration = dur.long, drawEase = 'out', size = 'md', highlight = [], vtName, className = '', progressTo, keysGlow = 0, trackDrawn = false }: RoadProps) {
+export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, entrance = 'session', entranceDelay = 0, drawDuration = dur.long, drawEase = 'out', size = 'md', highlight = [], vtName, className = '', progressTo, keysGlow = 0, trackDrawn = false, keysAt }: RoadProps) {
   const { t, lang } = useLang();
   const g = GEOM[size];
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -343,7 +345,7 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
             {todayLabel}
           </motion.text>
           {placed.map((m) => (
-            <Marker key={m.key} m={m} g={g} onHover={onHover} delay={play && !entranceOver ? reachDelay(m.x) : 0} play={play} highlighted={highlight.includes(m.key)} keysGlow={keysGlow} active={active === m.key} onActive={setActive} />
+            <Marker key={m.key} m={m} g={g} onHover={onHover} delay={play && !entranceOver ? (m.key === 'keys' && keysAt !== undefined ? keysAt : reachDelay(m.x)) : 0} play={play} highlighted={highlight.includes(m.key)} keysGlow={keysGlow} active={active === m.key} onActive={setActive} />
           ))}
           <AnimatePresence initial={play}>
             {clusters.map((c) => {
@@ -357,7 +359,7 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
                   initial={{ opacity: 0, x: c.left }}
                   animate={{ opacity: 1, x: c.left, fill: strong ? 'var(--ink)' : 'var(--ink-2)' }}
                   exit={{ opacity: 0, transition: { duration: 0.1 } }}
-                  transition={{ x: spring.gentle, fill: { duration: 0.2 }, opacity: { duration: 0.2, ease: ease.out, delay: play && !entranceOver ? reachDelay(c.x) + 0.05 : 0 } }}
+                  transition={{ x: spring.gentle, fill: { duration: 0.2 }, opacity: { duration: 0.2, ease: ease.out, delay: play && !entranceOver ? (c.keys.includes('keys') && keysAt !== undefined ? keysAt + 0.05 : reachDelay(c.x) + 0.05) : 0 } }}
                   pointerEvents="none"
                   data-label={c.id}
                 >

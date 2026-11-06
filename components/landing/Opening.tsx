@@ -98,7 +98,7 @@ export function Opening({ onDone, onSkip }: { onDone: () => void; onSkip: () => 
         style={{ left: houseLeft, top: houseTop, width: HOUSE_W, height: HOUSE_H }}
         initial={false}
         animate={houseTarget ? { x: houseTarget.x, y: houseTarget.y, scale: houseTarget.scale, opacity: [1, 1, 0] } : { x: 0, y: 0, scale: 1 }}
-        transition={houseTarget ? { ...pullSpring, opacity: { duration: OPEN.pullDur, times: [0, 0.8, 1] } } : undefined}
+        transition={houseTarget ? { ...pullSpring, opacity: { duration: OPEN.pullDur, times: [0, 0.88, 1] } } : undefined}
       >
         <svg width={HOUSE_W} height={HOUSE_H + 2} viewBox={`0 0 ${HOUSE_W} ${HOUSE_H + 2}`} className="block overflow-visible">
           <motion.rect

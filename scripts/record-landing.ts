@@ -8,7 +8,7 @@ import fs from 'fs';
   const ctx = await b.newContext({ viewport: { width: 1440, height: 900 }, recordVideo: { dir: 'docs/motion/tmp', size: { width: 1440, height: 900 } } });
   const p = await ctx.newPage();
   p.on('pageerror', (e) => console.log('PAGEERROR', e.message.slice(0, 200)));
-  await p.goto('http://localhost:3000/'); await p.waitForTimeout(2200);
+  await p.goto('http://localhost:3000/'); await p.evaluate(() => sessionStorage.setItem('hs.opened', '1')); await p.reload(); await p.waitForTimeout(2200);
   const sceneTop = async (id: string) => p.evaluate((i) => document.querySelector(`[data-testid=${i}]`)!.getBoundingClientRect().top + window.scrollY, id);
   const shots: [string, number][] = [];
   const phone = await sceneTop('scene-intake'); shots.push(['scene1', phone - 80]);
@@ -21,7 +21,7 @@ import fs from 'fs';
   await ctx.close();
   const f = fs.readdirSync('docs/motion/tmp')[0]; fs.renameSync(`docs/motion/tmp/${f}`, 'docs/motion/landing-1440.webm'); fs.rmdirSync('docs/motion/tmp');
   const q = await b.newPage({ viewport: { width: 1440, height: 900 } });
-  await q.goto('http://localhost:3000/'); await q.waitForTimeout(1800);
+  await q.goto('http://localhost:3000/'); await q.evaluate(() => sessionStorage.setItem('hs.opened', '1')); await q.reload(); await q.waitForTimeout(1800);
   for (const [name, y] of shots) {
     // approach each point by wheel so scroll-linked scenes update naturally
     const cur = await q.evaluate(() => window.scrollY);

@@ -1,0 +1,16 @@
+{
+  "whyThisDate": [
+    "Su renta es el 45% de su ingreso, lo que califica como necesidad.",
+    "Una cobranza de $1,900 es lo primero que hay que pagar, así que cada dólar extra va ahí primero.",
+    "Un crédito que necesita trabajo toma cerca de un año de historial limpio después de controlar las deudas.",
+    "Necesita $7,100 para el enganche y el cierre, y su plan de ahorro le lleva ahí."
+  ],
+  "actions": [
+    { "title": "Llame a la agencia de cobranza esta semana", "detail": "Pida por escrito un acuerdo de eliminación por pago antes de pagar.", "owner": "you", "byMonth": 0, "resource": null },
+    { "title": "Reserve una asesoría de crédito gratis", "detail": "Un asesor de SparkPoint OC le ayuda a ordenar sus deudas.", "owner": "counselor", "byMonth": 1, "resource": { "name": "SparkPoint OC", "url": "https://www.unitedwayoc.org/sparkpoint-oc/" } },
+    { "title": "Programe una transferencia automática de ahorro", "detail": "Mueva dinero el día que le pagan hacia su meta de $7,100.", "owner": "you", "byMonth": 0, "resource": null },
+    { "title": "Inscríbase a una orientación de Habitat OC", "detail": "Puede ir antes de estar listo del todo.", "owner": "habitat", "byMonth": 2, "resource": { "name": "Habitat OC orientation", "url": "https://www.habitatoc.org/homeownership" } },
+    { "title": "Empiece una carpeta con talones de pago y estados de cuenta", "detail": "Guarde los últimos dos meses de cada uno.", "owner": "you", "byMonth": 2, "resource": null }
+  ],
+  "underwritersEye": null
+}

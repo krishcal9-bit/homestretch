@@ -27,7 +27,7 @@ export function ReadyHero({ months, readyDate, keysDate, reveal, noIncome }: { m
     <motion.div initial={false} animate={{ opacity: reveal ? 1 : 0, y: reveal ? 0 : 8 }} transition={{ duration: dur.medium, ease: ease.out }}>
       <p className="text-[15px] text-ink-2">{t('result.eyebrow')}</p>
       <p className="mt-1 text-[clamp(40px,11vw,56px)] font-semibold leading-[1.07] tracking-[-0.01em] text-brass">
-        <AnimatedMonth text={months >= MAX_MONTHS ? '2036+' : monthName(readyDate, lang)} testId="ready-date" />
+        <AnimatedMonth text={months >= MAX_MONTHS ? t('result.tenPlus') : monthName(readyDate, lang)} testId="ready-date" />
       </p>
       <p className="tnum mt-3 text-[16px] text-ink" data-testid="ready-sub">
         {sub}

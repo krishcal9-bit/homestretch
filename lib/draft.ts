@@ -36,7 +36,8 @@ export const emptyDraft = (): Draft => ({
   debts: { car: { payment: null, balance: null }, card: { payment: null, balance: null }, student: { payment: null, balance: null }, collection: { payment: null, balance: null }, other: { payment: null, balance: null } },
   savings: null,
   creditBand: null,
-  levers: { extraDebt: 0, monthlySavings: 0, coApplicantIncome: 0 },
+  // The intake doesn't ask for a monthly savings amount; start the slider at a modest $150.
+  levers: { extraDebt: 0, monthlySavings: 150, coApplicantIncome: 0 },
 });
 
 /** Balance guesses when only a payment is known (months of payments outstanding). */

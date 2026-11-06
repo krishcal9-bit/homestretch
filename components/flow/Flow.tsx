@@ -11,6 +11,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Welcome } from './Welcome';
 import { HouseholdScreen, HousingScreen, IncomeScreen, MoneyScreen, validate, type ScreenProps } from './Screens';
 import { ResultScreen } from '@/components/result/ResultScreen';
+import { FamilyExtras } from '@/components/result/FamilyExtras';
 
 const INTAKE_STEPS = 4;
 
@@ -52,7 +53,7 @@ export function Flow() {
   // Move focus to the new screen's title for keyboard and screen-reader users.
   useEffect(() => {
     if (step === 0) return;
-    const id = requestAnimationFrame(() => (containerRef.current?.querySelector('[data-screen-title]') as HTMLElement | null)?.focus());
+    const id = requestAnimationFrame(() => (containerRef.current?.querySelector(`[data-step="${step}"] [data-screen-title]`) as HTMLElement | null)?.focus());
     return () => cancelAnimationFrame(id);
   }, [step]);
 
@@ -86,6 +87,7 @@ export function Flow() {
       <AnimatePresence mode="popLayout" initial={false} custom={dir}>
         <motion.div
           key={step}
+          data-step={step}
           custom={dir}
           variants={{
             enter: (d: number) => ({ x: d * 24, opacity: 0 }),
@@ -115,7 +117,7 @@ export function Flow() {
               </div>
             </form>
           )}
-          {step > INTAKE_STEPS && <ResultScreen draft={draft} setDraft={setDraft} onEdit={() => go(1)} />}
+          {step > INTAKE_STEPS && <ResultScreen draft={draft} setDraft={setDraft} onEdit={() => go(1)} Extras={FamilyExtras} />}
         </motion.div>
       </AnimatePresence>
     </div>

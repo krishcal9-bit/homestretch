@@ -40,7 +40,14 @@ export function Segmented<T extends string>({
             onClick={() => onChange(o.value)}
             onKeyDown={(e) => {
               const i = options.findIndex((x) => x.value === value);
-              if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+              if (e.key === 'Enter') {
+                // Like a native radio: Enter submits the surrounding form.
+                const form = (e.currentTarget as HTMLElement).closest('form');
+                if (form) {
+                  e.preventDefault();
+                  form.requestSubmit();
+                }
+              } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
                 e.preventDefault();
                 onChange(options[(i + 1 + options.length) % options.length].value);
               } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {

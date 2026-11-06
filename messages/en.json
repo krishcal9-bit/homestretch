@@ -144,7 +144,8 @@
     "futuresSentence": "Over ten years, renting costs {diff} more and leaves you with $0. The Habitat home leaves you with {equity} in equity.",
     "futuresSentenceLess": "Over ten years, the Habitat home costs {diff} more than renting, and leaves you with {equity} in equity instead of $0.",
     "cumulative": "Total housing cost",
-    "year": "Year {n}"
+    "year": "Year {n}",
+    "tenPlus": "10+ years"
   },
   "road": {
     "labels": {
@@ -187,5 +188,61 @@
     "bottomReady": "Nothing stands between you and an application, so your date is now.",
     "keys": "After you apply, a Habitat home typically takes about 9 months to build and close.",
     "collectionsLater": "A {amount} collection is the first thing to clear; once your other payments free up money, it clears in month {n}. Extra money toward debt gets there sooner."
+  },
+  "planFallback": {
+    "pullReport": "Pull your free credit report",
+    "pullReportDetail": "Get all three reports at annualcreditreport.com and note any collections or late payments.",
+    "callCollector": "Call about the {amount} in collections",
+    "callCollectorDetail": "Ask for a pay-for-delete agreement in writing before you pay anything.",
+    "counseling": "Book a free credit coaching session",
+    "counselingDetail": "A coach helps you order your debts and set up on-time payments.",
+    "autoSave": "Set up an automatic transfer of {amount} a month",
+    "autoSaveDetail": "Move it the day you get paid. Your goal is {target} for down payment and closing.",
+    "orientation": "Sign up for a Habitat OC orientation",
+    "orientationDetail": "Orientation is required before you apply, and you can go before you're fully ready.",
+    "documents": "Start a folder of pay stubs and bank statements",
+    "documentsDetail": "Keep the last two months of each. Habitat will ask for them when you apply.",
+    "ueOverdraft": "{n} overdraft or returned-payment fees in the last 90 days",
+    "ueOverdraftDo": "Lenders look for 90 days with none. Turn on low-balance alerts and keep a small buffer.",
+    "ueDeposit": "A {amount} deposit on {date} with no clear source",
+    "ueDepositDo": "Lenders will ask where it came from. Write a short letter of explanation and keep any proof.",
+    "ueLoan": "A recurring {amount} payment to {name} that looks like a loan you didn't list",
+    "ueLoanDo": "Add it to your debts so your plan is accurate, or note what it is."
+  },
+  "plan": {
+    "title": "Your 90-day plan",
+    "regenerate": "Regenerate plan",
+    "owner": {
+      "you": "You",
+      "habitat": "Habitat OC",
+      "counselor": "Counselor"
+    },
+    "byNow": "This month",
+    "byMonth": "By {month}",
+    "error": "We couldn't write your plan just now. Here's a basic plan from your numbers.",
+    "progress": "{done} of {total} done",
+    "ueTitle": "Underwriter's eye",
+    "ueHelp": "Things a lender will notice on your bank statement, and what to do about each.",
+    "whatToDo": "What to do",
+    "saveTitle": "Save my plan",
+    "saveHelp": "Get a code and a link to come back to this plan on any device.",
+    "save": "Save my plan",
+    "saved": "Plan saved",
+    "yourCode": "Your plan code",
+    "link": "Your link",
+    "copyLink": "Copy link",
+    "copied": "Link copied",
+    "textMe": "Text me this",
+    "texted": "Text sent",
+    "phone": "Mobile number",
+    "send": "Send",
+    "downloadPdf": "Download PDF",
+    "consent": "Habitat OC staff can see your plan only if you share your code at orientation.",
+    "saveError": "We couldn't save your plan. Check your connection and try again.",
+    "notFoundTitle": "We couldn't find that plan",
+    "notFound": "We couldn't find that plan. Check the code or start a new one.",
+    "startOver": "Start a new plan",
+    "planFor": "Plan {code}",
+    "openFamilyApp": "Update my answers"
   }
 }

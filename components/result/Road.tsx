@@ -10,7 +10,7 @@ import type { Milestone, ReadinessResult } from '@/lib/types';
 const BASE_H = 100;
 const TRACK_Y = 40;
 const PAD = 28;
-const MIN_W = 600; // below this the road scrolls horizontally (phones)
+const MIN_W = 340; // below this the road scrolls horizontally
 
 type Placed = Milestone & { x: number; row: number; dx: number; anchor: 'start' | 'middle' | 'end' };
 const textW = (s: string, bold = false) => s.length * (bold ? 7.4 : 6.9);
@@ -142,7 +142,7 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone }
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(([e]) => setW(Math.max(e.contentRect.width >= 460 ? 0 : MIN_W, Math.round(e.contentRect.width))));
+    const ro = new ResizeObserver(([e]) => setW(Math.max(MIN_W, Math.round(e.contentRect.width))));
     ro.observe(el);
     setReady(true);
     return () => ro.disconnect();

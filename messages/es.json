@@ -144,7 +144,8 @@
     "futuresSentence": "En diez años, rentar cuesta {diff} más y le deja $0. La casa de Habitat le deja {equity} de patrimonio.",
     "futuresSentenceLess": "En diez años, la casa de Habitat cuesta {diff} más que rentar, y le deja {equity} de patrimonio en lugar de $0.",
     "cumulative": "Costo total de vivienda",
-    "year": "Año {n}"
+    "year": "Año {n}",
+    "tenPlus": "Más de 10 años"
   },
   "road": {
     "labels": {
@@ -187,5 +188,61 @@
     "bottomReady": "Nada le impide hacer su solicitud, así que su fecha es ahora.",
     "keys": "Después de solicitar, una casa de Habitat suele tomar unos 9 meses en construirse y cerrarse.",
     "collectionsLater": "Una cobranza de {amount} es lo primero que hay que pagar; cuando sus otros pagos liberen dinero, quedará pagada en el mes {n}. Dinero extra para deudas lo adelanta."
+  },
+  "planFallback": {
+    "pullReport": "Pida su reporte de crédito gratis",
+    "pullReportDetail": "Obtenga los tres reportes en annualcreditreport.com y anote cobranzas o pagos atrasados.",
+    "callCollector": "Llame por los {amount} en cobranzas",
+    "callCollectorDetail": "Pida por escrito un acuerdo de eliminación por pago antes de pagar.",
+    "counseling": "Reserve una asesoría de crédito gratis",
+    "counselingDetail": "Un asesor le ayuda a ordenar sus deudas y organizar pagos a tiempo.",
+    "autoSave": "Programe una transferencia automática de {amount} al mes",
+    "autoSaveDetail": "Hágala el día que le pagan. Su meta es {target} para el enganche y el cierre.",
+    "orientation": "Inscríbase a una orientación de Habitat OC",
+    "orientationDetail": "La orientación es obligatoria antes de solicitar, y puede ir antes de estar listo del todo.",
+    "documents": "Empiece una carpeta con talones de pago y estados de cuenta",
+    "documentsDetail": "Guarde los últimos dos meses de cada uno. Habitat los pedirá cuando solicite.",
+    "ueOverdraft": "{n} cargos por sobregiro o pagos devueltos en los últimos 90 días",
+    "ueOverdraftDo": "Los prestamistas buscan 90 días sin ninguno. Active alertas de saldo bajo y deje un pequeño margen.",
+    "ueDeposit": "Un depósito de {amount} el {date} sin origen claro",
+    "ueDepositDo": "Los prestamistas preguntarán de dónde vino. Escriba una carta breve de explicación y guarde comprobantes.",
+    "ueLoan": "Un pago recurrente de {amount} a {name} que parece un préstamo que no anotó",
+    "ueLoanDo": "Agréguelo a sus deudas para que su plan sea preciso, o anote qué es."
+  },
+  "plan": {
+    "title": "Su plan de 90 días",
+    "regenerate": "Generar el plan de nuevo",
+    "owner": {
+      "you": "Usted",
+      "habitat": "Habitat OC",
+      "counselor": "Asesor"
+    },
+    "byNow": "Este mes",
+    "byMonth": "Para {month}",
+    "error": "No pudimos escribir su plan en este momento. Aquí tiene un plan básico con sus números.",
+    "progress": "{done} de {total} hechos",
+    "ueTitle": "Lo que verá el prestamista",
+    "ueHelp": "Lo que un prestamista notará en su estado de cuenta, y qué hacer con cada cosa.",
+    "whatToDo": "Qué hacer",
+    "saveTitle": "Guardar mi plan",
+    "saveHelp": "Reciba un código y un enlace para volver a este plan desde cualquier dispositivo.",
+    "save": "Guardar mi plan",
+    "saved": "Plan guardado",
+    "yourCode": "Su código de plan",
+    "link": "Su enlace",
+    "copyLink": "Copiar enlace",
+    "copied": "Enlace copiado",
+    "textMe": "Enviarme por mensaje",
+    "texted": "Mensaje enviado",
+    "phone": "Número de celular",
+    "send": "Enviar",
+    "downloadPdf": "Descargar PDF",
+    "consent": "El personal de Habitat OC solo puede ver su plan si usted comparte su código en la orientación.",
+    "saveError": "No pudimos guardar su plan. Revise su conexión e intente de nuevo.",
+    "notFoundTitle": "No encontramos ese plan",
+    "notFound": "No encontramos ese plan. Revise el código o empiece uno nuevo.",
+    "startOver": "Empezar un plan nuevo",
+    "planFor": "Plan {code}",
+    "openFamilyApp": "Actualizar mis respuestas"
   }
 }

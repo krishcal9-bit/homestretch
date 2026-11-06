@@ -20,11 +20,15 @@ export async function PATCH(req: Request, { params }: Ctx) {
   const parsed = await parseBody(req, Patch);
   if ('error' in parsed) return parsed.error;
   try {
-    const plan = await prisma.plan.findUnique({ where: { code: code.toUpperCase() } });
-    if (!plan) return apiError('not_found', "We couldn't find that plan.", 404);
-    const checklist = { ...(JSON.parse(plan.checklistJson) as Record<string, boolean>), [parsed.data.index]: parsed.data.done };
-    await prisma.plan.update({ where: { code: plan.code }, data: { checklistJson: JSON.stringify(checklist), lastActivity: new Date() } });
-    return NextResponse.json({ checklist });
+    // Compare-and-swap on updatedAt so two tabs ticking different items never lose one.
+    for (let attempt = 0; attempt < 6; attempt++) {
+      const plan = await prisma.plan.findUnique({ where: { code: code.toUpperCase() } });
+      if (!plan) return apiError('not_found', "We couldn't find that plan.", 404);
+      const checklist = { ...(JSON.parse(plan.checklistJson) as Record<string, boolean>), [parsed.data.index]: parsed.data.done };
+      const res = await prisma.plan.updateMany({ where: { id: plan.id, updatedAt: plan.updatedAt }, data: { checklistJson: JSON.stringify(checklist), lastActivity: new Date() } });
+      if (res.count === 1) return NextResponse.json({ checklist });
+    }
+    return apiError('conflict', 'Someone else is editing this plan. Try again.', 409);
   } catch {
     return apiError('db_unavailable', 'We could not save that right now.', 503);
   }

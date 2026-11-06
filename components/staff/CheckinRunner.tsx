@@ -113,7 +113,7 @@ export function CheckinRunner() {
                     </li>
                   ))}
                 </ul>
-                <p className="t-helper mt-3 text-ink-2">{it.change.map((c) => c.text).join(' · ')}</p>
+                {it.change.some((c) => !it.digest.includes(c.text)) && <p className="t-helper mt-3 text-ink-2">{it.change.map((c) => c.text).join(' · ')}</p>}
               </div>
               <div>
                 <label htmlFor={`nudge-${it.familyId}`} className="text-[13px] font-medium text-ink-2">

@@ -60,7 +60,6 @@ export async function POST(req: Request) {
     content: `Write the 90-day plan for this family in ${facts.language}.\n\n${JSON.stringify(facts, null, 2)}`,
     schema: PlanOutputSchema,
     fallback: () => fallbackPlan(profile, result, lang),
-    fixture: lang === 'es' ? 'plan-es' : 'plan',
     maxTokens: 4000,
   });
   // Underwriter's eye is only for families who uploaded a statement; make sure it's there when it should be.

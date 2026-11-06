@@ -6,7 +6,7 @@ import { useToast } from '@/components/Toast';
 import { Button } from '@/components/ui/Button';
 import { Segmented } from '@/components/ui/Segmented';
 import { monthName } from '@/lib/format';
-import { spring } from '@/lib/motion';
+import { exit, spring } from '@/lib/motion';
 import { nextActionFor } from '@/lib/outreach';
 import type { FamilyRow } from '@/lib/staffData';
 import { TIER_LABEL, homeCounts, homeTitle, rankForHome, rulesReason, type Candidate } from '@/lib/staffLogic';
@@ -138,7 +138,7 @@ function CandidateRow({ rank, c, home, reason, open, onToggle }: { rank: number;
       </div>
       <AnimatePresence initial={false}>
         {open && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={spring.smooth}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: exit }} transition={spring.smooth}>
             <OutreachEditor family={f} home={home} />
           </motion.div>
         )}

@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { HouseGlyph } from '@/components/staff/HouseGlyph';
+import { ReadyCount } from '@/components/staff/ReadyCount';
 import { monthName } from '@/lib/format';
 import { loadFamilies, loadHomes } from '@/lib/staffData';
 import { homeCounts, homeInsight } from '@/lib/staffLogic';
@@ -41,12 +43,16 @@ export default async function HomesPage() {
               <tr key={h.id} className="border-b border-line" data-testid="home-row" data-home={h.id} data-ready-count={projected} data-ready-now={readyNow}>
                 <td className="px-3 py-3 font-medium">{h.address}</td>
                 <td className="px-3 py-3 text-ink-2">{h.city}</td>
-                <td className="tnum px-3 py-3 text-right">{h.bedrooms}</td>
+                <td className="tnum px-3 py-3 text-right">
+                  <div className="flex items-center justify-end gap-3">
+                    <HouseGlyph bedrooms={h.bedrooms} />
+                    <span className="min-w-[1ch]">{h.bedrooms}</span>
+                  </div>
+                </td>
                 <td className="tnum px-3 py-3">{monthName(h.completion, 'en', true)}</td>
                 <td className="px-3 py-3 text-ink-2">{h.status}</td>
                 <td className="px-3 py-3">
-                  <span className="tnum font-medium">{projected}</span> <span className="text-ink-2">{projected === 1 ? 'family' : 'families'} projected ready,</span>{' '}
-                  <span className="tnum font-medium">{readyNow}</span> <span className="text-ink-2">ready now</span>
+                  <ReadyCount projected={projected} readyNow={readyNow} />
                 </td>
                 <td className="px-3 py-1 text-right">
                   <Link href={`/staff/match?home=${h.id}`} className="inline-flex min-h-[44px] items-center rounded-[8px] px-3 text-[15px] font-medium text-pine hover:bg-pine-soft">

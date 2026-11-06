@@ -131,7 +131,11 @@ export function Insights({ homes, families }: { homes: Home[]; families: Fam[] }
           <ProgramToggle label="Down-payment grant" unit="per family" prefix="$" on={on.grant} value={vals.grant} step={250} max={50000}
             onToggle={() => setOn({ ...on, grant: !on.grant })} onValue={(v) => setVals({ ...vals, grant: v })} />
         </div>
-        <p className="mt-8 border-t border-line pt-6 text-[20px] leading-[28px]" aria-live="polite">
+        {/* The numbers roll on screen; screen readers get the settled sentence once, not every frame. */}
+        <p className="sr-only" aria-live="polite">
+          {more} more {more === 1 ? 'family' : 'families'} ready by {monthName(addMonths(today, target))}, for {money(sim.cost)}.
+        </p>
+        <p className="mt-8 border-t border-line pt-6 text-[20px] leading-[28px]" aria-hidden>
           <span className="tnum font-semibold" data-testid="more-ready">
             <AnimatedNumber value={more} format={(n) => String(Math.round(n))} />
           </span>{' '}

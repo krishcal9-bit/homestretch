@@ -67,8 +67,9 @@ export function rankForHome<F extends FamilyRow>(home: Home, families: F[]): Can
       const ready = monthsSpare >= 0;
       const ideal = Math.ceil(f.householdSize / 2);
       const sizeFit = 1 - Math.min(1, Math.abs(home.bedrooms - ideal) / 2);
-      const lateness = ready ? 0 : Math.min(1, -monthsSpare / 24);
-      const fitScore = Math.round(100 * (0.55 * (ready ? 1 : 0.5 - 0.5 * lateness) + 0.3 * sizeFit + 0.15 * (1 - TIER_RANK[f.result.tier] / 4)));
+      // Ready by completion scores 1; a family a few months late still ranks well, a year late scores 0.
+      const readiness = ready ? 1 : 0.6 * Math.max(0, 1 - -monthsSpare / 12);
+      const fitScore = Math.round(100 * (0.55 * readiness + 0.3 * sizeFit + 0.15 * (1 - TIER_RANK[f.result.tier] / 4)));
       return { family: f, fitScore, readyByCompletion: ready, monthsSpare };
     })
     .sort((a, b) => b.fitScore - a.fitScore || a.family.result.monthsToReady - b.family.result.monthsToReady);

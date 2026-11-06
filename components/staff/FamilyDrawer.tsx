@@ -197,7 +197,7 @@ function ReferralPacket({ code, defaultLang }: { code: string; defaultLang: Lang
     <div className="rounded-[14px] border border-line p-4">
       <h3 className="text-[15px] font-semibold">Referral packet</h3>
       <p className="mt-1 text-[13px] leading-[18px] text-ink-2">One page for the counselor: household summary, top three blockers, the engine timeline and what Habitat needs to see at the end.</p>
-      <div className="mt-3 flex flex-wrap items-center gap-3">
+      <div className="mt-3 grid grid-cols-[1fr_180px] gap-3">
         <Segmented<ReferralOrg>
           size="sm"
           label="Counselor"
@@ -223,7 +223,7 @@ function ReferralPacket({ code, defaultLang }: { code: string; defaultLang: Lang
           target="_blank"
           rel="noopener"
           data-testid="referral-link"
-          className="ml-auto inline-flex min-h-[44px] items-center rounded-[8px] border border-line px-4 text-[15px] font-medium text-ink hover:bg-paper"
+          className="col-span-2 inline-flex min-h-[44px] justify-center items-center rounded-[8px] border border-line px-4 text-[15px] font-medium text-ink hover:bg-paper"
         >
           Open packet
         </a>

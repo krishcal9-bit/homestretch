@@ -1,0 +1,4 @@
+{
+  "subject": "Una casa de {bedrooms} recámaras en {city} para la familia {surname}",
+  "body": "Hola, {givenName}:\n\nLe escribe el equipo de Habitat OC para saber cómo va el plan de la familia {surname}. Estamos construyendo una casa de {bedrooms} recámaras en {city} que debe estar terminada en {completion}, y su plan indica que podrían estar listos para {readyDate}.\n\nSu siguiente paso: {nextAction}\n\nResponda a este mensaje si algo ha cambiado o si desea ayuda con ese paso.\n\nHabitat for Humanity of Orange County"
+}

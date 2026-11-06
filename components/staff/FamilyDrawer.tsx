@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Road } from '@/components/result/Road';
 import { Segmented } from '@/components/ui/Segmented';
 import { money, monthName, pct } from '@/lib/format';
-import { spring, exitDrawer } from '@/lib/motion';
+import { dur, spring, exitDrawer } from '@/lib/motion';
 import { ORG_NAME, type ReferralOrg } from '@/lib/referral';
 import type { FamilyRow } from '@/lib/staffData';
 import { TIER_LABEL } from '@/lib/staffLogic';
@@ -115,7 +115,8 @@ function DrawerBody({ family: f, onClose, closeRef }: { family: FamilyRow; onClo
         </motion.section>
 
         <motion.section variants={section} className="mt-4">
-          <Road result={r} />
+          {/* Draws on every open, quickly: staff open many drawers a day. Starts as the panel settles. */}
+          <Road key={f.code} result={r} entrance="always" drawDuration={0.4} entranceDelay={dur.micro} />
         </motion.section>
 
         {!f.eligible && (

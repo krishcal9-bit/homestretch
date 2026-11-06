@@ -2,14 +2,25 @@
 import Link from 'next/link';
 import { Search } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useMemo, useRef, useState } from 'react';
+import { AnimatePresence, LayoutGroup, motion, type Transition } from 'motion/react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { monthName } from '@/lib/format';
+import { dur, ease } from '@/lib/motion';
 import type { FamilyRow } from '@/lib/staffData';
 import { STAGES, TIER_LABEL } from '@/lib/staffLogic';
 import { ChipGroup } from './ChipGroup';
 import { FamilyDrawer } from './FamilyDrawer';
 
 const DAY = 86_400_000;
+
+// Motion: rows stagger in once, on the first load of the session (20ms apart, rows past the 8th arrive
+// with the 8th). After that, filtering only fades rows in and out while the rest glide to their new place.
+const ROW_STAGGER = 0.02;
+const STAGGER_CAP = 7; // index of the 8th row
+const FADE: Transition = { duration: dur.short, ease: ease.out };
+const FADE_OUT: Transition = { duration: dur.short * 0.7, ease: ease.out };
+const GLIDE: Transition = { layout: { duration: dur.short, ease: ease.out }, default: FADE };
+let staggered = false; // module scope: one stagger per page load, not per tab visit
 export function relativeDays(iso: string, now = Date.now()) {
   const d = Math.max(0, Math.floor((now - new Date(iso).getTime()) / DAY));
   return d === 0 ? 'Today' : d === 1 ? 'Yesterday' : `${d} days ago`;
@@ -26,6 +37,12 @@ export function Pipeline({ families }: { families: FamilyRow[] }) {
   const [tier, setTier] = useState('all');
   const [blocker, setBlocker] = useState('all');
   const [lang, setLang] = useState('all');
+  // True only for the rows mounted on the first render of the session; rows that enter later just fade.
+  const [firstLoad, setFirstLoad] = useState(() => !staggered);
+  useEffect(() => {
+    staggered = true;
+    setFirstLoad(false);
+  }, []);
 
   const blockerTypes = useMemo(() => Array.from(new Set(families.map((f) => f.blockerType).filter((b): b is string => !!b))).sort(), [families]);
   const tiers = useMemo(() => Array.from(new Set(families.map((f) => f.result.tier))), [families]);
@@ -57,6 +74,16 @@ export function Pipeline({ families }: { families: FamilyRow[] }) {
       router.replace(pathname, { scroll: false });
     }
   };
+  // Display order across stage groups, so the first-load stagger runs top to bottom.
+  const order = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const s of STAGES)
+      families
+        .filter((f) => f.stage === s.key)
+        .sort((a, b) => a.result.monthsToReady - b.result.monthsToReady || a.surname.localeCompare(b.surname))
+        .forEach((f) => m.set(f.code, m.size));
+    return m;
+  }, [families]);
   const selected = families.find((f) => f.code === openCode) ?? null;
   const filtersOn = stage !== 'all' || tier !== 'all' || blocker !== 'all' || lang !== 'all' || q.trim() !== '';
 
@@ -130,67 +157,78 @@ export function Pipeline({ families }: { families: FamilyRow[] }) {
                 <th scope="col" className="w-[9%] px-3 py-2 font-medium">Plan code</th>
               </tr>
             </thead>
-            {STAGES.map((s) => {
-              const rows = filtered.filter((f) => f.stage === s.key).sort((a, b) => a.result.monthsToReady - b.result.monthsToReady || a.surname.localeCompare(b.surname));
-              const total = families.filter((f) => f.stage === s.key).length;
-              if (filtersOn && rows.length === 0) return null;
-              return (
-                <tbody key={s.key} data-testid={`stage-${s.key}`} data-count={rows.length}>
-                  <tr>
-                    <th colSpan={6} scope="colgroup" className="border-b border-line px-3 pb-2 pt-6 text-left">
-                      <span className="text-[15px] font-semibold text-ink">{s.key === 'not_eligible' ? 'Not eligible (why)' : s.label}</span>
-                      <span className="tnum ml-2 text-[13px] font-normal text-ink-2" data-testid="stage-count">
-                        {rows.length}
-                      </span>
-                      {filtersOn && rows.length !== total && <span className="tnum text-[13px] font-normal text-ink-2"> of {total}</span>}
-                    </th>
-                  </tr>
-                  {rows.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="border-b border-line px-3 py-3 text-[13px] text-ink-2">
-                        No families in this stage.
-                      </td>
-                    </tr>
-                  )}
-                  {rows.map((f) => (
-                    <tr
-                      key={f.code}
-                      data-testid="family-row"
-                      data-code={f.code}
-                      tabIndex={0}
-                      aria-label={`Open ${f.surname} family`}
-                      onClick={() => open(f.code)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          open(f.code);
-                        }
-                      }}
-                      className={`cursor-pointer border-b border-line transition-colors duration-[120ms] hover:bg-surface focus-visible:bg-surface ${openCode === f.code ? 'bg-surface' : ''}`}
-                      style={{ outlineOffset: -2 }}
-                    >
-                      <td className="px-3 py-3">
-                        <span className="font-medium text-ink">{f.surname}</span>
-                        <span className="ml-2 text-[13px] text-ink-2">
-                          {f.givenName} · <span className="tnum">{f.householdSize}</span> {f.householdSize === 1 ? 'person' : 'people'}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-ink-2">{TIER_LABEL[f.result.tier]}</td>
-                      <td className="tnum px-3 py-3">{f.eligible ? (f.result.monthsToReady === 0 ? 'Now' : monthName(f.result.readyDate, 'en', true)) : <span className="text-ink-2">n/a</span>}</td>
-                      <td className="px-3 py-3 text-ink-2">
-                        {f.stage === 'not_eligible' ? (
-                          <span className="border-l-2 border-signal-amber pl-2 text-signal-amber">{f.result.blockers.find((b) => b.severity === 3)?.text ?? f.result.eligible.reasons[0]}</span>
-                        ) : (
-                          (f.result.blockers[0]?.text ?? 'None')
-                        )}
-                      </td>
-                      <td className="tnum px-3 py-3 text-ink-2">{relativeDays(f.lastActivity)}</td>
-                      <td className="tnum px-3 py-3 text-ink-2">{f.code}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              );
-            })}
+            <LayoutGroup>
+              <AnimatePresence initial={false}>
+                {STAGES.map((s) => {
+                  const rows = filtered.filter((f) => f.stage === s.key).sort((a, b) => a.result.monthsToReady - b.result.monthsToReady || a.surname.localeCompare(b.surname));
+                  const total = families.filter((f) => f.stage === s.key).length;
+                  if (filtersOn && rows.length === 0) return null;
+                  return (
+                    <motion.tbody key={s.key} data-testid={`stage-${s.key}`} data-count={rows.length} initial={{ opacity: 0 }} animate={{ opacity: 1, transition: FADE }} exit={{ opacity: 0, transition: FADE_OUT }}>
+                      <motion.tr layout="position" transition={GLIDE}>
+                        <th colSpan={6} scope="colgroup" className="border-b border-line px-3 pb-2 pt-6 text-left">
+                          <span className="text-[15px] font-semibold text-ink">{s.key === 'not_eligible' ? 'Not eligible (why)' : s.label}</span>
+                          <span className="tnum ml-2 text-[13px] font-normal text-ink-2" data-testid="stage-count">
+                            {rows.length}
+                          </span>
+                          {filtersOn && rows.length !== total && <span className="tnum text-[13px] font-normal text-ink-2"> of {total}</span>}
+                        </th>
+                      </motion.tr>
+                      {rows.length === 0 && (
+                        <motion.tr layout="position" transition={GLIDE}>
+                          <td colSpan={6} className="border-b border-line px-3 py-3 text-[13px] text-ink-2">
+                            No families in this stage.
+                          </td>
+                        </motion.tr>
+                      )}
+                      <AnimatePresence initial={firstLoad}>
+                        {rows.map((f) => (
+                          <motion.tr
+                            key={f.code}
+                            layout="position"
+                            initial={firstLoad ? { opacity: 0, y: 6 } : { opacity: 0 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, transition: FADE_OUT }}
+                            transition={firstLoad ? { ...GLIDE, default: { ...FADE, delay: Math.min(order.get(f.code) ?? 0, STAGGER_CAP) * ROW_STAGGER } } : GLIDE}
+                            data-testid="family-row"
+                            data-code={f.code}
+                            tabIndex={0}
+                            aria-label={`Open ${f.surname} family`}
+                            onClick={() => open(f.code)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                open(f.code);
+                              }
+                            }}
+                            className={`cursor-pointer border-b border-line transition-colors duration-[120ms] hover:bg-surface focus-visible:bg-surface ${openCode === f.code ? 'bg-surface' : ''}`}
+                            style={{ outlineOffset: -2 }}
+                          >
+                            <td className="px-3 py-3">
+                              <span className="font-medium text-ink">{f.surname}</span>
+                              <span className="ml-2 text-[13px] text-ink-2">
+                                {f.givenName} · <span className="tnum">{f.householdSize}</span> {f.householdSize === 1 ? 'person' : 'people'}
+                              </span>
+                            </td>
+                            <td className="px-3 py-3 text-ink-2">{TIER_LABEL[f.result.tier]}</td>
+                            <td className="tnum px-3 py-3">{f.eligible ? (f.result.monthsToReady === 0 ? 'Now' : monthName(f.result.readyDate, 'en', true)) : <span className="text-ink-2">n/a</span>}</td>
+                            <td className="px-3 py-3 text-ink-2">
+                              {f.stage === 'not_eligible' ? (
+                                <span className="border-l-2 border-signal-amber pl-2 text-signal-amber">{f.result.blockers.find((b) => b.severity === 3)?.text ?? f.result.eligible.reasons[0]}</span>
+                              ) : (
+                                (f.result.blockers[0]?.text ?? 'None')
+                              )}
+                            </td>
+                            <td className="tnum px-3 py-3 text-ink-2">{relativeDays(f.lastActivity)}</td>
+                            <td className="tnum px-3 py-3 text-ink-2">{f.code}</td>
+                          </motion.tr>
+                        ))}
+                      </AnimatePresence>
+                    </motion.tbody>
+                  );
+                })}
+              </AnimatePresence>
+            </LayoutGroup>
           </table>
           {filtered.length === 0 && <p className="mt-8 text-[15px] text-ink-2">No families match these filters. Clear a filter to see more.</p>}
         </>

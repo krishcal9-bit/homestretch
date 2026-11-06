@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ConsoleTransition } from '@/components/staff/ConsoleTransition';
 import { StaffNav } from '@/components/staff/StaffNav';
 
 export const metadata: Metadata = { title: 'Staff · Homestretch' };
@@ -9,7 +10,7 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
     <div className="min-h-screen min-w-[1024px] bg-paper">
       <StaffNav />
       <main id="main" className="max-w-[1280px] px-8 pb-24 pt-8">
-        {children}
+        <ConsoleTransition>{children}</ConsoleTransition>
       </main>
     </div>
   );

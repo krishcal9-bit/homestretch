@@ -2,8 +2,26 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { parseBody, apiError } from '@/lib/api';
 import { prisma } from '@/lib/db';
+import { PlanOutputSchema } from '@/lib/plan';
 
 type Ctx = { params: Promise<{ code: string }> };
+
+const Put = z.object({ plan: PlanOutputSchema, lang: z.enum(['en', 'es']) });
+
+/** Store a plan generated on first view, only if none is stored yet (keeps checklist indices stable). */
+export async function PUT(req: Request, { params }: Ctx) {
+  const { code } = await params;
+  const parsed = await parseBody(req, Put);
+  if ('error' in parsed) return parsed.error;
+  try {
+    const res = await prisma.plan.updateMany({ where: { code: code.toUpperCase(), planJson: null }, data: { planJson: JSON.stringify(parsed.data.plan), language: parsed.data.lang } });
+    const row = await prisma.plan.findUnique({ where: { code: code.toUpperCase() } });
+    if (!row) return apiError('not_found', "We couldn't find that plan.", 404);
+    return NextResponse.json({ stored: res.count === 1, plan: row.planJson ? JSON.parse(row.planJson) : parsed.data.plan });
+  } catch {
+    return apiError('db_unavailable', 'We could not save that right now.', 503);
+  }
+}
 
 export async function GET(_req: Request, { params }: Ctx) {
   const { code } = await params;

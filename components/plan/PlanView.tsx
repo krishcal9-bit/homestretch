@@ -43,9 +43,15 @@ export function PlanView({ code, createdAt, profile, initialPlan, initialCheckli
     if (plan) return;
     fetch('/api/plan', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ profile, lang }) })
       .then((r) => r.json())
-      .then((d) => d.plan && setPlan(d.plan))
+      .then(async (d) => {
+        if (!d.plan) return;
+        // Keep the first plan: store it so every tab and reload ticks the same items.
+        const res = await fetch(`/api/plans/${code}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ plan: d.plan, lang }) }).catch(() => null);
+        const saved = res && res.ok ? await res.json() : null;
+        setPlan(saved?.plan ?? d.plan);
+      })
       .catch(() => {});
-  }, [plan, profile, lang]);
+  }, [plan, profile, lang, code]);
 
   const toggle = async (index: string, done: boolean) => {
     setChecklist((c) => ({ ...c, [index]: done }));

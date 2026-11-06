@@ -48,12 +48,13 @@ test('family completes intake by keyboard, explores levers, aims for a home, sav
   await expect(page.getByTestId('checklist')).toBeVisible({ timeout: 15_000 });
   const first = page.locator('#action-0');
   await expect(first).not.toBeChecked();
+  await expect(first).toBeEnabled();
   const saved = page.waitForResponse((r) => r.request().method() === 'PATCH' && r.url().includes(`/api/plans/${code}`));
   await page.locator('label[for=action-0]').first().click();
   await expect(first).toBeChecked();
   expect((await saved).ok()).toBe(true);
   await page.reload();
-  await expect(page.locator('#action-0')).toBeChecked({ timeout: 10_000 });
+  await expect(page.locator('#action-0')).toBeChecked({ timeout: 30_000 });
 });
 
 test('unknown plan code shows a friendly message', async ({ page }) => {

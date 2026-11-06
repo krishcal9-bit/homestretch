@@ -4,6 +4,8 @@ import { DEMO_DRAFT, staffLogin } from './helpers';
 
 async function audit(page: Page, name: string) {
   await page.waitForTimeout(1500); // let the Road entrance finish
+  await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== 'running'), null, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(600);
   const res = await new AxeBuilder({ page: page as never }).withTags(['wcag2a', 'wcag2aa']).analyze();
   const bad = res.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
   expect(bad.map((v) => `${name}: ${v.id} (${v.nodes.length}) ${v.nodes[0]?.target}`)).toEqual([]);

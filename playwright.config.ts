@@ -10,10 +10,11 @@ export default defineConfig({
   use: { baseURL: 'http://localhost:3100', trace: 'off' },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: 'MOCK_CLAUDE=1 PORT=3100 npx next dev -p 3100',
+    // Production build: fast and deterministic (dev compiles on demand and times out under a long run).
+    command: 'npx next build && MOCK_CLAUDE=1 npx next start -p 3100',
     url: 'http://localhost:3100',
-    reuseExistingServer: true,
-    timeout: 120_000,
+    reuseExistingServer: false,
+    timeout: 300_000,
     env: { MOCK_CLAUDE: '1' },
   },
 });

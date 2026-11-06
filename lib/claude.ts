@@ -107,7 +107,7 @@ export async function* claudeTextStream(args: { purpose: string; system: string;
     const text = fx ?? args.fallback();
     console.log(`[claude:${isMock() ? 'mock' : 'fallback'}] ${args.purpose}`);
     // Emit in small pieces so the UI's streaming path is exercised either way.
-    for (const piece of text.match(/.{1,24}(\s|$)|\S+/g) ?? [text]) yield piece;
+    for (const piece of text.match(/[\s\S]{1,24}/g) ?? [text]) yield piece;
     return;
   }
   let yielded = false;

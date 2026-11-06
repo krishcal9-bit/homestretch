@@ -10,13 +10,16 @@ import { Button } from '@/components/ui/Button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Welcome } from './Welcome';
 import { HouseholdScreen, HousingScreen, IncomeScreen, MoneyScreen, validate, type ScreenProps } from './Screens';
+import { UploadCard } from './UploadCard';
+import { money } from '@/lib/format';
+import type { DebtKind, StatementFindings } from '@/lib/types';
 import { ResultScreen } from '@/components/result/ResultScreen';
 import { FamilyExtras } from '@/components/result/FamilyExtras';
 
 const INTAKE_STEPS = 4;
 
 export function Flow() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [draft, setDraft, ready] = useStored<Draft>('hs.draft', emptyDraft());
   const [step, setStep] = useStored<number>('hs.step', 0);
   const [dir, setDir] = useState(1);
@@ -60,12 +63,53 @@ export function Flow() {
   if (!ready) return <div className="min-h-[60vh]" aria-busy />;
 
   const props: ScreenProps = { draft, update, showErrors, flash };
-  void fill;
+  const stubCard = (
+    <UploadCard
+      id="paystub"
+      title={t('flow.income.scanTitle')}
+      body={t('flow.income.scanBody')}
+      button={t('flow.income.scanButton')}
+      endpoint="/api/extract/paystub"
+      onResult={(d) => {
+        const monthly = Number(d.monthlyGross) || 0;
+        fill({ grossMonthlyIncome: monthly, incomeSource: 'paystub' }, ['grossMonthlyIncome']);
+        return t('upload.stubDone', { employer: String(d.employer ?? '—'), amount: money(monthly, lang) });
+      }}
+    />
+  );
+  const statementCard = (
+    <UploadCard
+      id="statement"
+      title={t('flow.money.statementTitle')}
+      body={t('flow.money.statementBody')}
+      button={t('flow.money.statementButton')}
+      endpoint="/api/extract/statement"
+      onResult={(d) => {
+        const s = d as unknown as StatementFindings;
+        const debts = { ...draft.debts };
+        const keys: string[] = [];
+        // Pre-fill monthly payments for debts the family left blank.
+        for (const r of s.recurringDebts) {
+          const kind = (r.kind ?? 'other') as DebtKind;
+          if (kind === 'collection') continue;
+          if (debts[kind].payment === null) {
+            debts[kind] = { ...debts[kind], payment: Math.round(r.amount) };
+            keys.push(`debt-${kind}`);
+          } else if (kind === 'other') {
+            debts.other = { ...debts.other, payment: (debts.other.payment ?? 0) + Math.round(r.amount) };
+            keys.push('debt-other');
+          }
+        }
+        fill({ debts, statement: s }, keys);
+        return t('upload.statementDone', { debts: s.recurringDebts.length, fees: s.overdraftOrNsfCount });
+      }}
+    />
+  );
   const screens: Record<number, React.ReactNode> = {
     1: <HouseholdScreen {...props} />,
-    2: <IncomeScreen {...props} />,
+    2: <IncomeScreen {...props} extra={stubCard} />,
     3: <HousingScreen {...props} />,
-    4: <MoneyScreen {...props} />,
+    4: <MoneyScreen {...props} extra={statementCard} />,
   };
 
   return (

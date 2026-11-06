@@ -1,0 +1,3 @@
+{ "isStatement": true, "recurringDebts": [{ "name": "Coastline Auto Finance", "amount": 342, "kind": "car" }, { "name": "Harbor Card Services", "amount": 65, "kind": "card" }, { "name": "QuickCash Lending", "amount": 120, "kind": "other" }],
+  "rentPaymentDetected": true, "avgMonthlyDeposits": 5310, "overdraftOrNsfCount": 2,
+  "largeUnexplainedDeposits": [{ "date": "2026-09-14", "amount": 1500, "description": "Cash deposit" }] }

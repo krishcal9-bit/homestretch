@@ -119,7 +119,14 @@ export function IncomeScreen({ draft, update, showErrors, titleAction, flash, ex
             <span className="tnum text-[15px] text-ink-2" aria-live="polite">
               {annual > 0 ? t('flow.income.perYear', { amount: money(annual, lang) }) : ''}
             </span>
-            {draft.incomeSource === 'paystub' && <span className="t-helper rounded-[6px] bg-pine-soft px-2 py-1 text-pine">{t('flow.income.fromStub')}</span>}
+            {draft.incomeSource === 'paystub' && (
+              <span className="t-helper inline-flex items-center gap-1 rounded-[6px] bg-pine-soft px-2 py-1 text-pine" data-testid="from-paystub">
+                {t('flow.income.fromStub')} ·
+                <button type="button" className="font-medium underline-offset-2 hover:underline" onClick={() => document.getElementById('gross')?.focus()}>
+                  {t('flow.income.edit')}
+                </button>
+              </span>
+            )}
           </div>
         </Field>
         <Checkbox id="otherOn" checked={draft.otherIncomeOn} onChange={(v) => update({ otherIncomeOn: v })} label={t('flow.income.addOther')} help={t('flow.income.otherHelp')} />

@@ -244,5 +244,24 @@
     "startOver": "Start a new plan",
     "planFor": "Plan {code}",
     "openFamilyApp": "Update my answers"
+  },
+  "upload": {
+    "reading": "Reading your file",
+    "stubDone": "Filled in from your pay stub: {employer}, {amount} a month before taxes.",
+    "statementDone": "Found {debts} recurring payments and {fees} overdraft fees. We filled in what we could; check the numbers.",
+    "tryAgain": "Upload a different file",
+    "genericError": "Something went wrong reading that file. Type the numbers in instead.",
+    "chooseFile": "Choose a photo or PDF",
+    "privacy": "Your file is used once to fill in this form and is not stored."
+  },
+  "letter": {
+    "write": "Write my explanation letter",
+    "writing": "Writing your letter",
+    "editHelp": "Edit anything that isn't right. Lenders want it short, specific and signed.",
+    "download": "Download letter",
+    "label": "Letter of explanation",
+    "lender": "Lender name",
+    "lenderPlaceholder": "Habitat for Humanity of Orange County",
+    "name": "Your full name"
   }
 }

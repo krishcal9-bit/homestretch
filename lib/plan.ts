@@ -44,6 +44,11 @@ export function fallbackPlan(p: Profile, r: ReadinessResult, lang: Lang): PlanOu
   return { whyThisDate: whyThisDate(p, r, lang), actions: actions.slice(0, 6), underwritersEye };
 }
 
+const longDate = (iso: string, lang: Lang) => {
+  const d = new Date(`${iso}T12:00:00Z`);
+  return Number.isNaN(d.getTime()) ? iso : new Intl.DateTimeFormat(lang === 'es' ? 'es-US' : 'en-US', { dateStyle: 'long', timeZone: 'UTC' }).format(d);
+};
+
 export function fallbackUnderwriter(p: Profile, lang: Lang): PlanOutput['underwritersEye'] {
   const s = p.statement;
   if (!s) return null;
@@ -51,7 +56,7 @@ export function fallbackUnderwriter(p: Profile, lang: Lang): PlanOutput['underwr
   const out: NonNullable<PlanOutput['underwritersEye']> = [];
   if (s.overdraftOrNsfCount > 0) out.push({ kind: 'overdraft', finding: t('ueOverdraft', { n: s.overdraftOrNsfCount }), whatToDo: t('ueOverdraftDo') });
   for (const d of s.largeUnexplainedDeposits.slice(0, 2))
-    out.push({ kind: 'cash_deposit', finding: t('ueDeposit', { amount: money(d.amount, lang), date: d.date }), whatToDo: t('ueDepositDo') });
+    out.push({ kind: 'cash_deposit', finding: t('ueDeposit', { amount: money(d.amount, lang), date: longDate(d.date, lang) }), whatToDo: t('ueDepositDo') });
   const listed = new Set(p.debts.map((d) => d.kind));
   for (const r of s.recurringDebts.filter((d) => d.kind && !listed.has(d.kind)).slice(0, 1))
     out.push({ kind: 'unlisted_loan', finding: t('ueLoan', { name: r.name, amount: money(r.amount, lang) }), whatToDo: t('ueLoanDo') });

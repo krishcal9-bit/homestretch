@@ -67,3 +67,11 @@ export async function completeIntakeByKeyboard(page: Page) {
   await page.keyboard.press('ArrowRight'); // needs work
   await page.keyboard.press('Enter');
 }
+
+/** Click Continue / See my path and wait for the screen transition to finish. */
+export async function next(page: Page) {
+  await page.waitForFunction(() => document.querySelectorAll('form button[type=submit]').length === 1);
+  await page.locator('form button[type=submit]').click();
+  await page.waitForTimeout(50);
+  await page.waitForFunction(() => document.querySelectorAll('[data-step]').length === 1);
+}

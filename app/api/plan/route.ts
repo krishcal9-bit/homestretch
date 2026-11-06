@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { parseBody } from '@/lib/api';
 import { claudeJson } from '@/lib/claude';
 import { computeReadiness, sanitize } from '@/lib/engine';
-import { fallbackPlan, PLAN_SYSTEM, PlanOutputSchema, type PlanOutput } from '@/lib/plan';
+import { fallbackPlan, fallbackUnderwriter, PLAN_SYSTEM, PlanOutputSchema, type PlanOutput } from '@/lib/plan';
 import { LangSchema, ProfileSchema } from '@/lib/schemas';
 import { prisma } from '@/lib/db';
 import type { Profile } from '@/lib/types';
@@ -63,6 +63,9 @@ export async function POST(req: Request) {
     fixture: lang === 'es' ? 'plan-es' : 'plan',
     maxTokens: 4000,
   });
+  // Underwriter's eye is only for families who uploaded a statement; make sure it's there when it should be.
+  if (profile.statement && !out.data.underwritersEye?.length) out.data.underwritersEye = fallbackUnderwriter(profile, lang);
+  if (!profile.statement) out.data.underwritersEye = null;
   if (out.source === 'claude') {
     try {
       await prisma.planCache.upsert({ where: { key }, create: { key, json: JSON.stringify(out.data) }, update: { json: JSON.stringify(out.data) } });

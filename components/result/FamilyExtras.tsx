@@ -12,8 +12,12 @@ import type { Lang } from '@/lib/types';
 import type { ResultExtrasProps } from './ResultScreen';
 import { Section } from './Panels';
 import { PlanChecklist, PlanSkeleton, UnderwritersEye } from './PlanChecklist';
+import { LetterEditor } from './LetterEditor';
 
-type StoredPlan = { lang: Lang | null; plan: PlanOutput | null; source?: string };
+type StoredPlan = { lang: Lang | null; plan: PlanOutput | null; source?: string; key?: string };
+
+/** Answers that change the plan (levers excluded: sliders never refetch). */
+const answersKey = (p: ResultExtrasProps['profile']) => JSON.stringify({ ...p, levers: undefined });
 
 export function usePlan(profile: ResultExtrasProps['profile'], lang: Lang) {
   const [stored, setStored, ready] = useStored<StoredPlan>('hs.plan', { lang: null, plan: null });
@@ -34,7 +38,7 @@ export function usePlan(profile: ResultExtrasProps['profile'], lang: Lang) {
         const res = await fetch('/api/plan', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ profile: profileRef.current, lang, regenerate }), signal: ctrl.signal });
         clearTimeout(kill);
         const data = await res.json();
-        if (data.plan) setStored({ lang, plan: data.plan, source: data.source });
+        if (data.plan) setStored({ lang, plan: data.plan, source: data.source, key: answersKey(profileRef.current) });
       } catch {
         setStored((s) => ({ ...s, source: 'error' }));
       } finally {
@@ -46,9 +50,10 @@ export function usePlan(profile: ResultExtrasProps['profile'], lang: Lang) {
     },
     [lang, setStored],
   );
+  const key = answersKey(profile);
   useEffect(() => {
-    if (ready && (!stored.plan || stored.lang !== lang)) fetchPlan();
-  }, [ready, stored.plan, stored.lang, lang, fetchPlan]);
+    if (ready && (!stored.plan || stored.lang !== lang || (stored.key && stored.key !== key))) fetchPlan();
+  }, [ready, stored.plan, stored.lang, stored.key, key, lang, fetchPlan]);
   return { plan: stored.lang === lang ? stored.plan : null, source: stored.source, loading, slow, regenerate: () => fetchPlan(true), ready };
 }
 
@@ -90,7 +95,7 @@ export function FamilyExtras({ profile }: ResultExtrasProps) {
     <>
       {profile.statement && plan?.underwritersEye && plan.underwritersEye.length > 0 && (
         <Section title={t('plan.ueTitle')} id="ue">
-          <UnderwritersEye items={plan.underwritersEye} />
+          <UnderwritersEye items={plan.underwritersEye} renderAction={(u) => (u.kind === 'unlisted_loan' ? null : <LetterEditor finding={u} />)} />
         </Section>
       )}
       <Section

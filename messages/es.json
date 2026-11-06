@@ -244,5 +244,24 @@
     "startOver": "Empezar un plan nuevo",
     "planFor": "Plan {code}",
     "openFamilyApp": "Actualizar mis respuestas"
+  },
+  "upload": {
+    "reading": "Leyendo su archivo",
+    "stubDone": "Llenado con su talón de pago: {employer}, {amount} al mes antes de impuestos.",
+    "statementDone": "Encontramos {debts} pagos recurrentes y {fees} cargos por sobregiro. Llenamos lo que pudimos; revise los números.",
+    "tryAgain": "Subir otro archivo",
+    "genericError": "Algo salió mal al leer ese archivo. Mejor escriba los números.",
+    "chooseFile": "Elija una foto o PDF",
+    "privacy": "Su archivo se usa una vez para llenar este formulario y no se guarda."
+  },
+  "letter": {
+    "write": "Escribir mi carta de explicación",
+    "writing": "Escribiendo su carta",
+    "editHelp": "Corrija lo que no esté bien. Los prestamistas la quieren breve, específica y firmada.",
+    "download": "Descargar carta",
+    "label": "Carta de explicación",
+    "lender": "Nombre del prestamista",
+    "lenderPlaceholder": "Habitat for Humanity of Orange County",
+    "name": "Su nombre completo"
   }
 }

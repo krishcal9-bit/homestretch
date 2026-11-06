@@ -6,6 +6,7 @@ import { useLang } from '@/lib/i18n';
 import { addMonths } from '@/lib/engine';
 import { monthName, money } from '@/lib/format';
 import type { Milestone, MilestoneKey, ReadinessResult } from '@/lib/types';
+import { IsoHouse, type IsoBuild } from '@/components/illustrations/IsoHouse';
 
 const PAD = 28;
 const MIN_W = 280; // below this the road scrolls horizontally
@@ -131,7 +132,15 @@ function KeyGlyph({ s = 1 }: { s?: number }) {
   );
 }
 
-function Marker({ m, g, delay, play, active, highlighted, keysGlow = 0, onActive, onHover }: { m: Placed; g: (typeof GEOM)[Size]; delay: number; play: boolean; active: boolean; highlighted: boolean; keysGlow?: number; onActive: (k: string | null) => void; onHover: (k: string | null) => void }) {
+function Marker({ m, g, delay, play, active, highlighted, keysGlow = 0, keysHouse = false, keysBuild = 'none', keysBuildDelay = 0, onActive, onHover }: { m: Placed; g: (typeof GEOM)[Size]; delay: number; play: boolean; active: boolean; highlighted: boolean; keysGlow?: number; keysHouse?: boolean; keysBuild?: IsoBuild; keysBuildDelay?: number; onActive: (k: string | null) => void; onHover: (k: string | null) => void }) {
+  // The house's window lights for a beat when the date gets earlier.
+  const [lit, setLit] = useState(false);
+  useEffect(() => {
+    if (!keysGlow) return;
+    setLit(true);
+    const id = setTimeout(() => setLit(false), 1400);
+    return () => clearTimeout(id);
+  }, [keysGlow]);
   // A tiny 1.1× pulse when this milestone becomes reachable earlier.
   const prevMonth = useRef(m.month);
   const [pulse, setPulse] = useState(0);
@@ -169,7 +178,12 @@ function Marker({ m, g, delay, play, active, highlighted, keysGlow = 0, onActive
           onClick={() => onActive(active ? null : m.key)}
         />
         {active && <circle r={(isKeys ? g.keysR : g.r) + 5} fill="none" stroke="var(--pine)" strokeWidth="2" pointerEvents="none" />}
-        {isKeys ? (
+        {isKeys && keysHouse ? (
+          // the small isometric house from the intro, standing on the road
+          <g transform={`translate(${-g.keysR * 1.9} ${-g.keysR * 3.1})`} pointerEvents="none" data-testid="keys-house">
+            <IsoHouse size={g.keysR * 3.8} build={keysBuild} delay={keysBuildDelay} lit={lit} strokeWidth={2.2} />
+          </g>
+        ) : isKeys ? (
           <g pointerEvents="none">
             <circle r={g.keysR} fill="var(--brass)" />
             <KeyGlyph s={g.keysR / 9} />
@@ -210,13 +224,18 @@ type RoadProps = {
   trackDrawn?: boolean;
   /** Override when the Keys marker appears (seconds): the landing opening's house becomes it on landing. */
   keysAt?: number;
+  /** Draw the Keys marker as the small isometric house (landing hero, result). */
+  keysVariant?: 'dot' | 'house';
+  /** With keysVariant 'house': build the house (walls up, roof drops, door goes brass) — 'quick' ≈ 600ms (result), 'short' ≈ 400ms (plan page). */
+  keysBuild?: IsoBuild;
+  keysBuildDelay?: number;
 };
 
 /**
  * The Road: Today → Keys with milestone markers placed proportionally by month. The track draws in;
  * each marker pops in as the line reaches it; markers follow lever changes with spring.gentle.
  */
-export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, entrance = 'session', entranceDelay = 0, drawDuration = dur.long, drawEase = 'out', size = 'md', highlight = [], vtName, className = '', progressTo, keysGlow = 0, trackDrawn = false, keysAt }: RoadProps) {
+export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, entrance = 'session', entranceDelay = 0, drawDuration = dur.long, drawEase = 'out', size = 'md', highlight = [], vtName, className = '', progressTo, keysGlow = 0, trackDrawn = false, keysAt, keysVariant = 'dot', keysBuild = 'none', keysBuildDelay = 0 }: RoadProps) {
   const { t, lang } = useLang();
   const g = GEOM[size];
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -345,7 +364,7 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
             {todayLabel}
           </motion.text>
           {placed.map((m) => (
-            <Marker key={m.key} m={m} g={g} onHover={onHover} delay={play && !entranceOver ? (m.key === 'keys' && keysAt !== undefined ? keysAt : reachDelay(m.x)) : 0} play={play} highlighted={highlight.includes(m.key)} keysGlow={keysGlow} active={active === m.key} onActive={setActive} />
+            <Marker key={m.key} m={m} g={g} onHover={onHover} delay={play && !entranceOver ? (m.key === 'keys' && keysAt !== undefined ? keysAt : reachDelay(m.x)) : 0} play={play} highlighted={highlight.includes(m.key)} keysGlow={keysGlow} keysHouse={keysVariant === 'house'} keysBuild={keysBuild} keysBuildDelay={keysBuildDelay} active={active === m.key} onActive={setActive} />
           ))}
           <AnimatePresence initial={play}>
             {clusters.map((c) => {

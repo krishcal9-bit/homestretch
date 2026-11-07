@@ -1,8 +1,9 @@
 'use client';
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, type Transition } from 'motion/react';
+import { AnimatePresence, LayoutGroup, motion, useIsPresent, useReducedMotion, type Transition } from 'motion/react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useToast } from '@/components/Toast';
+import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { Button } from '@/components/ui/Button';
 import { Segmented } from '@/components/ui/Segmented';
 import { monthName } from '@/lib/format';
@@ -11,6 +12,8 @@ import { nextActionFor } from '@/lib/outreach';
 import type { FamilyRow } from '@/lib/staffData';
 import { TIER_LABEL, homeCounts, homeTitle, rankForHome, rulesReason, type Candidate } from '@/lib/staffLogic';
 import type { Home, Lang } from '@/lib/types';
+import { BuildArt } from './BuildArt';
+import { buildStageOf } from './buildStage';
 
 type Draft = { subject: string; body: string };
 
@@ -24,12 +27,21 @@ const OPEN_CLIP = 'inset(0% 0% 0% 0%)';
 const SHUT_CLIP = 'inset(0% 0% 100% 0%)';
 const STREAM_MS = dur.short * 3000; // ~600ms whatever the length
 const wordEnds = (text: string) => Array.from(text.matchAll(/\S+/g), (m) => (m.index ?? 0) + m[0].length);
+const whole = (n: number) => String(Math.round(n));
+// The chosen home's site crossfades to the new one's stage (200ms, opacity and a 4px rise); the lawns line up.
+const SITE_IN = { duration: dur.short, ease: ease.out };
 
 export function Match({ homes, families }: { homes: Home[]; families: FamilyRow[] }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
-  const homeId = params.get('home') && homes.some((h) => h.id === params.get('home')) ? params.get('home')! : homes[0]?.id;
+  const asked = params.get('home') && homes.some((h) => h.id === params.get('home')) ? params.get('home')! : homes[0]?.id;
+  // While the page leaves for another tab the URL has already lost ?home=; keep the home on screen as it was
+  // (otherwise the list re-ranks for the first home and flashes its loading reasons on the way out).
+  const present = useIsPresent();
+  const shownHome = useRef(asked);
+  if (present) shownHome.current = asked;
+  const homeId = present ? asked : shownHome.current;
   const home = homes.find((h) => h.id === homeId);
   const candidates = useMemo(() => (home ? rankForHome(home, families) : []), [home, families]);
   const [reasons, setReasons] = useState<Record<string, string> | null>(null);
@@ -99,10 +111,20 @@ export function Match({ homes, families }: { homes: Home[]; families: FamilyRow[
             ))}
           </select>
         </div>
-        <p className="pb-3 text-[15px] text-ink-2">
-          {homeTitle(home)}, done <span className="tnum">{monthName(home.completion)}</span>, {home.status.toLowerCase()}.{' '}
-          <span className="tnum font-medium text-ink">{counts.projected}</span> projected ready, <span className="tnum font-medium text-ink">{counts.readyNow}</span> ready now.
-        </p>
+        <div className="flex items-end gap-4">
+          <div className="relative -mb-1 h-[66px] w-[64px] shrink-0" aria-hidden data-testid="match-site" data-stage={buildStageOf(home.status)}>
+            <AnimatePresence initial={false} mode="popLayout">
+              <motion.div key={buildStageOf(home.status)} className="absolute inset-x-0 bottom-0" initial={{ opacity: 0, y: reduce ? 0 : 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, transition: exit }} transition={SITE_IN}>
+                <BuildArt stage={buildStageOf(home.status)} size={64} />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+          <p className="pb-3 text-[15px] text-ink-2">
+            {homeTitle(home)}, done <span className="tnum">{monthName(home.completion)}</span>, {home.status.toLowerCase()}.{' '}
+            <AnimatedNumber speed="snappy" value={counts.projected} format={whole} className="font-medium text-ink" /> projected ready,{' '}
+            <AnimatedNumber speed="snappy" value={counts.readyNow} format={whole} className="font-medium text-ink" /> ready now.
+          </p>
+        </div>
       </div>
 
       {candidates.length === 0 ? (

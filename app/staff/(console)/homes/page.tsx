@@ -1,12 +1,14 @@
 import Link from 'next/link';
-import { IsoHouse } from '@/components/illustrations/IsoHouse';
+import { BuildArt } from '@/components/staff/BuildArt';
+import { buildStageOf } from '@/components/staff/buildStage';
 import { ReadyCount } from '@/components/staff/ReadyCount';
 import { monthName } from '@/lib/format';
 import { loadFamilies, loadHomes } from '@/lib/staffData';
 import { homeCounts, homeInsight } from '@/lib/staffLogic';
 
-// Each home carries the isometric house (static, brass door). On a desktop pointer, hovering the row lifts
-// the house 2px (160ms); nothing on touch, nothing with reduced motion.
+// Each home carries its site, drawn at the stage the build has reached (lot, staked, slab, framing, roofing,
+// finished; pine door, never brass). Static. On a desktop pointer, hovering the row lifts the drawing 2px
+// (160ms); nothing on touch, nothing with reduced motion.
 const LIFT =
   'inline-flex shrink-0 transition-transform duration-[160ms] ease-[var(--ease-out)] [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:group-hover:[transform:translateY(-2px)]';
 
@@ -27,12 +29,15 @@ export default async function HomesPage() {
         </p>
       )}
       {homes.length === 0 ? (
-        <div className="panel mt-8 py-12 text-center text-[15px] text-ink-2">No homes yet. Add upcoming builds to see who could be ready for them.</div>
+        <div className="panel mt-8 flex flex-col items-center gap-4 py-12 text-center text-[15px] text-ink-2">
+          <BuildArt stage="lot" size={96} />
+          No homes yet. Add upcoming builds to see who could be ready for them.
+        </div>
       ) : (
         <table className="mt-8 w-full border-collapse text-left text-[15px]">
           <thead>
             <tr className="border-b border-line text-[13px] text-ink-2">
-              <th scope="col" className="py-2 pl-[84px] pr-3 font-medium">Address</th>
+              <th scope="col" className="py-2 pl-[92px] pr-3 font-medium">Address</th>
               <th scope="col" className="px-3 py-2 font-medium">City</th>
               <th scope="col" className="px-3 py-2 text-right font-medium">Bedrooms</th>
               <th scope="col" className="px-3 py-2 font-medium">Completion</th>
@@ -45,11 +50,11 @@ export default async function HomesPage() {
           </thead>
           <tbody>
             {rows.map(({ h, projected, readyNow }) => (
-              <tr key={h.id} className="group border-b border-line" data-testid="home-row" data-home={h.id} data-ready-count={projected} data-ready-now={readyNow}>
+              <tr key={h.id} className="group border-b border-line" data-testid="home-row" data-home={h.id} data-stage={buildStageOf(h.status)} data-ready-count={projected} data-ready-now={readyNow}>
                 <td className="whitespace-nowrap px-3 py-2 font-medium">
                   <div className="flex items-center gap-4">
                     <span className={LIFT}>
-                      <IsoHouse size={56} doorBrass={false} />
+                      <BuildArt stage={buildStageOf(h.status)} size={64} />
                     </span>
                     {h.address}
                   </div>

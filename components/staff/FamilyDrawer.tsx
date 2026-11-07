@@ -10,6 +10,8 @@ import { ORG_NAME, type ReferralOrg } from '@/lib/referral';
 import type { FamilyRow } from '@/lib/staffData';
 import { TIER_LABEL } from '@/lib/staffLogic';
 import type { Lang } from '@/lib/types';
+import { BuildArt } from './BuildArt';
+import { FAMILY_BUILD } from './buildStage';
 
 const SECTION_STAGGER = 0.03; // §4.1 #6: content staggers in at 30ms per section
 const content: Variants = { hidden: {}, shown: { transition: { staggerChildren: SECTION_STAGGER } }, exit: { transition: { staggerChildren: SECTION_STAGGER, staggerDirection: -1 } } };
@@ -53,7 +55,7 @@ export function FamilyDrawer({ family, onClose }: { family: FamilyRow | null; on
             aria-labelledby="drawer-title"
             data-testid="drawer"
             className="absolute inset-y-0 right-0 flex w-[600px] max-w-full flex-col border-l border-line bg-surface"
-            style={{ boxShadow: '0 12px 40px rgba(24,36,32,0.12)' }}
+            style={{ boxShadow: '0 1px 3px rgba(24,36,32,0.06), 0 16px 48px rgba(24,36,32,0.14)' }}
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%', transition: exitDrawer }}
@@ -99,24 +101,30 @@ function DrawerBody({ family: f, onClose, closeRef }: { family: FamilyRow; onClo
         </button>
       </div>
       <motion.div className="flex-1 overflow-y-auto px-6 pb-10" variants={content} initial="hidden" animate="shown" exit="exit">
-        <motion.section variants={section} className="pt-5">
-          <p className="text-[13px] text-ink-2">{r.monthsToReady === 0 ? 'Mortgage-ready now' : 'Projected mortgage-ready'}</p>
-          <div className="flex items-baseline justify-between gap-4">
-            <p className="t-title tnum text-brass" data-testid="drawer-ready-date">
-              {monthName(r.readyDate)}
-            </p>
-            <p className="tnum text-[13px] text-ink-2" title="Readiness score, staff only">
-              Score {r.score}
+        <motion.section variants={section} className="flex items-center gap-5 pt-5">
+          {/* The family's house, as far along as their readiness (ready now: finished, window lit). Static. */}
+          <div className="shrink-0" aria-hidden data-testid="drawer-house" data-stage={FAMILY_BUILD[f.stage]}>
+            <BuildArt stage={FAMILY_BUILD[f.stage]} size={72} lit={f.stage === 'ready_now'} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[13px] text-ink-2">{r.monthsToReady === 0 ? 'Mortgage-ready now' : 'Projected mortgage-ready'}</p>
+            <div className="flex items-baseline justify-between gap-4">
+              <p className="t-title tnum text-brass" data-testid="drawer-ready-date">
+                {monthName(r.readyDate)}
+              </p>
+              <p className="tnum text-[13px] text-ink-2" title="Readiness score, staff only">
+                Score {r.score}
+              </p>
+            </div>
+            <p className="text-[13px] text-ink-2">
+              {TIER_LABEL[r.tier]} income tier{r.monthsToReady > 0 ? ` · ${r.monthsToReady} months away` : ''}
             </p>
           </div>
-          <p className="text-[13px] text-ink-2">
-            {TIER_LABEL[r.tier]} income tier{r.monthsToReady > 0 ? ` · ${r.monthsToReady} months away` : ''}
-          </p>
         </motion.section>
 
         <motion.section variants={section} className="mt-4">
-          {/* Draws on every open, quickly: staff open many drawers a day. Starts as the panel settles. */}
-          <Road key={f.code} result={r} entrance="always" drawDuration={0.4} entranceDelay={dur.micro} />
+          {/* Draws on every open, quickly (300ms): staff open many drawers a day. Starts as the panel settles. */}
+          <Road key={f.code} result={r} entrance="always" drawDuration={dur.short * 1.5} entranceDelay={dur.micro} />
         </motion.section>
 
         {!f.eligible && (

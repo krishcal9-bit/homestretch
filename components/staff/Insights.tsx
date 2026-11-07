@@ -1,21 +1,14 @@
 'use client';
-import { useReducedMotion } from 'motion/react';
 import { useMemo, useState } from 'react';
-import { Bar, BarChart, CartesianGrid, Legend, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { addMonths, monthsUntil, simulateProgram, type Program } from '@/lib/engine';
 import { money, monthName } from '@/lib/format';
-import { dur } from '@/lib/motion';
-
-// Bars grow from the baseline on load and morph when a program is toggled: 300ms, ease-out (staff ≤ 300ms).
-const BAR_MS = dur.short * 1500;
 import { homeTitle } from '@/lib/staffLogic';
 import type { Home, Profile } from '@/lib/types';
+import { ReadyChart, type ChartMarker } from './ReadyChart';
 
 type Fam = { profile: Profile; eligible: boolean; monthsToReady: number; blockerType: string | null };
 const HORIZON = 24;
-const BASE = '#B7C3BD'; // baseline bars: a quiet neutral beside pine
-const PINE = '#1E5C47';
 
 function median(xs: number[]) {
   if (!xs.length) return 0;
@@ -26,7 +19,6 @@ function median(xs: number[]) {
 
 export function Insights({ homes, families }: { homes: Home[]; families: Fam[] }) {
   const [today] = useState(() => new Date());
-  const reduce = !!useReducedMotion();
   const [on, setOn] = useState({ matched: false, counseling: false, grant: false });
   const [vals, setVals] = useState({ matched: 100, counseling: 3, grant: 2000 });
   const program: Program = {
@@ -53,7 +45,7 @@ export function Insights({ homes, families }: { homes: Home[]; families: Fam[] }
   for (const f of eligible) if (f.blockerType) blockerCounts.set(f.blockerType, (blockerCounts.get(f.blockerType) ?? 0) + 1);
   const topBlocker = [...blockerCounts.entries()].sort((a, b) => b[1] - a[1])[0];
 
-  const data = sim.baseline.map((b, i) => ({ month: addMonths(today, i), label: monthName(addMonths(today, i), 'en', true), baseline: b, projected: anyOn ? sim.projected[i] : 0 }));
+  const data = useMemo(() => sim.baseline.map((b, i) => ({ label: monthName(addMonths(today, i), 'en', true), baseline: b, projected: anyOn ? sim.projected[i] : 0 })), [sim, anyOn, today]);
   const homeLines = homes.filter((h) => {
     const m = monthsUntil(h.completion, today);
     return m >= 0 && m < HORIZON;
@@ -72,6 +64,7 @@ export function Insights({ homes, families }: { homes: Home[]; families: Fam[] }
     laneOf.set(h.id, lane);
   }
   const laneCount = Math.max(1, lanes.length);
+  const markers: ChartMarker[] = homeLines.map((h) => ({ id: h.id, index: monthsUntil(h.completion, today), title: homeTitle(h), lane: laneOf.get(h.id) ?? 0 }));
 
   if (families.length === 0) {
     return (
@@ -108,37 +101,13 @@ export function Insights({ homes, families }: { homes: Home[]; families: Fam[] }
           </h2>
           <p className="text-[13px] text-ink-2">Next 24 months. Vertical lines mark home completions.</p>
         </div>
-        <div className="mt-4 h-[340px]" role="img" aria-label={`Bar chart of eligible families by projected-ready month over the next 24 months${anyOn ? ', with the program projection beside the baseline' : ''}.`}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 14 + laneCount * 14, right: 48, bottom: 0, left: -20 }} barGap={2} barCategoryGap="18%">
-              <CartesianGrid vertical={false} stroke="var(--line)" />
-              <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: 'var(--line)' }} tick={{ fill: 'var(--ink-2)', fontSize: 12 }} interval={2} />
-              <YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={{ fill: 'var(--ink-2)', fontSize: 12 }} />
-              <Tooltip
-                cursor={{ fill: 'var(--pine-soft)', opacity: 0.5 }}
-                contentStyle={{ border: '1px solid var(--line)', borderRadius: 8, boxShadow: 'none', fontSize: 13 }}
-                formatter={(v, name) => [v as number, name === 'baseline' ? 'Today' : 'With program']}
-              />
-              {anyOn && <Legend verticalAlign="bottom" align="left" height={32} iconType="square" iconSize={10} formatter={(v) => <span className="text-[13px] text-ink-2">{v === 'baseline' ? 'Today' : 'With program'}</span>} />}
-              {homeLines.map((h) => (
-                <ReferenceLine
-                  key={h.id}
-                  x={monthName(h.completion, 'en', true)}
-                  stroke="var(--ink-2)"
-                  strokeDasharray="2 3"
-                  strokeWidth={1}
-                  label={({ viewBox }: { viewBox?: { x?: number; y?: number } }) => (
-                    <text x={viewBox?.x ?? 0} y={(viewBox?.y ?? 0) - 6 - (laneOf.get(h.id) ?? 0) * 14} textAnchor="middle" fill="var(--ink-2)" fontSize={11}>
-                      {homeTitle(h)}
-                    </text>
-                  )}
-                />
-              ))}
-              <Bar dataKey="baseline" fill={anyOn ? BASE : PINE} radius={[4, 4, 0, 0]} animationDuration={BAR_MS} animationEasing="ease-out" isAnimationActive={!reduce} />
-              <Bar dataKey="projected" fill={PINE} radius={[4, 4, 0, 0]} animationDuration={BAR_MS} animationEasing="ease-out" isAnimationActive={!reduce} hide={!anyOn} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <ReadyChart
+          data={data}
+          markers={markers}
+          laneCount={laneCount}
+          anyOn={anyOn}
+          label={`Bar chart of eligible families by projected-ready month over the next 24 months${anyOn ? ', with the program projection beside the baseline' : ''}.`}
+        />
       </section>
 
       <section className="mt-10 rounded-[14px] border border-line bg-surface p-6" aria-labelledby="sim-title">

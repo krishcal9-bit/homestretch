@@ -7,7 +7,7 @@ test('the intro plays on every load; any key skips straight to the hero', async 
   await page.keyboard.press('Escape');
   await expect(page.getByTestId('intro')).toHaveCount(0, { timeout: 2000 });
   await expect(page.getByTestId('find-my-date')).toBeVisible();
-  await expect(page.getByTestId('sample-date')).toHaveText(/[A-Z][a-z]+ \d{4}/);
+  await expect(page.getByTestId('door-keep')).toBeVisible();
   await page.reload();
   await expect(page.getByTestId('intro')).toBeVisible();
   await page.mouse.click(5, 5);

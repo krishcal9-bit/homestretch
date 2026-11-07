@@ -16,7 +16,8 @@ async function noEnglish(page: Page) {
 test('Spanish everywhere on screens 1–6 and the PDF is Spanish', async ({ page }) => {
   await freshLanding(page);
   await page.getByTestId('lang-toggle').getByRole('radio', { name: 'ES' }).click();
-  await expect(page.getByTestId('find-my-date')).toHaveText('Encontrar mi fecha');
+  await expect(page.getByTestId('find-my-date')).toContainText('Me preparo para una casa de Habitat');
+  await expect(page.getByTestId('door-keep')).toContainText('Tengo una casa de Habitat');
   await noEnglish(page);
   await expect(page.locator('main')).not.toContainText('See exactly when');
   await page.getByTestId('find-my-date').click();

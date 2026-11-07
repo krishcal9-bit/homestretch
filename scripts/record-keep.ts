@@ -16,7 +16,7 @@ const size = vp === 'mobile' ? { width: 390, height: 844 } : { width: 1440, heig
 (async () => {
   const dir = fs.mkdtempSync(path.join(path.dirname(OUT), '.rec-'));
   const b = await chromium.launch();
-  const ctx = await b.newContext({ viewport: size, recordVideo: { dir, size } });
+  const ctx = await b.newContext({ viewport: size, ...(arg('video', '1') === '1' ? { recordVideo: { dir, size } } : {}) });
   await ctx.addInitScript((t) => {
     try {
       localStorage.setItem('hs.theme', t);

@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 import path from 'path';
 
 async function freshKeep(page: Page, lang: 'en' | 'es' = 'en') {
@@ -139,3 +140,21 @@ test('Spanish: /keep has no English', async ({ page }) => {
   await expect(page.getByTestId('habitat-text')).toHaveValue(/^Hola/);
   await check();
 });
+
+for (const theme of ['light', 'dark'] as const) {
+  test(`axe: Keep setup and forecast have no serious violations (${theme})`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: theme });
+    await freshKeep(page);
+    await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+    const audit = async (name: string) => {
+      await page.waitForTimeout(1500);
+      const res = await new AxeBuilder({ page: page as never }).withTags(['wcag2a', 'wcag2aa']).analyze();
+      const bad = res.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
+      expect(bad.map((v) => `${name}: ${v.id} (${v.nodes.length}) ${v.nodes[0]?.target}`)).toEqual([]);
+    };
+    await audit('setup');
+    await page.getByTestId('keep-try-sample').click();
+    await expect(page.getByTestId('shield-moves')).toBeVisible({ timeout: 30_000 });
+    await audit('forecast');
+  });
+}

@@ -124,7 +124,7 @@ function SkyArt() {
 /** Two drifting clouds, kept clear of the headline (day; the dark theme hides them). */
 const Clouds = memo(function Clouds({ phone }: { phone: boolean }) {
   return (
-    <div className="il-day absolute inset-0 transition-opacity duration-500">
+    <div className="il-day absolute inset-0 transition-opacity duration-500" aria-hidden>
       <div className="absolute left-[44%] top-[3%] w-[clamp(110px,11vw,190px)]">
         <svg viewBox="0 0 200 84" className="sc-amb sc-drift block h-auto w-full">
           <CloudShape />
@@ -147,7 +147,7 @@ const Far = memo(function Far({ W, top }: { W: number; top: number }) {
   const roofs: [number, number, number][] = [];
   for (let x = -20, i = 0; x < W + 40; x += 58 + ((i * 37) % 41), i++) roofs.push([x, 22 + ((i * 13) % 12), 40 + ((i * 29) % 26)]);
   return (
-    <svg className="absolute left-0 overflow-visible" width={W} height={120} viewBox={`0 0 ${W} 120`} style={{ top: top - 96 }}>
+    <svg className="absolute left-0 overflow-visible" width={W} height={120} viewBox={`0 0 ${W} 120`} style={{ top: top - 96 }} aria-hidden>
       <path d={`M0 70 C ${W * 0.18} 30 ${W * 0.32} 44 ${W * 0.5} 58 S ${W * 0.82} 26 ${W} 52 V120 H0Z`} fill={haze(P.sageDark, 0.62)} />
       <path d={`M0 92 C ${W * 0.22} 70 ${W * 0.4} 84 ${W * 0.62} 80 S ${W * 0.9} 64 ${W} 78 V120 H0Z`} fill={haze(P.sage, 0.45)} />
       {roofs.map(([x, h, w], i) => (
@@ -209,7 +209,7 @@ const Neighbours = memo(function Neighbours({ layout }: { layout: StreetLayout }
   return (
     <>
       {lots.map((l, i) => (
-        <div key={i} className="absolute" style={{ left: l.left, top: slotTop, width: sw, height: sh }}>
+        <div key={i} className="absolute" style={{ left: l.left, top: slotTop, width: sw, height: sh }} aria-hidden>
           <Image unoptimized src={`/house/street-n${l.variant}.webp`} alt="" width={sw} height={sh} className="still-day absolute inset-0 h-full w-full select-none" draggable={false} priority={i < 3} />
           <Image unoptimized src={`/house/street-n${l.variant}-night.webp`} alt="" width={sw} height={sh} className="still-night absolute inset-0 h-full w-full select-none" draggable={false} />
         </div>
@@ -254,7 +254,7 @@ const Foreground = memo(function Foreground({ W, phone }: { W: number; phone: bo
  */
 export const HeroScene = memo(function HeroScene({ layout, road }: { layout: StreetLayout | null; road: ReactNode }) {
   return (
-    <SceneRoot index={0} sky={HERO_SKY} skyArt={<SkyArt />} testId="hero-scene">
+    <SceneRoot index={0} sky={HERO_SKY} skyArt={<SkyArt />} testId="hero-scene" interactive>
       <Layer speed={0.4}>
         <Clouds phone={!!layout?.phone} />
       </Layer>

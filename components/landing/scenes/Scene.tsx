@@ -145,7 +145,7 @@ function Sky({ d, unit, sky, children }: { d: MotionValue<number>; unit: RefObje
     return p >= 0 ? (p < 1.5 ? 1 : 0) : Math.max(0, 1 + p);
   });
   return (
-    <motion.div className="sc-sky pointer-events-none fixed inset-0 -z-10" style={{ background: sky, opacity }}>
+    <motion.div className="sc-sky pointer-events-none fixed inset-0 -z-10" style={{ background: sky, opacity }} aria-hidden>
       {children}
     </motion.div>
   );
@@ -156,7 +156,7 @@ function Sky({ d, unit, sky, children }: { d: MotionValue<number>; unit: RefObje
  * provides the scroll offset. `index` is the section's index in SectionNav. `sky` defaults to the section's
  * SKY preset. `night` forces the night look (the dark theme turns it on anyway).
  */
-export function SceneRoot({ index, sky, skyArt, night = false, className = '', testId, children }: { index: number; sky?: string; skyArt?: ReactNode; night?: boolean; className?: string; testId?: string; children: ReactNode }) {
+export function SceneRoot({ index, sky, skyArt, night = false, className = '', testId, interactive = false, children }: { index: number; sky?: string; skyArt?: ReactNode; night?: boolean; className?: string; testId?: string; /** the scene holds real controls (the hero's Road): its decorative layers hide themselves instead */ interactive?: boolean; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const reduce = !!useReducedMotion();
   const live = useSceneLive(index);
@@ -168,7 +168,7 @@ export function SceneRoot({ index, sky, skyArt, night = false, className = '', t
     <div
       ref={ref}
       className="sc-root pointer-events-none absolute inset-0"
-      aria-hidden
+      aria-hidden={interactive ? undefined : true}
       data-testid={testId}
       data-live={live ? 'true' : 'false'}
       data-night={night ? 'true' : 'false'}

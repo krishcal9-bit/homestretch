@@ -231,11 +231,11 @@ export function IsoHouse({
             {fine && <rect x={d.x + 1} y={-1.6} width={d.w - 2} height={1.4} fill={P.slateLight} opacity={0.7} />}
           </motion.g>
 
-          {/* porch light */}
-          <g>
+          {/* porch light (appears with the door) */}
+          <motion.g {...pop(0.8)}>
             <motion.circle cx={d.x - 4.5} cy={d.y + 4} r={6} fill={P.honey} filter={`url(#gl${id})`} initial={false} animate={{ opacity: porch ? 0.8 : 0 }} transition={{ duration: 0.4 }} />
             <rect x={d.x - 5.6} y={d.y + 2.2} width={2.2} height={3.6} rx={0.6} fill={porch ? P.honeyLight : P.slateLight} />
-          </g>
+          </motion.g>
 
           {/* windows: frames, glass with a glare stripe, mullions, sills */}
           <motion.g {...pop(1.0)} style={{ transformBox: 'fill-box', transformOrigin: '50% 50%' }}>
@@ -254,10 +254,10 @@ export function IsoHouse({
             <rect x={w.x} y={w.y} width={w.w} height={w.h} fill={`url(#lw${id})`} />
           </motion.g>
           {fine && (
-            <g fill={P.trim}>
+            <motion.g fill={P.trim} {...pop(1.0)} style={{ transformBox: 'fill-box', transformOrigin: '50% 50%' }}>
               <rect x={w.x + w.w / 2 - 0.7} y={w.y} width={1.4} height={w.h} />
               <rect x={w.x} y={w.y + w.h / 2 - 0.7} width={w.w} height={1.4} />
-            </g>
+            </motion.g>
           )}
 
           {/* shrub by the door */}

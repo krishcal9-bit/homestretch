@@ -203,11 +203,6 @@ html.hs-veil::after { content: ''; position: fixed; inset: 0; background: var(--
    controls, so no ring. Must be unlayered to beat the global :focus-visible rule above. */
 [data-screen-title]:focus-visible { outline: none; }
 
-/* Closing band: 100 houses fill in white one by one (opacity only) */
-@keyframes hh-in { from { opacity: 0; } to { opacity: 1; } }
-.hh-outline { fill: none; stroke: #ffffff; stroke-opacity: 0.35; stroke-width: 1.5; stroke-linejoin: round; }
-.hh-fill { fill: #ffffff; opacity: 0; animation: hh-in 160ms var(--ease-out) forwards; }
-.hh-on { opacity: 1; animation: none; }
 
 /* Landing: full-viewport sections that snap (mandatory on desktop, proximity on phones). */
 html.landing-snap { scroll-snap-type: y proximity; scroll-padding-top: 64px; }
@@ -269,6 +264,8 @@ html.landing-snap.landing-snap-off { scroll-snap-type: none; }
 @media (max-width: 1023px) and (max-height: 700px) {
   .hero-house { position: relative; left: auto; top: auto; translate: none; margin: 0 auto -8px; }
   .hero-house-spacer { display: none; }
+}
+
 /* r5:landing-art */
 /* Landing scene illustrations (components/illustrations/landing) and the Skyline. Compositor-only CSS:
    transform and opacity. Ambient loops pause (.la-paused) while their scene is off screen; reduced motion

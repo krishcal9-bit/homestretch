@@ -8,7 +8,7 @@ import { emptyDraft, type Draft } from '@/lib/draft';
 import { useStored } from '@/lib/useStored';
 import { Button } from '@/components/ui/Button';
 import { ProgressRoad } from '@/components/ui/ProgressRoad';
-import { Skyline } from '@/components/ui/Skyline';
+import { Backdrop, type BackdropScene } from '@/components/scenery/Backdrop';
 import { flushSync } from 'react-dom';
 import { useVTRouter, vtSupported, withViewTransition } from '@/lib/vt';
 import { ease } from '@/lib/motion';
@@ -87,7 +87,8 @@ export function Flow() {
   // Stable pieces, so a tap on a stepper re-renders only what changed (4× CPU throttle budget: no frame > 34ms).
   const speechRef = useRef<(f: SpeechFields) => number>(() => 0);
   const onSpeech = useCallback((f: SpeechFields) => speechRef.current(f), []);
-  const skyline = useMemo(() => <Skyline mode="static" count={10} height={64} className="-mx-5 mt-6 opacity-40" />, []);
+  // behind the panel: the neighborhood, quieter; its centre changes with the question
+  const SCENE: Record<number, BackdropScene> = { 1: 'household', 2: 'income', 3: 'housing', 4: 'money' };
   const submit = useMemo(
     () => (
       <Button type="submit" size="lg" full>
@@ -221,7 +222,7 @@ export function Flow() {
                 e.preventDefault();
                 next();
               }}
-              className="pb-8 pt-2"
+              className="-mx-2 mb-10 mt-2 rounded-[14px] border border-line bg-surface px-5 pb-7 pt-5 sm:mx-0 sm:px-7"
             >
               <div className="intake-screen">{screens[step]}</div>
               <div className="mt-10">{submit}</div>
@@ -252,7 +253,7 @@ export function Flow() {
                 e.preventDefault();
                 next();
               }}
-              className="pb-8 pt-2"
+              className="-mx-2 mb-10 mt-2 rounded-[14px] border border-line bg-surface px-5 pb-7 pt-5 sm:mx-0 sm:px-7"
             >
               <div className="intake-screen">{screens[step]}</div>
               <div className="mt-10">{submit}</div>
@@ -262,7 +263,7 @@ export function Flow() {
         </motion.div>
       </AnimatePresence>
       )}
-      {step <= INTAKE_STEPS && skyline}
+      {step >= 1 && step <= INTAKE_STEPS && <Backdrop scene={SCENE[step] ?? 'street'} />}
     </div>
   );
 }

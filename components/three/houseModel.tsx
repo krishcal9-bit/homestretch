@@ -250,7 +250,7 @@ export function makeHouseController(build: HouseBuild, state: HouseState): House
 
 export function House({ ctl, onBuilt }: { ctl: HouseHandle; onBuilt?: () => void }) {
   const m = useMaterials();
-  const { clock, invalidate } = useThree();
+  const { invalidate } = useThree();
   const geo = useMemo(
     () => ({
       plinthLawn: roundedSlab(PLINTH.w, PLINTH.d, PLINTH.lawn, 0.7),
@@ -285,8 +285,10 @@ export function House({ ctl, onBuilt }: { ctl: HouseHandle; onBuilt?: () => void
     const R = r.current;
     const b = ctl.build;
     let moving = false;
-    if (ctl.start === null) ctl.start = clock.elapsedTime;
-    const raw = clock.elapsedTime - ctl.start;
+    // wall-clock time (R3F's clock restarts when the canvas pauses off screen, which would replay the build)
+    const now = performance.now() / 1000;
+    if (ctl.start === null) ctl.start = now;
+    const raw = now - ctl.start;
     // map real time to intro-timeline time
     let t: number;
     if (b === 'none') t = 99;

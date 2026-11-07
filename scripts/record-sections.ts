@@ -1,4 +1,4 @@
-// Records a full section-by-section pass using the Down arrow (1440×900) to docs/motion/r4-sections.webm
+// Records a full section-by-section pass using the Down arrow (1440×900) to docs/motion/r5-sections.webm
 import { chromium } from 'playwright';
 import fs from 'fs';
 (async () => {
@@ -10,6 +10,6 @@ import fs from 'fs';
   for (let i = 0; i < 4; i++) { await p.keyboard.press('ArrowDown'); await p.waitForTimeout(3300); }
   await p.getByTestId('section-arrow-4').click(); await p.waitForTimeout(1500);
   await ctx.close();
-  const f = fs.readdirSync('docs/motion/tmp')[0]; fs.renameSync(`docs/motion/tmp/${f}`, 'docs/motion/r4-sections.webm'); fs.rmdirSync('docs/motion/tmp');
+  const f = fs.readdirSync('docs/motion/tmp')[0]; fs.renameSync(`docs/motion/tmp/${f}`, 'docs/motion/r5-sections.webm'); fs.rmdirSync('docs/motion/tmp');
   await b.close();
 })();

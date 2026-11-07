@@ -20,11 +20,12 @@ const inOut = (p: number) => {
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 function IntroRig({ slot, start }: { slot: () => DOMRect | null; start: { t: number | null } }) {
-  const { camera, size, clock, invalidate } = useThree();
+  const { camera, size, invalidate } = useThree();
   const target = useRef<DOMRect | null>(null);
   useFrame(() => {
-    if (start.t === null) start.t = clock.elapsedTime;
-    const t = clock.elapsedTime - start.t;
+    const now = performance.now() / 1000;
+    if (start.t === null) start.t = now;
+    const t = now - start.t;
     const cam = camera as THREE.PerspectiveCamera;
     const W = size.width;
     const H = size.height;

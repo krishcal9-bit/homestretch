@@ -7,7 +7,7 @@ import { whyThisDate } from '@/lib/explain';
 import type { Profile } from '@/lib/types';
 import type { PlanOutput } from '@/lib/plan';
 import { Road } from '@/components/result/Road';
-import { PanelStreet } from '@/components/illustrations/result/PanelStreet';
+import { RoadScene } from '@/components/scenery/RoadScene';
 import { ReadyHero } from '@/components/illustrations/result/ReadyHero';
 import { Section, WhyThisDate } from '@/components/result/Panels';
 import { PlanChecklist, PlanSkeleton } from '@/components/result/PlanChecklist';
@@ -101,7 +101,7 @@ export function PlanView({ code, createdAt, profile, initialPlan, initialCheckli
       <div style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
         <ReadyHero key={phase} months={result.monthsToReady} readyDate={result.readyDate} keysDate={addMonths(new Date(), keys)} noIncome={result.noIncome} play={play} at={Math.max(0.2, keysAt - 0.05)} roll={0.4} onSettled={onSettled} />
       </div>
-      <div className="panel mt-8 !px-5 !pb-2 !pt-4">
+      <RoadScene className="mt-8" warmth={0.2}>
         {phase === 'pending' ? (
           // the Road's height with the house at its end (it scales with the panel's width)
           <div className="[container-type:inline-size]">
@@ -120,8 +120,7 @@ export function PlanView({ code, createdAt, profile, initialPlan, initialCheckli
             keysSlot={<RoadHouse build={play && !houseDone ? 'quick' : 'none'} lit={doneCount} porch={settled && built} tilt onBuilt={onBuilt} />}
           />
         )}
-        <PanelStreet />
-      </div>
+      </RoadScene>
       <WhyThisDate sentences={why} />
       <Section title={t('plan.title')} id="plan">
         {plan ? <PlanChecklist plan={plan} checklist={checklist} onToggle={toggle} today={new Date(createdAt)} /> : <PlanSkeleton />}

@@ -13,7 +13,7 @@ import { Levers } from './Levers';
 import { FinancePanel, Section, WhyThisDate } from './Panels';
 import { AimForHome } from './AimForHome';
 import { TwoFutures } from './TwoFutures';
-import { PanelStreet } from '@/components/illustrations/result/PanelStreet';
+import { RoadScene } from '@/components/scenery/RoadScene';
 import { useDateDelta } from '@/components/illustrations/result/DeltaPill';
 import { keysReachAt, panelRoadWidth } from '@/components/illustrations/result/timing';
 import { ReadyHero, useEntrance } from '@/components/illustrations/result/ReadyHero';
@@ -96,6 +96,9 @@ export function ResultScreen({
   const baseProfile = useMemo(() => draftToProfile(draft), [draft]);
   const profile = useMemo(() => ({ ...baseProfile, levers }), [baseProfile, levers]);
   const result = useMemo(() => computeReadiness(profile), [profile]);
+  // the sky behind the Road warms toward golden hour as the date gets earlier than where the family started
+  const [startMonths] = useState(() => result.monthsToReady);
+  const warmth = Math.min(1, Math.max(0, (startMonths - result.monthsToReady) / Math.max(6, startMonths * 0.6)));
   // The hero, the Road and the sliders follow every frame of a drag. "Aim for a specific home" follows a
   // deferred copy (rendered between frames, so its small Road still re-flows while a solve glides); the
   // sections nobody reads mid-drag (why, finance, plan, save, counselor) follow a copy that settles 160ms
@@ -184,7 +187,7 @@ export function ResultScreen({
       )}
       <ReadyHero months={result.monthsToReady} readyDate={result.readyDate} keysDate={addMonths(new Date(), keysMonth)} play={play} at={dateAt} onSettled={onSettled} baseline={baseline} />
 
-      <div className="panel mt-8 !px-5 !pb-2 !pt-4">
+      <RoadScene className="mt-8" warmth={warmth}>
         <Road
           result={result}
           entrance={play ? 'always' : 'none'}
@@ -197,9 +200,7 @@ export function ResultScreen({
           progressTo={result.monthsToReady}
           keysGlow={keysGlow}
         />
-        {/* the street the road runs along */}
-        <PanelStreet />
-      </div>
+      </RoadScene>
 
       <div className="panel mt-4 !p-5">
         <h2 className="t-section text-ink">{t('result.leversTitle')}</h2>

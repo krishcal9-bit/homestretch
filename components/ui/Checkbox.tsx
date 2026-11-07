@@ -5,12 +5,12 @@ import { dur, ease } from '@/lib/motion';
 /** Checkbox whose check draws as a path over 200ms. */
 export function CheckMark({ checked }: { checked: boolean }) {
   return (
-    <span className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[6px] border transition-colors duration-[120ms] ${checked ? 'border-pine bg-pine' : 'border-[#b9c4be] bg-surface'}`} aria-hidden>
+    <span className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[6px] border transition-colors duration-[120ms] ${checked ? 'border-pine bg-pine' : 'border-line-strong bg-surface'}`} aria-hidden>
       <svg width="14" height="14" viewBox="0 0 14 14">
         <motion.path
           d="M3 7.5 6 10.5 11.5 4"
           fill="none"
-          stroke="white"
+          stroke="var(--on-pine)"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"

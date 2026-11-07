@@ -36,7 +36,7 @@ function Ingot({ label, w, id }: { label: string; w: number; id: string }) {
       <path d={`M${-w / 2 + 2.6} ${-h}L${-w / 2 + 5.6} ${-h - ING_TOP}H${w / 2 + 0.4}L${w / 2 - 2.6} ${-h}Z`} fill={P.slateLight} />
       <path d={`M${w / 2 - 2.6} ${-h}L${w / 2 + 0.4} ${-h - ING_TOP}L${w / 2 + 3} ${-ING_TOP}L${w / 2} 0Z`} fill={P.slateDark} />
       <path d={`M${-w / 2 + 4} ${-h + 1.4}H${w / 2 - 5}`} stroke={P.glassLight} strokeWidth={0.8} opacity={0.55} />
-      <text x={0} y={-5.4} textAnchor="middle" className="tnum" fontSize={13} fill={P.trim}>
+      <text x={0} y={-5.4} textAnchor="middle" className="tnum" fontSize={13} fill={P.boardInk}>
         {label}
       </text>
     </>
@@ -57,7 +57,7 @@ function SavingsTag({ word, amount, w }: { word: string; amount: string; w: numb
         <text x={right - w / 2 - 1} y={-29} textAnchor="middle" className="tnum" fontSize={13} fill={P.ink2}>
           {word}
         </text>
-        <text x={right - w / 2 - 1} y={-14} textAnchor="middle" className="tnum" fontSize={13} fontWeight={500} fill={P.pine}>
+        <text x={right - w / 2 - 1} y={-14} textAnchor="middle" className="tnum" fontSize={13} fontWeight={500} fill="var(--pine)">
           {amount}
         </text>
       </g>

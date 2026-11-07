@@ -2,7 +2,7 @@
 import { motion, useReducedMotion } from 'motion/react';
 import { useEffect, useId, useState } from 'react';
 import { ease } from '@/lib/motion';
-import { P } from '@/lib/illustrationPalette';
+import { P, alpha } from '@/lib/illustrationPalette';
 
 /**
  * The 2D house: Homestretch's recurring object wherever the 3D canvas isn't used (the Road's Keys marker,
@@ -110,6 +110,11 @@ export function IsoHouse({
           <stop offset="0" stopColor={P.slateLight} />
           <stop offset="1" stopColor={P.slate} />
         </linearGradient>
+        <radialGradient id={`wl${id}`}>
+          <stop offset="0" stopColor={alpha(P.honey, 0.45)} />
+          <stop offset="0.6" stopColor={alpha(P.honey, 0.14)} />
+          <stop offset="1" stopColor={alpha(P.honey, 0)} />
+        </radialGradient>
         <linearGradient id={`lw${id}`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor={P.honeyLight} />
           <stop offset="1" stopColor={P.honey} />
@@ -124,6 +129,13 @@ export function IsoHouse({
           <path d={`M${W + 4} 4L${W + dx + 14} ${-dy + 2}L${W + dx + 14} ${-dy + 5}L${W + 4} 7Z`} fill={P.sageDark} opacity={0.8} />
           <ellipse cx={W / 2 + dx * 0.75} cy={-dy / 2 + 1} rx={W * 0.62} ry={dy * 0.55} fill={P.shadow} filter={`url(#sh${id})`} />
         </motion.g>
+      )}
+
+      {/* night on a building site: the work light's warm wash behind the frame (dark theme only) */}
+      {(framing || roofing) && (
+        <g className="il-light" style={{ '--i': 1 } as React.CSSProperties}>
+          <ellipse cx={W * 0.62} cy={-H * 0.42} rx={W * 0.62} ry={H * 0.62} fill={`url(#wl${id})`} />
+        </g>
       )}
 
       {/* walls: rise from the floor (overlap: side first, front 60ms later) */}
@@ -269,6 +281,16 @@ export function IsoHouse({
             </motion.g>
           )}
         </>
+      )}
+
+      {/* the work light itself: a lamp head on a tripod at the front corner of the lot (night only) */}
+      {(framing || roofing) && (
+        <g className="il-light" style={{ '--i': 0 } as React.CSSProperties}>
+          <path d={`M${W + 10} 5L${W + 13} -9L${W + 16} 5M${W + 13} -9V4`} fill="none" stroke={P.slateDark} strokeWidth={1.1} strokeLinecap="round" />
+          <circle cx={W + 13} cy={-11.5} r={7} fill={alpha(P.honey, 0.35)} />
+          <rect x={W + 9.5} y={-14.5} width={7} height={5} rx={1} fill={P.slate} />
+          <rect x={W + 10.3} y={-13.7} width={5.4} height={3.4} rx={0.6} fill={P.glow} />
+        </g>
       )}
     </svg>
   );

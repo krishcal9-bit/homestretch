@@ -1,6 +1,6 @@
 'use client';
 import { motion, useReducedMotion } from 'motion/react';
-import { P } from '@/lib/illustrationPalette';
+import { P, alpha } from '@/lib/illustrationPalette';
 
 /**
  * The saved plan code as a split-flap board: each character sits on a slate tile with a hinge across its
@@ -29,17 +29,17 @@ export function SplitFlapCode({ code, play }: { code: string; play: boolean }) {
             <span key={`${code}-${i}`} className={`relative [perspective:220px] ${CELL}`}>
               {/* the blank flap the new one falls over */}
               <span className="absolute inset-x-0 bottom-0 h-1/2 rounded-b-[8px]" style={{ background: TILE.bottom }} />
-              <span data-ch={ch} className={`${HALF} top-0 rounded-t-[8px] before:top-0`} style={{ background: TILE.top, color: P.paper }} />
+              <span data-ch={ch} className={`${HALF} top-0 rounded-t-[8px] before:top-0`} style={{ background: TILE.top, color: P.boardInk }} />
               <motion.span
                 data-ch={ch}
                 className={`${HALF} bottom-0 rounded-b-[8px] before:-top-[26px]`}
-                style={{ background: TILE.bottom, color: P.paper, transformOrigin: '50% 0%', backfaceVisibility: 'hidden' }}
+                style={{ background: TILE.bottom, color: P.boardInk, transformOrigin: '50% 0%', backfaceVisibility: 'hidden' }}
                 initial={animateIn ? { rotateX: 92 } : false}
                 animate={{ rotateX: 0 }}
                 transition={{ type: 'spring', duration: 0.5, bounce: 0.32, delay }}
               >
                 {/* the falling flap is in shade until it faces the light */}
-                <motion.span className="absolute inset-0 bg-[rgba(24,36,32,0.45)]" initial={animateIn ? { opacity: 1 } : false} animate={{ opacity: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: delay + 0.05 }} />
+                <motion.span className="absolute inset-0" style={{ background: alpha(P.ink, 0.45) }} initial={animateIn ? { opacity: 1 } : false} animate={{ opacity: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: delay + 0.05 }} />
               </motion.span>
               {/* the hinge: a dark seam with a lit lip under it, and the two pins at the ends */}
               <span className="absolute inset-x-0 top-1/2 h-px -translate-y-px" style={{ background: P.slateDark }} />
@@ -52,7 +52,7 @@ export function SplitFlapCode({ code, play }: { code: string; play: boolean }) {
           );
         })}
       </div>
-      <p className="tnum relative whitespace-nowrap leading-[52px] text-transparent selection:bg-[rgba(228,239,234,0.5)]" data-testid="plan-code">
+      <p className="tnum relative whitespace-nowrap leading-[52px] text-transparent selection:bg-pine-soft/50" data-testid="plan-code">
         {chars.map((ch, i) => (
           <span key={i} className={`${CELL} text-center`}>
             {ch}

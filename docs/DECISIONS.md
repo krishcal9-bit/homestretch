@@ -74,3 +74,33 @@ Ambiguities resolved during the build, with the choice made.
   (smoke rises less and fades inside that air), plinth base ~6% above the bottom; Road anchors moved to
   ax 0.38 / ay 0.785 (projected path end). `public/house/house.png` re-rendered with it.
 - The intro's sky no longer fades back in when the title lands in the header (it flashed for ~50ms before).
+
+## Round 6 — per-section landing scenes
+
+- One shared backdrop (`components/scenery/World`) is gone from the landing. Each section has its own scene in
+  `components/landing/scenes/`, full-bleed behind its content: hero street at late afternoon (neighborhood at the
+  edges of the product stage, street along the bottom), a softly blurred kitchen behind the phone, a golden-hour
+  valley whose winding road is the background and the car's exact path, an elevated block on a clean ground plane,
+  a dusk street of a hundred homes. `SceneSky` is the landing's one fixed sky; it crossfades to the section the
+  camera is headed to in 700ms (the new sky over the old, which drops only once covered: no dip).
+- The camera move is scroll-linked parallax per layer (far 0.3–0.55, ground 1, foreground 1.15–1.28) relative to
+  where the section rests, so arrows, dots, wheel and touch all read the same way. SectionNav gained a `target`
+  (where the camera is headed: set when a move starts, or by the viewport's middle when scrolling freely).
+- Ambient loops run only while the camera has settled on a section (`data-live`), never during a move. Scenes two
+  or more sections away skip rendering (`content-visibility: hidden`); neighbours switch at rest. Large soft glows
+  live in the sky layer (painted once) instead of in moving layers; no layer opacity fades (they forced offscreen
+  passes in software compositing).
+- Scenes take `night` (default false); everything that lights at night is its own `.sc-light` element with a stagger
+  delay (`--d`), dark by day. Colours only from `P`/`mix()`; translucency only via opacity attributes.
+- Perf at 4× CPU throttle in headless Chromium (software compositing, shared 4-core box) is measured with
+  `scripts/perf-r6-scenes.ts`; the compositor's software draw, not the main thread, is the bottleneck there.
+- **Round 6: light and dark mode (owner spec, Nov 7).** This supersedes "no dark mode" in BUILD_SPEC §4 and CLAUDE.md.
+  - **One attribute drives everything.** `<html data-theme="light|dark">` is set by an inline `<head>` script before first paint (stored `hs.theme`, else `prefers-color-scheme`), so the wrong theme never flashes. With no stored choice the page follows the system setting live; another tab's choice syncs. The UI tokens and the illustration palette both key on it, so a switch is one attribute change with no React re-render. Canvases listen for the `hs:theme` window event (`{ theme, instant }`) or read `getTheme()`.
+  - **Switching is a View Transition**, kind `theme`: the new theme fades in over the old snapshot (600ms, eased; the old stays opaque so nothing dips through transparency). The switch itself is excluded from the crossfade (its own `view-transition-name`) so its sun-to-crescent morph (250ms, transform/opacity) plays live. Lights in the scenery come on after the fade starts, 45ms apart (`.il-light`). Reduced motion or no View Transitions: instant.
+  - **Dark tokens are the owner's values**, plus tokens the components needed: `--on-pine` (#0F1513: white on #4FA585 is 2.5:1), `--line-strong` (control borders), `--tip`/`--on-tip` (toast and Road tooltip: a raised dark grey at night, not an inverted light chip), `--band`/`--on-band` (the closing band: deep pine at night instead of a bright #4FA585 slab), `--knob`, `--selection`, `--scrim`, `--edge`, `--drawer-shadow`, `--scrollbar`, `--chart-base`.
+  - **The illustration palette is CSS variables** (`P.wall === 'var(--il-wall)'`) with day and night values from one source (`PALETTE_CSS`, inlined in the layout head). Night is not inverted: a navy-to-ink sky, moonlit (darker, cooler) walls, roofs and lawns, warm lamplit glass, brass/honey/glow brighter. `P.ink` stays the darkest tone at night (tyres, phone bodies, shadows); text on paper uses `P.ink2`/`P.print`, which turn light with the paper. three.js, data-URI images and canvases take hex (`PX` day, `PN` night); `mix`/`alpha` return hex for hex and `color-mix()` for variables.
+  - **The brand wordmark uses the UI tokens** (`--ink`, `--pine`), not the illustration palette: it is chrome.
+  - **Data-URI textures are built twice** (`perTheme`) and CSS shows the current one (`.themed-bg`, `.theme-day-only/.theme-night-only`). The letter desk at night is dark walnut under a lamp; the sheet is dark paper with light ink.
+  - **Night scenery** (components/scenery): stars and a moon (`.il-night`), moonlit clouds, most windows and porch lamps lit, the corner street lamp plus two lamps along the far sidewalk with pools of light; framing and roofing houses get a work light. Birds roost.
+  - **The header's staff link hides below 640px** to make room for the switch. The staff console needs ≥1024px anyway, and the landing footer keeps the link.
+  - **PDFs and the share card stay light**: they are drawn with their own hex and never read CSS variables.

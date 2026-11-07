@@ -2,7 +2,7 @@
 import { motion, useReducedMotion } from 'motion/react';
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { P } from '@/lib/illustrationPalette';
+import { P, alpha as rgba } from '@/lib/illustrationPalette';
 import { spring } from '@/lib/motion';
 
 /** One sweep of the scan beam, top to bottom. Callers wait for whole sweeps before showing what was read. */
@@ -15,10 +15,6 @@ const VB = { w: 88, h: 100 };
 const BOX = { x: 26, y: 73, w: 56, h: 19 };
 const PAPER = 'M3 3H70L85 18V97H3Z';
 
-const rgba = (hex: string, a: number) => {
-  const n = parseInt(hex.slice(1), 16);
-  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
-};
 /** The scan beam: a honey-light band with a bright leading edge (it travels downward). */
 const BEAM = `linear-gradient(to bottom, ${rgba(P.glow, 0)} 0%, ${rgba(P.glow, 0.35)} 45%, ${rgba(P.honeyLight, 0.75)} 82%, ${rgba(P.honey, 0.95)} 90%, ${rgba(P.glow, 0.5)} 94%, ${rgba(P.glow, 0)} 100%)`;
 
@@ -141,7 +137,7 @@ export function PayStub({
               <feGaussianBlur stdDeviation="2.2" />
             </filter>
             <linearGradient id={`${uid}-paper`} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor={P.trim} />
+              <stop offset="0" stopColor={P.paperLight} />
               <stop offset="0.5" stopColor={P.paper} />
               <stop offset="1" stopColor={P.paperShade} />
             </linearGradient>
@@ -178,7 +174,7 @@ export function PayStub({
           ].map(([y, l, v]) => (
             <g key={y}>
               <rect x={8} y={y} width={l} height={3} rx={1.5} fill={P.ink2} opacity={0.3} />
-              <rect x={80 - v} y={y} width={v} height={3} rx={1.5} fill={P.ink} opacity={0.4} />
+              <rect x={80 - v} y={y} width={v} height={3} rx={1.5} fill={P.print} opacity={0.4} />
             </g>
           ))}
           <path d="M8 65.5H80" stroke={P.paperShade} strokeWidth={1} />

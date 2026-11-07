@@ -18,7 +18,8 @@ const BARS = [0.35, 0.6, 0.9, 0.55, 1, 0.75, 0.45, 0.85, 0.6, 0.95, 0.5, 0.7, 0.
 const STUB = { w: 136, h: 172, amt: { x: 10, y: 128, w: 116, h: 30 } };
 const BODY = `linear-gradient(140deg, ${P.slateLight} 0%, ${P.slate} 22%, ${P.slateDark} 60%, ${P.ink} 100%)`;
 
-export function PhoneVoice({ reduce }: { reduce: boolean }) {
+/** `backdrop`: the blurred kitchen behind the phone (off when the landing's scene draws the room). */
+export function PhoneVoice({ reduce, backdrop = true }: { reduce: boolean; backdrop?: boolean }) {
   const { t } = useLang();
   const T = reduce ? ZERO : TL;
   const wrap = useRef<HTMLDivElement>(null);
@@ -56,7 +57,7 @@ export function PhoneVoice({ reduce }: { reduce: boolean }) {
   return (
     <div ref={wrap} className="relative isolate mx-auto w-[300px] pb-12 pt-2" style={{ perspective: 1400 }} aria-hidden data-testid="phone-voice">
       {/* the family's kitchen table, out of focus behind the phone (not on phones: too busy at that size) */}
-      {st >= 2 && <Kitchen reduce={reduce} />}
+      {st >= 2 && backdrop && <Kitchen reduce={reduce} />}
       {/* contact shadow on the floor, falling right (light from the top-left); breathes with the float */}
       <div className={`la-float-shadow absolute bottom-[6px] left-[34px] z-[1] h-[44px] w-[270px] ${onScreen && !reduce ? '' : 'la-paused'}`}>
         <motion.div
@@ -136,7 +137,7 @@ export function PhoneVoice({ reduce }: { reduce: boolean }) {
                   </div>
                 </div>
                 <Field label={fields[2][0]} value={fields[2][1]} at={fields[2][2]} reduce={reduce} />
-                <div className="mt-1 flex h-[38px] items-center justify-center rounded-[8px] bg-pine text-[13px] font-medium text-white">{t('app.continue')}</div>
+                <div className="mt-1 flex h-[38px] items-center justify-center rounded-[8px] bg-pine text-[13px] font-medium text-on-pine">{t('app.continue')}</div>
               </div>
               <div className="mx-auto mt-3 h-[4px] w-[100px] rounded-full" style={{ background: P.ink, opacity: 0.85 }} />
               {/* glass: a soft glare across the top-left of the screen */}

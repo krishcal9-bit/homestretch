@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 
-/* Homestretch design tokens (BUILD_SPEC §4). One light theme, no shadows, one brass accent. */
+/* Homestretch design tokens (BUILD_SPEC §4). Light and dark (round 6), no shadows, one brass accent.
+   <html data-theme> is set before first paint (lib/themeScript.ts); every component reads these only. */
 :root {
   --paper: #f6f7f5;
   --surface: #ffffff;
@@ -13,6 +14,20 @@
   --brass: #b8862b;
   --signal-red: #b3362b;
   --signal-amber: #8a5f0e;
+  /* r6:theme tokens — text on pine; control borders; inverse tips; the closing band; overlays */
+  --on-pine: #ffffff;
+  --line-strong: #b9c4be;
+  --tip: #182420;
+  --on-tip: #ffffff;
+  --band: #1e5c47;
+  --on-band: #ffffff;
+  --knob: #ffffff;
+  --selection: #e4efea;
+  --scrim: rgba(24, 36, 32, 0.2);
+  --edge: rgba(24, 36, 32, 0.06);
+  --drawer-shadow: 0 1px 3px rgba(24, 36, 32, 0.06), 0 16px 48px rgba(24, 36, 32, 0.14);
+  --scrollbar: #c5cec9;
+  --chart-base: #b7c3bd;
   color-scheme: light;
   /* pro-ui-craft easing: custom curves for every CSS transform transition */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -20,7 +35,37 @@
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-::selection { background: var(--pine-soft); color: var(--ink); }
+/* Dark: night, not inverted. Every text/background pair here is >= 4.5:1 (pine on pine-soft 4.6). */
+:root[data-theme='dark'] {
+  --paper: #0f1513;
+  --surface: #161e1b;
+  --ink: #e8edea;
+  --ink-2: #a7b4ae;
+  --line: #26312d;
+  --pine: #4fa585;
+  --pine-hover: #62b394;
+  --pine-soft: #183229;
+  --brass: #d9a64a;
+  --signal-red: #e07a6f;
+  --signal-amber: #d9a64a;
+  --on-pine: #0f1513;
+  --line-strong: #5e6b66;
+  --tip: #2b3833;
+  --on-tip: #e8edea;
+  --band: #173a2e;
+  --on-band: #e8edea;
+  --knob: #e8edea;
+  --selection: #24493b;
+  --scrim: rgba(3, 6, 5, 0.6);
+  --edge: rgba(232, 237, 234, 0.08);
+  --drawer-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 16px 48px rgba(0, 0, 0, 0.55);
+  --scrollbar: #34413c;
+  --chart-base: #5e6e67;
+  color-scheme: dark;
+}
+
+::selection { background: var(--selection); color: var(--ink); }
+html { scrollbar-color: var(--scrollbar) var(--paper); }
 input, textarea { caret-color: var(--pine); }
 h1, h2 { text-wrap: balance; }
 p, li { text-wrap: pretty; }
@@ -34,7 +79,7 @@ p, li { text-wrap: pretty; }
 .hit::before { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%); }
 
 /* Images keep their edge on light surfaces. */
-.img-edge { outline: 1px solid rgba(24, 36, 32, 0.06); outline-offset: -1px; }
+.img-edge { outline: 1px solid var(--edge); outline-offset: -1px; }
 
 @keyframes spin-fast { to { transform: rotate(360deg); } }
 .spin-fast { animation: spin-fast 0.7s linear infinite; }
@@ -52,6 +97,13 @@ p, li { text-wrap: pretty; }
   --color-brass: var(--brass);
   --color-signal-red: var(--signal-red);
   --color-signal-amber: var(--signal-amber);
+  --color-on-pine: var(--on-pine);
+  --color-line-strong: var(--line-strong);
+  --color-tip: var(--tip);
+  --color-on-tip: var(--on-tip);
+  --color-band: var(--band);
+  --color-on-band: var(--on-band);
+  --color-knob: var(--knob);
   --font-sans: 'Public Sans', ui-sans-serif, system-ui, sans-serif;
   --radius-control: 8px;
   --radius-panel: 14px;
@@ -114,7 +166,7 @@ textarea {
   color: var(--ink);
   transition: border-color 120ms, box-shadow 120ms;
 }
-@media (hover: hover) and (pointer: fine) { .field:hover { border-color: #c5cec9; } }
+@media (hover: hover) and (pointer: fine) { .field:hover { border-color: var(--line-strong); } }
 .field:focus { outline: none; border-color: var(--pine); box-shadow: 0 0 0 2px var(--pine); }
 
 }
@@ -244,6 +296,11 @@ html.landing-snap.landing-snap-off { scroll-snap-type: none; }
   .scenery-birds { display: none; }
 }
 
+/* the 3D house's still renders: day, or night under the dark theme (decided before first paint) */
+.still-night { display: none; }
+[data-theme='dark'] .still-night { display: block; }
+[data-theme='dark'] .still-day { display: none; }
+
 /* landing hero: the house stands in the product stage (components/three/HeroHouse.tsx); the canvas hangs on
    the intro's stage during the film and docks into its slot on the Road */
 
@@ -311,9 +368,102 @@ html.landing-snap.landing-snap-off { scroll-snap-type: none; }
 [data-draw="pending"] .recharts-line-curve { opacity: 0; }
 [data-draw] .recharts-label-list { transition: opacity 240ms ease; }
 [data-draw="pending"] .recharts-label-list, [data-draw="drawing"] .recharts-label-list { opacity: 0; }
+/* r6:theme */
+/* Light ⇄ dark (lib/theme.ts). The new theme fades in over the old one: 600ms, eased, nothing moves. The old
+   snapshot stays opaque underneath, so the page never dips through transparency mid-fade. */
+html[data-vt='theme']::view-transition-group(*) { animation: none; }
+html[data-vt='theme']::view-transition-old(*) { animation: none; }
+html[data-vt='theme']::view-transition-new(*) { animation: 600ms cubic-bezier(0.45, 0, 0.55, 1) both vt-fade-in; }
+/* The switch is not crossfaded: it morphs live while the page fades (rays retract into a crescent, 250ms). */
+.theme-toggle { view-transition-name: theme-toggle; }
+::view-transition-group(theme-toggle) { animation: none; }
+html[data-vt='theme']::view-transition-old(theme-toggle) { display: none; }
+html[data-vt='theme']::view-transition-new(theme-toggle) { animation: none; }
+.tt-core, .tt-bite { transform-box: fill-box; transform-origin: center; transition: transform 250ms var(--ease-out); }
+.tt-rays { transform-origin: 12px 12px; transition: transform 250ms var(--ease-out), opacity 200ms ease; }
+.tt-bite { transform: translate(9px, -9px); }
+:root[data-theme='dark'] .tt-core { transform: scale(1.7); }
+:root[data-theme='dark'] .tt-bite { transform: none; }
+:root[data-theme='dark'] .tt-rays { transform: rotate(-60deg) scale(0.35); opacity: 0; }
+
+/* Night-only scenery (stars, the moon, lamp halos) and day-only scenery (birds). */
+.il-night { opacity: 0; }
+:root[data-theme='dark'] .il-night { opacity: 1; }
+:root[data-theme='dark'] .il-day { opacity: 0; }
+/* Lights (windows, porch lamps, street lamps): off by day, on at night. They come on in a quick stagger
+   (--i per light, 45ms apart) once the night has started to fade in, and go off the same way. */
+.il-light { opacity: 0; transition: opacity 180ms ease-out; transition-delay: calc(var(--i, 0) * 30ms); }
+:root[data-theme='dark'] .il-light { opacity: 1; transition-delay: calc(240ms + var(--i, 0) * 45ms); }
+
+/* The landing world's moon: top right on phones; on wide screens above the hero's stage panel, clear of it. */
+.world-sky { --moon-x: 84%; --moon-y: 12%; }
+@media (min-width: 1024px) { .world-sky { --moon-x: 47%; --moon-y: 8%; } }
+
+/* A pair of images, one per theme (data-URI SVGs can't read CSS variables): only the current one shows. */
+:root[data-theme='dark'] .theme-day-only, :root:not([data-theme='dark']) .theme-night-only { display: none !important; }
+/* Background images that can't read CSS variables (data-URI SVGs): one per theme (illustrationPalette themedBg). */
+.themed-bg { background-image: var(--bg-day); }
+:root[data-theme='dark'] .themed-bg { background-image: var(--bg-night); }
+
+/* The staff paper at night: the same grain and fibres in pale ink, a touch fainter. */
+:root[data-theme='dark'] .staff-paper {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.91 0 0 0 0 0.93 0 0 0 0 0.92 0 0 0 1.4 -0.55'/%3E%3C/filter%3E%3Cfilter id='f' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.32' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.91 0 0 0 0 0.93 0 0 0 0 0.92 0 0 0 2.2 -1.15'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)' opacity='0.035'/%3E%3Crect width='200' height='200' filter='url(%23f)' opacity='0.025'/%3E%3C/svg%3E");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tt-core, .tt-bite, .tt-rays, .il-light { transition: none; }
+}
+/* /r6:theme */
 
 /* r6:voice — the mic's listening ring (transform + opacity only) */
 .voice-ring { border: 2px solid var(--pine); animation: voice-ring 1.6s cubic-bezier(0.23, 1, 0.32, 1) infinite; }
 @keyframes voice-ring { from { transform: scale(1); opacity: 0.55; } to { transform: scale(1.45); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .voice-ring { animation: none; opacity: 0; } }
 /* /r6:voice */
+
+/* r6:scenes */
+/* Per-section landing scenes (components/landing/scenes). Compositor-friendly CSS: transform and opacity.
+   Ambient loops (.sc-amb) run only while the camera has settled on their section (data-live), never
+   during a move. Each scene layer is its own compositor layer (a move only translates them).
+   Night lights (.sc-light) stay dark by day and switch on with a stagger (--d) in the dark theme (or under a
+   scene's data-night). Lamps (.sc-lamp) come on one after another along their street, 80ms apart (--i), the
+   first with a flicker. */
+[data-live='false'] .sc-amb { animation-play-state: paused; }
+.sc-layer { will-change: transform; }
+.sc-light { opacity: 0; transition: opacity 0.6s var(--ease-out) var(--d, 0s); }
+:root[data-theme='dark'] .sc-light, [data-night='true'] .sc-light { opacity: 1; }
+.sc-lamp { opacity: 0; transition: opacity 0.28s ease-out; transition-delay: calc(var(--i, 0) * 80ms); }
+:root[data-theme='dark'] .sc-lamp, [data-night='true'] .sc-lamp { opacity: 1; }
+@keyframes sc-flicker { 0% { opacity: 0; } 12% { opacity: 0.9; } 20% { opacity: 0.15; } 34% { opacity: 1; } 44% { opacity: 0.35; } 58%, 100% { opacity: 1; } }
+:root[data-theme='dark'] .sc-lamp-flicker, [data-night='true'] .sc-lamp-flicker { animation: sc-flicker 0.6s linear both; animation-delay: calc(var(--i, 0) * 80ms); }
+@keyframes sc-drift { from { transform: translateX(0); } to { transform: translateX(26px); } }
+.sc-drift { animation: sc-drift 38s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate; }
+@keyframes sc-sway { from { transform: rotate(-1.4deg); } to { transform: rotate(1.6deg); } }
+.sc-sway { animation: sc-sway 5.6s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate; }
+@keyframes sc-birds {
+  0% { transform: translate(-6cqw, 0); opacity: 0; }
+  3% { opacity: 1; }
+  34% { transform: translate(104cqw, -4cqh); opacity: 1; }
+  36%, 100% { transform: translate(104cqw, -4cqh); opacity: 0; }
+}
+.sc-birds { animation: sc-birds 48s linear 4s infinite both; }
+@keyframes sc-steam { 0% { transform: translateY(0) scaleX(1); opacity: 0; } 25% { opacity: 0.55; } 100% { transform: translateY(-46px) scaleX(1.5); opacity: 0; } }
+.sc-steam { transform-origin: 50% 100%; animation: sc-steam 4.2s cubic-bezier(0.3, 0, 0.6, 1) infinite both; }
+@keyframes sc-pass { from { transform: translateX(-30%); } to { transform: translateX(130%); } }
+.sc-pass { animation: sc-pass 9s linear infinite both; }
+@keyframes sc-idle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-0.6%); } }
+.sc-idle { animation: sc-idle 0.5s ease-in-out infinite; }
+@keyframes sc-puff { 0% { transform: translate(0, 0) scale(0.5); opacity: 0; } 20% { opacity: 0.5; } 100% { transform: translate(-140%, -60%) scale(1.6); opacity: 0; } }
+.sc-puff { animation: sc-puff 1.6s ease-out infinite both; }
+@keyframes sc-twinkle { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.sc-twinkle { animation: sc-twinkle 3.2s ease-in-out infinite; }
+@keyframes sc-on { from { opacity: 0; } to { opacity: 1; } }
+.sc-on { opacity: 0; animation: sc-on 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .sc-amb { animation: none !important; }
+  .sc-birds, .sc-pass, .sc-puff, .sc-steam { display: none; }
+  .sc-on { opacity: 1; animation: none; }
+  .sc-lamp, .sc-light { transition: none; }
+  .sc-lamp-flicker { animation: none !important; }
+}
+/* /r6:scenes */

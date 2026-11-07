@@ -2,9 +2,9 @@
 import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react';
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { ease } from '@/lib/motion';
-import { P } from '@/lib/illustrationPalette';
+import { P, alpha, perTheme, themedBg } from '@/lib/illustrationPalette';
 import { Pen } from './Pen';
-import { DESK_STYLE, DeskDecor } from './DeskScene';
+import { DESK_CLASS, DESK_STYLE, DeskDecor } from './DeskScene';
 
 export const RULE = 24; // px: every line of text on the sheet sits on this grid
 export const PAD_TOP = 20;
@@ -17,7 +17,7 @@ const SIGN_SECONDS = 0.75;
  * The paper's fibres: a deterministic tile of short, faintly curved strands over a fine grain, made once
  * as an SVG data URI (a background image is rasterised once, so the texture costs nothing while it moves).
  */
-const FIBRES = (() => {
+const FIBRES = perTheme((P) => {
   let seed = 11;
   const r = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
   const T = 180;
@@ -41,15 +41,19 @@ const FIBRES = (() => {
     `<rect width='${T}' height='${T}' filter='url(#g)'/>` +
     `<path d='${d}' fill='none' stroke='${P.stoneShade}' stroke-width='0.6' stroke-linecap='round' opacity='0.32'/></svg>`;
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
-})();
+});
 /** The sheet's soft shadow, blurred once inside an image (no live CSS blur to redo while things move over it). */
-const SHEET_SHADOW = `url("data:image/svg+xml,${encodeURIComponent(
-  `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><filter id='b' x='-20%' y='-20%' width='140%' height='140%'><feGaussianBlur stdDeviation='3.2'/></filter><rect x='7' y='7' width='86' height='86' rx='2' fill='rgba(24,36,32,0.13)' filter='url(#b)'/></svg>`,
-)}")`;
+const SHEET_SHADOW = perTheme(
+  (P) =>
+    `url("data:image/svg+xml,${encodeURIComponent(
+      `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><filter id='b' x='-20%' y='-20%' width='140%' height='140%'><feGaussianBlur stdDeviation='3.2'/></filter><rect x='7' y='7' width='86' height='86' rx='2' fill='${P.shadow}' filter='url(#b)'/></svg>`,
+    )}")`,
+);
+// light from the top-left falls off across the sheet; the fibres sit under it
+const SHEEN = `linear-gradient(155deg, ${alpha(P.paperLight, 0.9)} 0%, ${alpha(P.paperLight, 0)} 42%, ${alpha(P.paperShade, 0.4)} 100%)`;
 const PAPER_STYLE = {
   backgroundColor: P.paper,
-  // light from the top-left falls off across the sheet; the fibres sit under it
-  backgroundImage: `linear-gradient(155deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 42%, ${P.paperShade}66 100%), ${FIBRES}`,
+  ...themedBg(`${SHEEN}, ${FIBRES.day}`, `${SHEEN}, ${FIBRES.night}`),
   border: `1px solid ${P.paperShade}`,
   borderRadius: 4,
   clipPath: `polygon(0 0, calc(100% - ${FOLD}px) 0, 100% ${FOLD}px, 100% 100%, 0 100%)`,
@@ -96,7 +100,7 @@ export function PaperSheet({
   const sigPath = useRef<SVGPathElement>(null);
   const pen = useRef<HTMLDivElement>(null);
   const desk = useRef<HTMLDivElement>(null);
-  const deskPen = useRef<HTMLImageElement>(null);
+  const deskPen = useRef<HTMLSpanElement>(null);
   const [measured, setMeasured] = useState(0);
   const [width, setWidth] = useState(0);
   const [landed, setLanded] = useState(false);
@@ -256,7 +260,7 @@ export function PaperSheet({
   return (
     <motion.div
       ref={desk}
-      className={`relative isolate overflow-hidden rounded-[10px] px-3 pb-9 pt-[60px] sm:px-6 ${className}`}
+      className={`${DESK_CLASS} relative isolate overflow-hidden rounded-[10px] px-3 pb-9 pt-[60px] sm:px-6 ${className}`}
       style={DESK_STYLE}
       initial={reduce ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -272,10 +276,10 @@ export function PaperSheet({
         data-testid={testId}
       >
         {/* where it rests: a soft shadow, a little to the right and below (light from the top-left) */}
-        <div aria-hidden className="pointer-events-none absolute -inset-x-[4px] -bottom-[14px] top-[2px]" style={{ backgroundImage: SHEET_SHADOW, backgroundSize: '100% 100%', transform: 'translate(4px, 2px)' }} />
+        <div aria-hidden className="themed-bg pointer-events-none absolute -inset-x-[4px] -bottom-[14px] top-[2px]" style={{ ...themedBg(SHEET_SHADOW.day, SHEET_SHADOW.night), backgroundSize: '100% 100%', transform: 'translate(4px, 2px)' }} />
         <div aria-hidden className="pointer-events-none absolute inset-x-[10%] bottom-[-5px] h-[12px]" style={{ background: `radial-gradient(closest-side, ${P.shadow}, transparent)` }} />
         {/* its own layer: writing repaints only the sheet, never the blurred shadow and the desk under it */}
-        <div ref={paper} className="group relative" style={{ ...PAPER_STYLE, minHeight: PAD_TOP + minLines * RULE + PAD_BOTTOM, willChange: 'transform' }}>
+        <div ref={paper} className="themed-bg group relative" style={{ ...PAPER_STYLE, minHeight: PAD_TOP + minLines * RULE + PAD_BOTTOM, willChange: 'transform' }}>
           {/* while it's being written the text is its own layer, so uncovering a line never repaints the paper's fibres */}
           <motion.div ref={content} style={writing && !reduce ? { clipPath: clip, willChange: 'transform' } : undefined}>
             {children}
@@ -284,7 +288,7 @@ export function PaperSheet({
           {/* the signature: drawn once, then stays on the paper */}
           <div ref={sig} aria-hidden className="pointer-events-none absolute left-0 top-0" style={{ visibility: 'hidden', willChange: 'transform' }}>
             <svg viewBox="0 0 120 32" className="block h-auto w-full overflow-visible">
-              <motion.path ref={sigPath} d={SIGNATURE} fill="none" stroke={P.ink} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" style={{ pathLength: signed ? 1 : ink, opacity: signed ? 1 : inkOn }} />
+              <motion.path ref={sigPath} d={SIGNATURE} fill="none" stroke={P.print} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" style={{ pathLength: signed ? 1 : ink, opacity: signed ? 1 : inkOn }} />
             </svg>
           </div>
           {/* the folded corner: the flap catches less light than the sheet, with a soft shadow under its edge */}

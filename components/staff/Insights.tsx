@@ -151,7 +151,7 @@ function ProgramToggle({ label, unit, prefix, on, value, step, max, onToggle, on
       <button type="button" role="switch" aria-checked={on} onClick={onToggle} className="flex min-h-[44px] w-full items-center justify-between gap-3 text-left">
         <span className="text-[15px] font-medium">{label}</span>
         <span className={`relative h-6 w-10 shrink-0 rounded-full transition-colors duration-[120ms] ${on ? 'bg-pine' : 'bg-line'}`} aria-hidden>
-          <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform duration-[120ms] ${on ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
+          <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-knob transition-transform duration-[120ms] ${on ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
         </span>
       </button>
       <label htmlFor={id} className="mt-2 block text-[13px] text-ink-2">{unit}</label>

@@ -75,8 +75,8 @@ export const World = memo(function World({ variant = 'landing', warmth = 0 }: { 
   }, []);
 
   return (
-    <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden data-testid="world">
-      <Sky golden={golden} clouds={!reduce} birds={!reduce && landing} />
+    <div className="world-sky pointer-events-none fixed inset-0 -z-10" aria-hidden data-testid="world">
+      <Sky golden={golden} clouds={!reduce} birds={!reduce && landing} moon={{ left: 'var(--moon-x)', top: 'var(--moon-y)' }} />
       <div className="absolute inset-x-0 bottom-0" style={{ height: BAND_H }} data-world-band>
         <Horizon layers={reduce || !landing ? undefined : { far, mid, front }} golden={goldenNow} life={!reduce && landing} />
       </div>

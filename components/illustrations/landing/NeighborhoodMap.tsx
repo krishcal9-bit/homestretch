@@ -1,5 +1,5 @@
 'use client';
-import { motion } from 'motion/react';
+import { motion, type MotionValue } from 'motion/react';
 import { memo, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useLang } from '@/lib/i18n';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
@@ -40,6 +40,8 @@ const SLOTS: { u: number; w: number; side: 'L' | 'R' }[] = [
   { u: 214, w: ROWS[2], side: 'R' },
 ];
 const pct = (v: number, of: number) => `${(v / of) * 100}%`;
+/** The block's geometry, for scenery drawn around it in the same projection (components/landing/scenes). */
+export const NB = { VB, G, at, SLOTS, STREET, SLAB, ROWS, HOUSE_W, HOUSE_D };
 const z = (w: number) => Math.round(1000 - w * 2);
 const T = { slab: 0, houses: 0.2, crane: 0.5, badges: 0.95, walk: 0.95, worker: 0.85, unscaffold: 1.45, finished: 1.85 };
 const WALK_SPEED = 125; // ground units per second
@@ -63,7 +65,11 @@ function RollUp({ to, at: when, format }: { to: number; at: number; format: (n: 
   return <AnimatedNumber value={v} format={format} />;
 }
 
-export function NeighborhoodMap({ lots, reduce }: { lots: Lot[]; reduce: boolean }) {
+/**
+ * `plain`: the block sits flush on a ground plane drawn by the page (no plinth, no lawn or street of its own,
+ * no rise). `badgeY`: extra travel for the count badges, so they float above the block when the page moves.
+ */
+export function NeighborhoodMap({ lots, reduce, plain = false, badgeY }: { lots: Lot[]; reduce: boolean; plain?: boolean; badgeY?: MotionValue<number> }) {
   const { t } = useLang();
   const id = `nb${useId().replace(/:/g, '')}`;
   const box = useRef<HTMLDivElement>(null);
@@ -116,11 +122,11 @@ export function NeighborhoodMap({ lots, reduce }: { lots: Lot[]; reduce: boolean
     <div ref={box} className="relative mx-auto w-full max-w-[620px]" style={{ aspectRatio: `${VB.w} / ${VB.h}` }} aria-hidden data-testid="neighborhood-map">
       <motion.div
         className="absolute inset-0"
-        initial={reduce ? false : { opacity: 0, y: 26 }}
+        initial={reduce || plain ? false : { opacity: 0, y: 26 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: 'spring', duration: 0.75, bounce: 0.14, delay: T.slab, opacity: { duration: 0.3 } }}
       >
-        <Ground id={id} />
+        {!plain && <Ground id={id} />}
         {/* homes (nearest drawn last) */}
         {st >= 2 && six.map((lot, i) => {
           const c = corner(i);
@@ -155,7 +161,9 @@ export function NeighborhoodMap({ lots, reduce }: { lots: Lot[]; reduce: boolean
           <Family key={wk.lot} walk={wk} reduce={reduce} />
         ))}
         {/* count badges pop above each home and roll up from 0 */}
-        {st >= 4 && six.map((lot, i) => {
+        {st >= 4 && (
+        <motion.div className="absolute inset-0" style={{ zIndex: 2000, y: badgeY }}>
+        {six.map((lot, i) => {
           const c = corner(i);
           const ready = lot.ready > 0;
           return (
@@ -181,6 +189,8 @@ export function NeighborhoodMap({ lots, reduce }: { lots: Lot[]; reduce: boolean
             </div>
           );
         })}
+        </motion.div>
+        )}
       </motion.div>
     </div>
   );

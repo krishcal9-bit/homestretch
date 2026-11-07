@@ -7,13 +7,14 @@ import { Horizon } from './Horizon';
  * The result and plan pages' Road panel as a place: the neighborhood sky behind the Road (warming toward
  * golden hour as the ready date improves — `warmth` 0–1, opacity crossfade only) and the street along the
  * panel's bottom, faded at its top so the Road's labels stay on calm sky. One ambient motion: a cloud.
+ * At night the moon sits top-left, clear of the Keys house and its label.
  */
 export function RoadScene({ warmth = 0, children, className = '' }: { warmth?: number; children: React.ReactNode; className?: string }) {
   const reduce = useReducedMotion();
   return (
     <div className={`relative overflow-hidden rounded-[14px] border border-line ${className}`} data-testid="road-scene">
       <div className="absolute inset-0">
-        <Sky golden={warmth} clouds={!reduce} birds={false} />
+        <Sky golden={warmth} clouds={!reduce} birds={false} moon={{ left: '9%', top: '17%' }} />
       </div>
       <div
         className="pointer-events-none absolute inset-x-0 bottom-0 h-[120px]"

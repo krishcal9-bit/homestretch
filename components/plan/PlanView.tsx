@@ -22,7 +22,7 @@ export function PlanNotFound() {
     <section className="pt-16" data-testid="plan-not-found">
       <h1 className="t-title text-ink">{t('plan.notFoundTitle')}</h1>
       <p className="mt-3 text-ink-2">{t('plan.notFound')}</p>
-      <Link href="/start" onClick={() => { try { localStorage.removeItem('hs.step'); } catch {} }} className="press mt-8 inline-flex min-h-[48px] items-center rounded-[8px] bg-pine px-5 font-medium text-white hover:bg-pine-hover">
+      <Link href="/start" onClick={() => { try { localStorage.removeItem('hs.step'); } catch {} }} className="press mt-8 inline-flex min-h-[48px] items-center rounded-[8px] bg-pine px-5 font-medium text-on-pine hover:bg-pine-hover">
         {t('plan.startOver')}
       </Link>
     </section>

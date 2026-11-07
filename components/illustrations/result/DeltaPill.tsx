@@ -64,7 +64,7 @@ function DeltaPill({ n }: { n: number | null }) {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, transition: { duration: 0.2 } }}
           transition={{ duration: 0.16, ease: ease.out }}
-          className={`tnum inline-flex h-[28px] items-center whitespace-nowrap rounded-full px-3 text-[13px] font-medium ${n < 0 ? 'bg-pine text-white' : 'bg-surface text-ink-2 ring-1 ring-line'}`}
+          className={`tnum inline-flex h-[28px] items-center whitespace-nowrap rounded-full px-3 text-[13px] font-medium ${n < 0 ? 'bg-pine text-on-pine' : 'bg-surface text-ink-2 ring-1 ring-line'}`}
           data-testid="delta-pill"
         >
           <SwapText text={text} />

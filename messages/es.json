@@ -5,7 +5,12 @@
     "language": "Idioma",
     "back": "Atrás",
     "continue": "Continuar",
-    "skipToContent": "Saltar al contenido"
+    "skipToContent": "Saltar al contenido",
+    "themeToDark": "Cambiar al modo oscuro",
+    "themeToLight": "Cambiar al modo claro",
+    "notFoundTitle": "No encontramos esa página",
+    "notFound": "Puede que el enlace sea antiguo o tenga un error. Empiece desde la página principal.",
+    "notFoundCta": "Ir a la página principal"
   },
   "welcome": {
     "title": "Vea qué tan cerca está de una casa de Habitat y exactamente qué hacer después.",

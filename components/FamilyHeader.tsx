@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useLang } from '@/lib/i18n';
 import { useVTRouter } from '@/lib/vt';
 import { LanguageToggle } from './LanguageToggle';
+import { ThemeToggle } from './ThemeToggle';
 import { Wordmark as BrandWordmark } from './brand/Wordmark';
 import { useBrand } from '@/lib/brand';
 
@@ -71,9 +72,11 @@ export function FamilyHeader({ variant = 'app' }: { variant?: 'landing' | 'app' 
         <Link href="/" className="-ml-1 flex items-center rounded px-1" aria-label="HomeStretch">
           <HeaderWordmark />
         </Link>
-        <div className="flex items-center gap-4 transition-opacity duration-300" style={{ opacity: b.stage === 'title' ? 0 : 1, pointerEvents: b.stage === 'title' ? 'none' : undefined, transitionTimingFunction: 'cubic-bezier(0.23,1,0.32,1)', transitionDuration: b.stage === 'title' ? '0ms' : '300ms', transitionDelay: b.fly ? '250ms' : '0ms' }}>
-          <StaffLink />
+        <div className="flex items-center gap-3 transition-opacity duration-300 sm:gap-4" style={{ opacity: b.stage === 'title' ? 0 : 1, pointerEvents: b.stage === 'title' ? 'none' : undefined, transitionTimingFunction: 'cubic-bezier(0.23,1,0.32,1)', transitionDuration: b.stage === 'title' ? '0ms' : '300ms', transitionDelay: b.fly ? '250ms' : '0ms' }}>
+          {/* the staff console is desktop-only (≥1024px); on phones the header keeps room for language and theme */}
+          <StaffLink className="max-sm:hidden" />
           <LanguageToggle />
+          <ThemeToggle className="-ml-1 -mr-2 sm:-ml-2" />
         </div>
       </div>
     </header>

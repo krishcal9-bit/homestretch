@@ -238,7 +238,7 @@ export const VoiceControl = memo(function VoiceControl({ screen, onFields }: { s
           aria-label={listening ? t('voice.stop') : t('voice.speak')}
           aria-pressed={listening}
           data-testid="mic"
-          className={`relative flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full border transition-colors duration-[120ms] ${listening ? 'border-pine bg-pine text-white' : 'border-line bg-surface text-pine hover:bg-pine-soft'}`}
+          className={`relative flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full border transition-colors duration-[120ms] ${listening ? 'border-pine bg-pine text-on-pine' : 'border-line bg-surface text-pine hover:bg-pine-soft'}`}
         >
           {/* while the mic is open, a soft ring breathes around it */}
           {listening && <span className="voice-ring pointer-events-none absolute inset-0 rounded-full" aria-hidden />}

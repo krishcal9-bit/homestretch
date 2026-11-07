@@ -14,7 +14,7 @@ type Props = Omit<HTMLMotionProps<'button'>, 'children'> & {
 };
 
 const styles: Record<Variant, string> = {
-  primary: 'bg-pine text-white hover:bg-pine-hover',
+  primary: 'bg-pine text-on-pine hover:bg-pine-hover',
   secondary: 'bg-surface text-ink border border-line hover:bg-paper',
   quiet: 'bg-transparent text-pine hover:bg-pine-soft',
 };

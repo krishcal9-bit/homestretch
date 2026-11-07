@@ -4,11 +4,12 @@
 //   start:  landing → intake ("Find my date" morphs into the progress bar), 250ms crossfade elsewhere
 //   result: last intake step → result (the Road is the shared element)
 //   fade:   anything → staff, a crisp 200ms fade
+//   theme:  light ⇄ dark, the whole page crossfades (600ms; lib/theme.ts)
 // Unsupported browsers or reduced motion: the update runs immediately and Motion handles the fallback.
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
-export type VTKind = 'forward' | 'back' | 'start' | 'result' | 'fade';
+export type VTKind = 'forward' | 'back' | 'start' | 'result' | 'fade' | 'theme';
 
 type VT = { finished: Promise<void>; ready: Promise<void>; updateCallbackDone: Promise<void> };
 type DocVT = Document & { startViewTransition?: (cb: () => Promise<void> | void) => VT };

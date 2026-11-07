@@ -3,7 +3,7 @@ import { Area, ComposedChart, Line, ResponsiveContainer, XAxis, YAxis, Cartesian
 import { useLang } from '@/lib/i18n';
 import { computeReadiness, tenYearComparison } from '@/lib/engine';
 import { money } from '@/lib/format';
-import { P } from '@/lib/illustrationPalette';
+import { alpha } from '@/lib/illustrationPalette';
 import type { Profile } from '@/lib/types';
 import { Section } from './Panels';
 import { memo, useMemo, useRef } from 'react';
@@ -16,7 +16,7 @@ function LeadDot({ color, halo, setRef, on }: { color: string; halo: string; set
   return (
     <div ref={setRef} aria-hidden className="pointer-events-none absolute left-0 top-0 z-10" style={{ transform: 'translate(-99px, -99px)' }}>
       <div className="absolute h-[22px] w-[22px] -translate-x-1/2 -translate-y-1/2 rounded-full transition-opacity duration-300" style={{ background: `radial-gradient(closest-side, ${halo}, transparent)`, opacity: on ? 1 : 0 }} />
-      <div className="absolute h-[7px] w-[7px] -translate-x-1/2 -translate-y-1/2 rounded-full transition-opacity duration-300" style={{ background: color, boxShadow: `0 0 0 1.5px ${P.trim}`, opacity: on ? 1 : 0 }} />
+      <div className="absolute h-[7px] w-[7px] -translate-x-1/2 -translate-y-1/2 rounded-full transition-opacity duration-300" style={{ background: color, boxShadow: '0 0 0 1.5px var(--surface)', opacity: on ? 1 : 0 }} />
     </div>
   );
 }
@@ -62,8 +62,8 @@ export const TwoFutures = memo(
     <Section title={t('result.futuresTitle')} id="futures">
       <div className="panel">
         <div ref={chartRef} className="relative h-[240px] w-full" role="img" aria-label={sentence} data-draw={phase}>
-          <LeadDot color={P.ink2} halo="rgba(74,87,83,0.28)" setRef={(el) => void (dots.current[0] = el)} on={phase === 'drawing'} />
-          <LeadDot color={P.pine} halo="rgba(78,148,120,0.45)" setRef={(el) => void (dots.current[1] = el)} on={phase === 'drawing'} />
+          <LeadDot color="var(--ink-2)" halo={alpha('var(--ink-2)', 0.28)} setRef={(el) => void (dots.current[0] = el)} on={phase === 'drawing'} />
+          <LeadDot color="var(--pine)" halo={alpha('var(--pine)', 0.4)} setRef={(el) => void (dots.current[1] = el)} on={phase === 'drawing'} />
           {/* mounted when scrolled into view, so the lines draw left to right where the reader can see them */}
           {inView && (
           <ResponsiveContainer width="100%" height="100%">
@@ -74,7 +74,9 @@ export const TwoFutures = memo(
               <Tooltip
                 formatter={(v) => money(Number(v), lang)}
                 labelFormatter={(y) => t('result.year', { n: String(y) })}
-                contentStyle={{ border: '1px solid var(--line)', borderRadius: 8, boxShadow: 'none', fontSize: 13 }}
+                contentStyle={{ background: 'var(--surface)', color: 'var(--ink)', border: '1px solid var(--line)', borderRadius: 8, boxShadow: 'none', fontSize: 13 }}
+                labelStyle={{ color: 'var(--ink)' }}
+                cursor={{ stroke: 'var(--line)' }}
               />
               <Area
                 type="monotone"

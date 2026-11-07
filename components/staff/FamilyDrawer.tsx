@@ -41,7 +41,7 @@ export function FamilyDrawer({ family, onClose }: { family: FamilyRow | null; on
         <div className="fixed inset-0 z-40" key="drawer-root">
           <motion.div
             className="absolute inset-0"
-            style={{ background: 'rgba(24,36,32,0.2)' }}
+            style={{ background: 'var(--scrim)' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, transition: exitDrawer }}
@@ -55,7 +55,7 @@ export function FamilyDrawer({ family, onClose }: { family: FamilyRow | null; on
             aria-labelledby="drawer-title"
             data-testid="drawer"
             className="absolute inset-y-0 right-0 flex w-[600px] max-w-full flex-col border-l border-line bg-surface"
-            style={{ boxShadow: '0 1px 3px rgba(24,36,32,0.06), 0 16px 48px rgba(24,36,32,0.14)' }}
+            style={{ boxShadow: 'var(--drawer-shadow)' }}
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%', transition: exitDrawer }}

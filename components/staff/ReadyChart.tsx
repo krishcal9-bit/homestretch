@@ -7,8 +7,8 @@ export type ChartDatum = { label: string; baseline: number; projected: number };
 /** A home completion: a dashed line at its month, its title in the lowest label lane where it fits. */
 export type ChartMarker = { id: string; index: number; title: string; lane: number };
 
-export const BASE = '#B7C3BD'; // baseline bars beside a program: a quiet neutral next to pine
-export const PINE = '#1E5C47';
+export const BASE = 'var(--chart-base)'; // baseline bars beside a program: a quiet neutral next to pine
+export const PINE = 'var(--pine)';
 
 const HEIGHT = 308; // the svg; the legend row (32px) sits under it, 340px in all
 const LEFT = 40; // y-axis labels

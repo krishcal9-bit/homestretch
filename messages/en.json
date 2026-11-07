@@ -5,7 +5,12 @@
     "language": "Language",
     "back": "Back",
     "continue": "Continue",
-    "skipToContent": "Skip to content"
+    "skipToContent": "Skip to content",
+    "themeToDark": "Switch to dark mode",
+    "themeToLight": "Switch to light mode",
+    "notFoundTitle": "We couldn't find that page",
+    "notFound": "The link may be old or mistyped. Start from the home page.",
+    "notFoundCta": "Go to the home page"
   },
   "welcome": {
     "title": "See how close you are to a Habitat home, and exactly what to do next.",

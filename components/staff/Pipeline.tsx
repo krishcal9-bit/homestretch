@@ -153,7 +153,7 @@ export function Pipeline({ families }: { families: FamilyRow[] }) {
         </div>
         <Link
           href="/staff/checkin"
-          className="press inline-flex min-h-[44px] items-center rounded-[8px] bg-pine px-4 text-[15px] font-medium text-white transition-colors duration-[120ms] hover:bg-pine-hover"
+          className="press inline-flex min-h-[44px] items-center rounded-[8px] bg-pine px-4 text-[15px] font-medium text-on-pine transition-colors duration-[120ms] hover:bg-pine-hover"
           data-testid="run-checkin"
         >
           Run Monday check-in

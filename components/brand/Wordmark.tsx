@@ -12,6 +12,9 @@ import { GLYPHS, GLYPHS_BOLD } from './wordmarkGlyphs';
  */
 type Glyphs = typeof GLYPHS | typeof GLYPHS_BOLD;
 const HOME_END = 4; // letters [0,4) are "Home"
+// The letters and their road are brand chrome: the UI tokens (light ink and brighter pine at night).
+const INK = 'var(--ink)';
+const PINE = 'var(--pine)';
 function geom(g: Glyphs) {
   const L = g.letters;
   const S = L[HOME_END];
@@ -96,9 +99,9 @@ export function Wordmark({
         <Defs id={id} />
         {shadowEl(G, id)}
         {G.L.map((g, i) => (
-          <path key={i} d={g.d} fill={i < HOME_END ? P.ink : P.pine} />
+          <path key={i} d={g.d} fill={i < HOME_END ? INK : PINE} />
         ))}
-        <path d={G.road} fill="none" stroke={P.pine} strokeWidth={4.6} strokeLinecap="round" />
+        <path d={G.road} fill="none" stroke={PINE} strokeWidth={4.6} strokeLinecap="round" />
         <g transform={`translate(${G.MARK.x} ${G.MARK.base})`}>
           <MarkShape id={id} />
         </g>
@@ -199,7 +202,7 @@ export const WordmarkTitle = forwardRef<HTMLDivElement, TitleProps>(function Wor
         <g clipPath={`url(#clip${id})`}>
           {G.L.map((g, i) => {
             const at = TITLE_T.letters + i * TITLE_T.stagger;
-            const fill = i < HOME_END ? P.ink : P.pine;
+            const fill = i < HOME_END ? INK : PINE;
             return (
               <motion.g key={i} initial={reduce ? false : { y: 88 }} animate={{ y: 0 }} transition={{ duration: TITLE_T.letter, ease: EASE, delay: at }}>
                 {/* the soft ghost (blur → sharp without a per-frame filter): a wide, faint stroke of the glyph */}
@@ -216,7 +219,7 @@ export const WordmarkTitle = forwardRef<HTMLDivElement, TitleProps>(function Wor
           </g>
         )}
         {/* the road draws under "Stretch" with a glowing tip */}
-        <motion.path ref={road} d={G.road} fill="none" stroke={P.pine} strokeWidth={roadW} strokeLinecap="round" style={{ pathLength: p }} />
+        <motion.path ref={road} d={G.road} fill="none" stroke={PINE} strokeWidth={roadW} strokeLinecap="round" style={{ pathLength: p }} />
         <g ref={dot} style={{ opacity: 0 }}>
           <circle r={7} fill={P.honey} opacity={0.9} filter={`url(#dg${id})`} />
           <circle r={3} fill={P.glow} />

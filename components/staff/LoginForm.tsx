@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useRef, useState } from 'react';
 import { Wordmark } from '@/components/FamilyHeader';
 import { Button } from '@/components/ui/Button';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { dur, ease } from '@/lib/motion';
 import { BuildStreet } from './BuildStreet';
 import { markConsoleArrival } from './handoff';
@@ -70,10 +71,13 @@ export function LoginForm() {
     >
       <div className="flex items-center justify-between">
         <Wordmark />
+        <div className="flex items-center gap-1">
         <Link href="/" className="hit inline-flex min-h-[36px] items-center gap-1 rounded-[8px] px-2 text-[13px] font-medium text-pine transition-colors duration-[120ms] hover:bg-pine-soft">
           <ChevronLeft size={16} strokeWidth={1.75} aria-hidden />
           Family site
         </Link>
+        <ThemeToggle className="-mr-2" />
+        </div>
       </div>
       <BuildStreet className="mt-12" />
       <h1 className="t-title mt-8">Staff console</h1>

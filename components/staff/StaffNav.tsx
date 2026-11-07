@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { Wordmark } from '@/components/FamilyHeader';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { dur, ease, spring } from '@/lib/motion';
 import { arrivingFromLogin } from './handoff';
 import { HeaderSkyline } from './HeaderSkyline';
@@ -43,7 +44,8 @@ export function StaffNav() {
             );
           })}
         </nav>
-        <form action="/api/staff/logout" method="post" className="ml-auto">
+        <ThemeToggle className="ml-auto" />
+        <form action="/api/staff/logout" method="post" className="-ml-6">
           <button type="submit" className="min-h-[44px] rounded-[8px] px-3 text-[15px] text-ink-2 transition-colors duration-[120ms] hover:text-ink">
             Sign out
           </button>

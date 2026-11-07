@@ -25,7 +25,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 8, transition: exitT }}
               transition={spring.snappy}
-              className="rounded-[8px] bg-ink px-4 py-3 text-[15px] text-white"
+              className="rounded-[8px] bg-tip px-4 py-3 text-[15px] text-on-tip"
             >
               {msg.text}
             </motion.div>

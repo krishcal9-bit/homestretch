@@ -1,16 +1,20 @@
 'use client';
-import { P, mix } from '@/lib/illustrationPalette';
+import { P, alpha, mix } from '@/lib/illustrationPalette';
 
 /**
  * Scenery parts: small shaded SVG pieces for the neighborhood (houses, palms, jacarandas, street furniture).
  * Same light as everything else: top-left; front faces lit, right faces and undersides in shade. Each part
  * draws inside a parent <svg>, anchored at (x, base) = bottom-centre (or bottom-left for houses).
  * `fade` (0–1) pushes a part toward the sky colour for distance (aerial perspective) and desaturates it.
+ * Night (dark theme): the palette turns the walls moonlit; parts that carry a light (`light` = its place in
+ * the switch-on stagger) turn it on — lit windows and porch lamps on houses, bulbs and pools on street lamps
+ * (.il-light in globals.css: opacity only, staggered, instant under reduced motion).
  */
+const stagger = (i: number) => ({ '--i': i }) as React.CSSProperties;
 const toward = (c: string, fade: number, sky: string = P.skyBottom) => (fade ? mix(c, sky, fade) : c);
 
 export type HouseStyle = { roof: 'gable' | 'hip'; solar?: boolean; wall?: string; trim?: string };
-export function MiniHouse({ x, base, w, h, style, lit = false, porch = false, fade = 0, chimney = false }: { x: number; base: number; w: number; h: number; style: HouseStyle; lit?: boolean; porch?: boolean; fade?: number; chimney?: boolean }) {
+export function MiniHouse({ x, base, w, h, style, lit = false, porch = false, fade = 0, chimney = false, light }: { x: number; base: number; w: number; h: number; style: HouseStyle; lit?: boolean; porch?: boolean; fade?: number; chimney?: boolean; /** night: this house's place in the lights' stagger (none = dark at night too) */ light?: number }) {
   const f = (c: string) => toward(c, fade);
   const side = w * 0.32; // receding side face
   const dy = side * 0.45;
@@ -51,6 +55,16 @@ export function MiniHouse({ x, base, w, h, style, lit = false, porch = false, fa
       <rect x={x + w * 0.12 - 1} y={top + h * 0.28 + winH} width={winW + 2} height={1.4} fill={f(P.trim)} />
       <rect x={x + w * 0.58} y={top + h * 0.4} width={w * 0.18} height={h * 0.6} fill={f(P.slateLight)} />
       {porch && <circle cx={x + w * 0.53} cy={top + h * 0.45} r={2.6} fill={P.honey} />}
+      {light !== undefined && (
+        <g className="il-light" style={stagger(light)}>
+          {/* the lit window (a glow spills past its frame) and the porch lamp by the door */}
+          <rect x={x + w * 0.12 - 2} y={top + h * 0.28 - 2} width={winW + 4} height={winH + 4} fill={P.honey} opacity={0.22 * (1 - fade * 0.6)} />
+          <rect x={x + w * 0.12} y={top + h * 0.28} width={winW} height={winH} fill={toward(P.honey, fade * 0.5)} />
+          <rect x={x + w * 0.12 + winW * 0.15} y={top + h * 0.28 + winH * 0.15} width={winW * 0.45} height={winH * 0.5} fill={P.glow} opacity={0.55 * (1 - fade)} />
+          <circle cx={x + w * 0.53} cy={top + h * 0.45} r={5.5} fill={alpha(P.honey, 0.3 * (1 - fade * 0.6))} />
+          <circle cx={x + w * 0.53} cy={top + h * 0.45} r={1.8} fill={P.glow} />
+        </g>
+      )}
     </g>
   );
 }
@@ -136,14 +150,30 @@ export function Mailbox({ x, base }: { x: number; base: number }) {
   );
 }
 
-export function StreetLamp({ x, base, h = 70, glow = 0 }: { x: number; base: number; h?: number; glow?: number }) {
+export function StreetLamp({ x, base, h = 70, glow = 0, light }: { x: number; base: number; h?: number; glow?: number; /** night: place in the lights' stagger */ light?: number }) {
+  const bx = x + 9;
+  const by = base - h + 2;
   return (
     <g>
       <circle cx={x + 8} cy={base - h + 4} r={16} fill={P.honey} opacity={0.35 * glow} style={{ filter: 'blur(6px)' }} />
+      {light !== undefined && (
+        <g className="il-light" style={stagger(light)}>
+          {/* the pool of light on the pavement under the lamp, and the cone falling to it */}
+          <ellipse cx={bx} cy={base} rx={h * 0.42} ry={h * 0.07} fill={alpha(P.honey, 0.22)} />
+          <path d={`M${bx - 3} ${by + 1}L${bx - h * 0.36} ${base}H${bx + h * 0.36}L${bx + 3} ${by + 1}Z`} fill={alpha(P.honeyLight, 0.07)} />
+        </g>
+      )}
       <rect x={x - 1.6} y={base - h} width={3.2} height={h} fill={P.slateDark} />
       <path d={`M${x} ${base - h}q0 -6 9 -6`} fill="none" stroke={P.slateDark} strokeWidth={2.4} />
       <path d={`M${x + 4} ${base - h - 4}h10l-2 5h-6Z`} fill={P.slate} />
       <rect x={x + 6} y={base - h + 1} width={6} height={2} fill={glow > 0.2 ? P.glow : P.stone} />
+      {light !== undefined && (
+        <g className="il-light" style={stagger(light)}>
+          <circle cx={bx} cy={by} r={12} fill={alpha(P.honey, 0.28)} />
+          <circle cx={bx} cy={by} r={6} fill={alpha(P.glow, 0.5)} />
+          <rect x={x + 6} y={base - h + 1} width={6} height={2} fill={P.glow} />
+        </g>
+      )}
     </g>
   );
 }

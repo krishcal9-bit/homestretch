@@ -13,6 +13,7 @@ import { MiniHouse, RoundTree } from './parts';
  * and crossfades (400ms) with the step transition:
  *   household — the family on the sidewalk · income — a workplace in the distance
  *   housing — the family's current crowded apartment building · money — a credit union on the corner
+ * At night (dark theme) it is the same street moonlit, with its windows and lamps lit (see Horizon).
  */
 export type BackdropScene = 'household' | 'income' | 'housing' | 'money' | 'street';
 const VB = `0 0 ${HZ.w} ${HZ.h}`;
@@ -21,7 +22,7 @@ const B = HZ.street - 4;
 function Household() {
   return (
     <g>
-      <MiniHouse x={700} base={B} w={120} h={70} style={{ roof: 'gable' }} porch />
+      <MiniHouse x={700} base={B} w={120} h={70} style={{ roof: 'gable' }} porch light={0} />
       <RoundTree x={850} base={B + 2} r={22} />
       {[
         [880, 'adult', 1, 0, 'short', 'pine', 'slate'],
@@ -75,6 +76,7 @@ function Housing() {
         Array.from({ length: 6 }, (_, c) => (
           <g key={`${r}${c}`}>
             <rect x={x + 12 + c * 34} y={B - (r + 1) * 34 + 6} width={18} height={16} fill={(r + c) % 4 === 0 ? P.honey : P.glass} />
+            {(r * 6 + c) % 3 === 1 && <rect className="il-light" style={{ '--i': (r * 6 + c) % 9 } as React.CSSProperties} x={x + 12 + c * 34} y={B - (r + 1) * 34 + 6} width={18} height={16} fill={P.honey} />}
             {c % 2 === 0 && <rect x={x + 8 + c * 34} y={B - (r + 1) * 34 + 22} width={26} height={3} fill={P.slate} />}
             {c % 3 === 1 && <rect x={x + 22 + c * 34} y={B - (r + 1) * 34 + 22} width={8} height={6} fill={P.stoneShade} />}
           </g>
@@ -129,7 +131,7 @@ export function Backdrop({ scene = 'street', strength = 0.35 }: { scene?: Backdr
       {/* the one ambient motion: a cloud drifting (outside the softened layer, so the blur is never redone) */}
       {!reduce && (
         <svg width="190" height="80" viewBox="0 0 200 84" className="scenery-cloud absolute top-[28%]" style={{ animationDuration: '96s', animationDelay: '-40s' }}>
-          <path d="M22 64C10 64 8 52 18 47C15 35 30 29 40 34C45 21 63 16 74 26C82 13 108 12 117 27C128 18 150 22 152 38C168 37 182 47 176 58C180 64 172 68 162 66Z" fill="#fff" />
+          <path d="M22 64C10 64 8 52 18 47C15 35 30 29 40 34C45 21 63 16 74 26C82 13 108 12 117 27C128 18 150 22 152 38C168 37 182 47 176 58C180 64 172 68 162 66Z" fill={P.cloud} />
         </svg>
       )}
       <div className="absolute inset-0" style={{ filter: 'saturate(0.6) blur(1px)' }}>

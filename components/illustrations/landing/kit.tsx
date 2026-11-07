@@ -1,6 +1,6 @@
 'use client';
 import { startTransition, useEffect, useState, type RefObject } from 'react';
-import { P, mix } from '@/lib/illustrationPalette';
+import { P, mix, alpha as paletteAlpha } from '@/lib/illustrationPalette';
 
 const BARK_SHADE = mix(P.bark, P.ink, 0.25);
 
@@ -11,10 +11,9 @@ const BARK_SHADE = mix(P.bark, P.ink, 0.25);
  * Soft shadows are radial-gradient ellipses (no blur filters, so they cost nothing to repaint).
  */
 
-/** A palette colour at some opacity (for gradients that fade a palette colour to nothing). */
-export function alpha(hex: string, a: number) {
-  const n = parseInt(hex.slice(1), 16);
-  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+/** A palette colour at some opacity (for gradients that fade a palette colour to nothing). Theme-aware. */
+export function alpha(color: string, a: number) {
+  return paletteAlpha(color, a);
 }
 
 /** Deterministic pseudo-random (same on server and client). */

@@ -22,14 +22,14 @@ const ROW: [HouseStage, number][] = [
 /**
  * The console header's skyline: a faint, static row of houses at different build stages (framing, roofing,
  * finished; never a brass door), standing on the header's bottom rule at 9% strength. It sits in the empty
- * stretch between the tabs and Sign out, so it is never behind text, and fades in from the left. No motion.
+ * stretch between the tabs and the theme switch, so it is never behind a control, and fades in from the left. No motion.
  */
 export function HeaderSkyline() {
   return (
     <div
       aria-hidden
       data-testid="header-skyline"
-      className="pointer-events-none absolute inset-y-0 left-[560px] right-[128px] -z-10 flex items-end justify-end gap-1.5 overflow-hidden opacity-[0.09] [mask-image:linear-gradient(to_right,transparent,#000_120px)]"
+      className="pointer-events-none absolute inset-y-0 left-[560px] right-[176px] -z-10 flex items-end justify-end gap-1.5 overflow-hidden opacity-[0.09] [mask-image:linear-gradient(to_right,transparent,#000_120px)]"
     >
       {ROW.map(([stage, size], i) => (
         <IsoHouse key={i} size={size} stage={stage} doorBrass={false} detail={false} className="-mb-[3px] shrink-0" />

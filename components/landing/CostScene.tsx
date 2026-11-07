@@ -41,7 +41,7 @@ function Roll({ value, on, lang }: { value: number; on: boolean; lang: 'en' | 'e
   useEffect(() => {
     if (!on) return;
     if (reduce) return void mv.set(value);
-    const a = animate(mv, value, { duration: 0.9, ease: ease.out });
+    const a = animate(mv, value, { duration: 0.7, ease: ease.out });
     return () => a.stop();
   }, [on, value, mv, reduce]);
   return <motion.span className="tabular-nums">{text}</motion.span>;
@@ -86,7 +86,7 @@ export function CostScene({ index }: { index: number }) {
   const movesY = useTransform(p, [0.58, 0.66], [12, 0]);
   const endO = useTransform(p, [0.88, 0.96], [0, 1]);
   // while the roof glows, the other parts step back so the one that moves leads
-  const restO = useTransform(p, [0.58, 0.66, 0.8, 0.86], [1, 0.35, 0.35, 1]);
+  const restO = useTransform(p, [0.56, 0.62, 0.8, 0.86], [1, 0, 0, 1]);
   const labelO = (part: CostPart) => (part === 'utilities' || part === 'repairs' ? shown.tools : shown.main);
 
   const partLabel: Record<CostPart, string> = {
@@ -168,13 +168,9 @@ export function CostScene({ index }: { index: number }) {
             <p className="mt-5 max-w-[36ch] text-[18px] leading-[28px] text-ink-2 lg:text-[20px] lg:leading-[31px]">{t('landing.costBody')}</p>
           </motion.div>
         </div>
-        <motion.div
-          style={{ opacity: movesO, y: movesY }}
-          className="pointer-events-none absolute inset-x-0 top-0 mx-auto max-w-[1440px] px-5 pt-8 text-center sm:px-8 lg:px-20 lg:pt-14"
-          aria-live="polite"
-        >
-          <p className="t-display text-[32px] text-ink sm:text-[44px] lg:text-[60px]">{t('landing.costMoves')}</p>
-          <p className="mx-auto mt-3 max-w-[46ch] text-[16px] leading-[24px] text-ink-2 lg:text-[18px] lg:leading-[28px]">{t('landing.costMovesSub')}</p>
+        <motion.div style={{ opacity: movesO, y: movesY }} className="pointer-events-none absolute inset-x-0 bottom-[10%] mx-auto max-w-[1440px] px-5 sm:px-8 lg:bottom-auto lg:top-[40%] lg:px-20" aria-live="polite">
+          <p className="t-display max-w-[11ch] text-[34px] text-ink sm:text-[48px] lg:text-[60px]">{t('landing.costMoves')}</p>
+          <p className="mt-4 max-w-[30ch] border-l-2 border-signal-amber pl-3 text-[16px] leading-[24px] text-ink-2 lg:text-[18px] lg:leading-[27px]">{t('landing.costMovesSub')}</p>
         </motion.div>
         <motion.div style={{ opacity: endO }} className="pointer-events-none absolute inset-x-0 top-0 mx-auto max-w-[1440px] px-5 pt-8 sm:px-8 lg:px-20 lg:pt-16">
           <p className="t-display max-w-[16ch] text-[34px] text-ink sm:text-[48px] lg:text-[60px]">{t('landing.costEnd')}</p>

@@ -380,7 +380,7 @@ const H2 = 'text-[42px] text-ink sm:text-[56px] lg:text-[72px] xl:text-[84px]';
  * the screen), so the centrepiece replays on each visit. The text reveals on activation, which SectionNav
  * only grants once the camera has landed.
  */
-function SceneSection({ id, index, layout = 'split', bob = false, text, scene, minGraphic = 0, label }: { id: string; index: number; layout?: 'split' | 'sky'; bob?: boolean; text: (play: number) => React.ReactNode; scene: (play: number, reduce: boolean) => React.ReactNode; minGraphic?: number; label: string }) {
+function SceneSection({ id, index, layout = 'split', bob = false, text, scene, minGraphic = 0, label, low = false }: { id: string; index: number; layout?: 'split' | 'sky'; bob?: boolean; text: (play: number) => React.ReactNode; scene: (play: number, reduce: boolean) => React.ReactNode; minGraphic?: number; label: string; /** desktop: the text sits low, under the scene's busy top (the shock room's shelf) */ low?: boolean }) {
   const { t } = useLang();
   const reduce = !!useReducedMotion();
   const ref = useRef<HTMLElement>(null);
@@ -390,14 +390,14 @@ function SceneSection({ id, index, layout = 'split', bob = false, text, scene, m
   const textEl = useMemo(() => text(n), [n, text]);
   const sceneEl = useMemo(() => scene(n, reduce), [n, reduce, scene]);
   return (
-    <section ref={ref} id={id} data-testid={id} className={`snap-section relative flex min-h-[calc(100svh-64px)] overflow-hidden ${layout === 'sky' ? 'items-start' : 'items-center'}`} aria-label={label}>
+    <section ref={ref} id={id} data-testid={id} className={`snap-section relative flex min-h-[calc(100svh-64px)] overflow-hidden ${layout === 'sky' ? 'items-start' : low ? 'items-center lg:items-end' : 'items-center'}`} aria-label={label}>
       {sceneEl}
       {layout === 'sky' ? (
         <div className="relative z-[1] mx-auto w-full max-w-[1440px] px-5 pb-[max(300px,44svh)] pt-10 sm:px-8 lg:px-20 lg:pb-24 lg:pt-14">
           <div className="text-scrim max-w-[640px]">{textEl}</div>
         </div>
       ) : (
-        <div className="relative z-[1] mx-auto grid w-full max-w-[1440px] grid-cols-1 items-center gap-10 px-5 pb-24 pt-12 sm:px-8 lg:grid-cols-12 lg:gap-8 lg:px-20 lg:pb-20 lg:pt-8">
+        <div className={`relative z-[1] mx-auto grid w-full max-w-[1440px] grid-cols-1 items-center gap-10 px-5 pb-24 pt-12 sm:px-8 lg:grid-cols-12 lg:gap-8 lg:px-20 lg:pt-8 ${low ? 'lg:pb-[13svh]' : 'lg:pb-20'}`}>
           <div className="text-scrim relative z-[2] lg:col-span-6 xl:col-span-5">{textEl}</div>
           {/* room for the scene's centrepiece under the text on phones (on desktop it stands to the right) */}
           <div className="min-h-[var(--mg)] lg:col-span-6 lg:min-h-0 xl:col-span-7" style={{ ['--mg' as string]: `${minGraphic}px` }} aria-hidden />
@@ -430,7 +430,7 @@ function SceneIntake() {
     ),
     [t],
   );
-  return <SceneSection id="scene-intake" index={2} minGraphic={420} label={t('landing.nav1')} text={text} scene={homeScene} />;
+  return <SceneSection id="scene-intake" index={2} minGraphic={420} low label={t('landing.nav1')} text={text} scene={homeScene} />;
 }
 const homeScene = (play: number, reduce: boolean) => <HomeScene play={play} reduce={reduce} />;
 const repairScene = (play: number, reduce: boolean) => <RepairScene play={play} reduce={reduce} />;

@@ -1,6 +1,6 @@
 # Keystone: get the keys, keep the keys
 
-Built at the Claude Impact Lab (UC Irvine × SoCal Affordable Housing) for Habitat for Humanity of Orange County and the UCI Merage Center for Real Estate. Live: https://homestretch-umber.vercel.app
+Built at the Claude Impact Lab (UC Irvine × SoCal Affordable Housing) for Habitat for Humanity of Orange County and the UCI Merage Center for Real Estate. Live: https://keystone-oc.vercel.app
 
 Getting a family into a home is half the job; keeping them there is the other half, and it's getting harder. California homeowners insurance is up about 84% since 2020 and the FAIR Plan raised rates 29.1% on October 15, 2026. Rising insurance and property tax flow into escrow, so a family's payment jumps with little warning. Under Habitat's model, homeowner payments fund the next homes.
 

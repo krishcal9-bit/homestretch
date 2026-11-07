@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Homestretch",
+    "name": "HomeStretch",
     "partner": "Habitat for Humanity del Condado de Orange",
     "language": "Idioma",
     "back": "Atrás",
@@ -329,7 +329,7 @@
     "road": "Su camino",
     "plan": "Su plan de 90 días",
     "code": "Código del plan {code}",
-    "footer": "Hecho con Homestretch para Habitat for Humanity del Condado de Orange. Abra su plan cuando quiera en {url}",
+    "footer": "Hecho con HomeStretch para Habitat for Humanity del Condado de Orange. Abra su plan cuando quiera en {url}",
     "owner": {
       "you": "Usted",
       "habitat": "Habitat OC",
@@ -370,7 +370,7 @@
     "colHome": "Casa",
     "colDone": "Lista",
     "colReady": "Familias listas",
-    "closing": "Habitat termina 100 casas. Homestretch ayuda a que 100 familias estén listas para comprarlas.",
+    "closing": "Habitat termina 100 casas. HomeStretch ayuda a que 100 familias estén listas para comprarlas.",
     "footerPartner": "Hecho para Habitat for Humanity del Condado de Orange.",
     "sooner": "{n} meses antes",
     "sooner1": "1 mes antes",
@@ -383,7 +383,7 @@
     "tSaved": "Familia de {n} en {city} · enganche ahorrado",
     "tMatched": "Familia de {n} en {city} · asignada a una casa de {br} recámaras",
     "closingA": "Habitat termina {n} casas.",
-    "closingB": "Homestretch ayuda a que {n} familias estén listas para comprarlas.",
+    "closingB": "HomeStretch ayuda a que {n} familias estén listas para comprarlas.",
     "nav0": "Inicio",
     "nav1": "Cuéntenos dónde está",
     "nav2": "El camino a sus llaves",

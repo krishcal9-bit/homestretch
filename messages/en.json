@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Homestretch",
+    "name": "HomeStretch",
     "partner": "Habitat for Humanity of Orange County",
     "language": "Language",
     "back": "Back",
@@ -329,7 +329,7 @@
     "road": "Your road",
     "plan": "Your 90-day plan",
     "code": "Plan code {code}",
-    "footer": "Made with Homestretch for Habitat for Humanity of Orange County. Open your plan any time at {url}",
+    "footer": "Made with HomeStretch for Habitat for Humanity of Orange County. Open your plan any time at {url}",
     "owner": {
       "you": "You",
       "habitat": "Habitat OC",
@@ -370,7 +370,7 @@
     "colHome": "Home",
     "colDone": "Done",
     "colReady": "Families ready",
-    "closing": "Habitat finishes 100 homes. Homestretch helps 100 families be ready to buy them.",
+    "closing": "Habitat finishes 100 homes. HomeStretch helps 100 families be ready to buy them.",
     "footerPartner": "Built for Habitat for Humanity of Orange County.",
     "sooner": "{n} months sooner",
     "sooner1": "1 month sooner",
@@ -383,7 +383,7 @@
     "tSaved": "{city} family of {n} · down payment saved",
     "tMatched": "{city} family of {n} · matched to a {br}-bedroom",
     "closingA": "Habitat finishes {n} homes.",
-    "closingB": "Homestretch helps {n} families be ready to buy them.",
+    "closingB": "HomeStretch helps {n} families be ready to buy them.",
     "nav0": "Overview",
     "nav1": "Tell us where you are",
     "nav2": "The road to your keys",

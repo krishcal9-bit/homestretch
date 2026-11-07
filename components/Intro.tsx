@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { P } from '@/lib/illustrationPalette';
 import { brand, BRAND_LAYOUT_ID } from '@/lib/brand';
 import { WordmarkTitle, TITLE_T } from '@/components/brand/Wordmark';
-import { HOUSE_STILL, hasWebGL } from '@/components/three/HouseCanvas';
+import { HOUSE_SIZES, HOUSE_STILL, hasWebGL } from '@/components/three/HouseCanvas';
 import { INTRO, INTRO_STILL, INTRO_WAIT_MS } from './introTimeline';
 
 export { INTRO } from './introTimeline';
@@ -24,7 +24,7 @@ type Mode = 'pending' | 'late' | '3d' | 'still';
 const EASE = [0.23, 1, 0.32, 1] as const;
 const heroSlot = () => document.querySelector('[data-testid=hero-house]')?.getBoundingClientRect() ?? null;
 
-export function Intro({ live = true, onHandoff, onDone, onSkip }: { live?: boolean; onHandoff?: () => void; onDone: () => void; onSkip: () => void }) {
+export function Intro({ live = true, onStart, onHandoff, onDone, onSkip }: { live?: boolean; onStart?: (mode: '3d' | 'still') => void; onHandoff?: () => void; onDone: () => void; onSkip: () => void }) {
   const [vp, setVp] = useState<{ w: number; h: number } | null>(null);
   const [mode, setMode] = useState<Mode>('pending');
   const [beat, setBeat] = useState<'film' | 'title' | 'exit'>('film');
@@ -51,6 +51,7 @@ export function Intro({ live = true, onHandoff, onDone, onSkip }: { live?: boole
   const run = useCallback(
     (m: '3d' | 'still') => {
       setMode(m);
+      onStart?.(m);
       const T = m === '3d' ? INTRO : INTRO_STILL;
       const at = (s: number, f: () => void) => timers.current.push(setTimeout(f, s * 1000));
       at(T.title, () => setBeat('title'));
@@ -62,7 +63,7 @@ export function Intro({ live = true, onHandoff, onDone, onSkip }: { live?: boole
       });
       at(T.total, () => end(false));
     },
-    [end, onHandoff],
+    [end, onHandoff, onStart],
   );
 
   useEffect(() => {
@@ -120,11 +121,11 @@ export function Intro({ live = true, onHandoff, onDone, onSkip }: { live?: boole
           <motion.div
             className="absolute"
             style={{ left: stillBox.left, top: stillBox.top, width: stillBox.w, aspectRatio: '5 / 4', originX: 0, originY: 0 }}
-            initial={{ opacity: 0, y: 16 }}
-            animate={stillTo ? { opacity: 1, x: stillTo.left - stillBox.left, y: stillTo.top - stillBox.top, scale: stillTo.width / stillBox.w } : { opacity: 1, y: 0 }}
+            initial={{ y: 14 }}
+            animate={stillTo ? { x: stillTo.left - stillBox.left, y: stillTo.top - stillBox.top, scale: stillTo.width / stillBox.w } : { y: 0 }}
             transition={stillTo ? { type: 'spring', duration: 0.5, bounce: 0 } : { duration: 0.5, ease: EASE }}
           >
-            <Image src={HOUSE_STILL} alt="" fill sizes="760px" priority className="object-contain" />
+            <Image src={HOUSE_STILL} alt="" fill sizes={HOUSE_SIZES} priority className="object-contain" />
           </motion.div>
         )}
       </div>

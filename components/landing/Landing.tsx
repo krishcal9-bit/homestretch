@@ -14,7 +14,7 @@ import { AnimatedMonth } from '@/components/ui/AnimatedMonth';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { Road } from '@/components/result/Road';
 import { Intro, INTRO, preloadIntro } from '@/components/Intro';
-import { HouseCanvas, preloadHouse } from '@/components/three/HouseCanvas';
+import { HouseCanvas, hasWebGL, preloadHouse } from '@/components/three/HouseCanvas';
 import { brand } from '@/lib/brand';
 import { SectionArrow, SectionDots, SectionNavProvider, useSectionPlay } from './SectionNav';
 import { PhoneVoice } from '@/components/illustrations/landing/PhoneVoice';
@@ -26,7 +26,7 @@ import { StaffLink, Wordmark } from '@/components/FamilyHeader';
 import type { Profile } from '@/lib/types';
 
 // The intro and the hero house are 3D: start fetching three.js the moment the landing code runs.
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && hasWebGL()) {
   preloadIntro().catch(() => {});
   preloadHouse().catch(() => {});
 }
@@ -191,7 +191,7 @@ function OdometerDate({ iso, phase, lang }: { iso: string; phase: Phase; lang: '
 /* ------------------------------------------------------------------ */
 /* Hero demo                                                            */
 /* ------------------------------------------------------------------ */
-function HeroDemo({ phase, onEarlier, introUp }: { phase: Phase; onEarlier: () => void; introUp: boolean }) {
+function HeroDemo({ phase, onEarlier, introUp, intro3d }: { phase: Phase; onEarlier: () => void; introUp: boolean; intro3d: boolean }) {
   const { t, lang } = useLang();
   const reduce = useReducedMotion();
   const [family, setFamily] = useState<'reyes' | 'nguyen'>('reyes');
@@ -298,8 +298,8 @@ function HeroDemo({ phase, onEarlier, introUp }: { phase: Phase; onEarlier: () =
 
       <div className="mt-6 grid grid-cols-1 items-end gap-x-6 lg:grid-cols-[minmax(0,1fr)_220px] xl:grid-cols-[minmax(0,1fr)_300px]">
         {/* the 3D house, next to the date (first on phones); the intro lands on exactly this slot */}
-        <div className="order-first mx-auto mb-2 w-full max-w-[360px] lg:order-none lg:col-start-2 lg:row-start-1 lg:mb-0 lg:max-w-none" data-testid="hero-house" style={{ opacity: introUp ? 0 : 1 }}>
-          <HouseCanvas eager priority hold={introUp} build="none" lit={litWindows} porch doorOpen smoke sun={gain} tilt />
+        <div className="order-first mx-auto mb-2 w-full max-w-[360px] lg:order-none lg:col-start-2 lg:row-start-1 lg:mb-0 lg:max-w-none" data-testid="hero-house" style={{ opacity: intro3d ? 0 : 1 }}>
+          <HouseCanvas eager priority hold={introUp} hideLive={introUp} build="none" lit={litWindows} porch doorOpen smoke sun={gain} tilt />
         </div>
         <div className="relative [container-type:inline-size] lg:col-start-1 lg:row-start-1 lg:pb-4">
           <div className="relative flex min-h-[28px] items-center justify-between gap-3">
@@ -383,7 +383,7 @@ function HeroDemo({ phase, onEarlier, introUp }: { phase: Phase; onEarlier: () =
   );
 }
 
-function Hero({ phase, introUp }: { phase: Phase; introUp: boolean }) {
+function Hero({ phase, introUp, intro3d }: { phase: Phase; introUp: boolean; intro3d: boolean }) {
   const { t } = useLang();
   const router = useVTRouter();
   const reduce = useReducedMotion();
@@ -433,7 +433,7 @@ function Hero({ phase, introUp }: { phase: Phase; introUp: boolean }) {
           </motion.div>
         </div>
         <div className="lg:col-span-6 xl:col-span-7 xl:pl-8">
-          <HeroDemo phase={phase} onEarlier={onEarlier} introUp={introUp} />
+          <HeroDemo phase={phase} onEarlier={onEarlier} introUp={introUp} intro3d={intro3d} />
         </div>
       </div>
       <SectionArrow index={0} label={t('landing.arrowNext')} topLabel={t('landing.arrowTop')} />
@@ -756,6 +756,7 @@ export function Landing() {
   }, [intro]);
   const [handoff, setHandoff] = useState(false);
   const onHandoff = useCallback(() => setHandoff(true), []);
+  const [introMode, setIntroMode] = useState<'3d' | 'still' | null>(null);
   const onIntroDone = useCallback(() => {
     setIntro(false);
     brand.set({ stage: 'header', fly: false });
@@ -772,9 +773,9 @@ export function Landing() {
       <noscript>
         <style>{`[data-intro]{visibility:visible!important}`}</style>
       </noscript>
-      {phase === 'opening' && introMounted && <Intro live={intro} onHandoff={onHandoff} onDone={onIntroDone} onSkip={onIntroSkip} />}
+      {phase === 'opening' && introMounted && <Intro live={intro} onStart={setIntroMode} onHandoff={onHandoff} onDone={onIntroDone} onSkip={onIntroSkip} />}
       {/* a skip remounts the hero straight into its final state */}
-      <HeroM key={phase === 'static' ? 'static' : 'live'} phase={heroPhase} introUp={phase === 'opening' && intro} />
+      <HeroM key={phase === 'static' ? 'static' : 'live'} phase={heroPhase} introUp={phase === 'opening' && intro} intro3d={phase === 'opening' && intro && introMode === '3d'} />
       <SceneIntakeM />
       <SceneRoadM />
       <SceneHomesM />

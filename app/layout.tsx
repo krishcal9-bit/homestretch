@@ -9,7 +9,7 @@ import type { Lang } from '@/lib/types';
 
 
 export const metadata: Metadata = {
-  title: 'Homestretch · Habitat OC',
+  title: 'HomeStretch · Habitat OC',
   description: 'How far is your family from keys, and exactly what closes the gap.',
 };
 

@@ -7,7 +7,7 @@ import { chromium } from 'playwright';
   const base = process.argv[2] ?? 'http://localhost:3000';
   const b = await chromium.launch({ args: ['--enable-unsafe-swiftshader', '--use-angle=swiftshader', '--ignore-gpu-blocklist'] });
   const p = await b.newPage({ viewport: { width: 1440, height: 1200 }, deviceScaleFactor: 2 });
-  await p.goto(`${base}/?nointro`, { timeout: 120000 });
+  await p.goto(`${base}/?nointro&force3d`, { timeout: 120000 });
   await p.waitForSelector('[data-testid=hero-house] canvas', { timeout: 60000 });
   // render the slot at 600px (same 5:4 framing) so the 2× canvas is 1200px wide
   await p.addStyleTag({ content: '[data-testid=hero-house]{position:fixed!important;left:0!important;top:0!important;width:600px!important;max-width:none!important;z-index:999}' });

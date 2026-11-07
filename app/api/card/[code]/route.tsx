@@ -35,7 +35,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ code: st
             <path d="M3 9.5 10 3l7 6.5V17H3z" fill="none" stroke="#1E5C47" strokeWidth="1.75" strokeLinejoin="round" />
             <path d="M3 14h14" stroke="#1E5C47" strokeWidth="1.75" />
           </svg>
-          Homestretch
+          HomeStretch
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', marginTop: 360 }}>
           <div style={{ fontSize: 96, fontWeight: 600, lineHeight: 1.08, letterSpacing: -1, color: '#182420' }}>{headline}</div>

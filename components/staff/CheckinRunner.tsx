@@ -74,10 +74,10 @@ export function CheckinRunner() {
           <p className="tnum mt-1 text-[15px] text-ink-2" aria-live="polite">
             {status === 'running' ? (
               <>
-                Checked <AnimatedNumber value={done} format={(n) => String(Math.round(n))} /> of {total || '…'} families ·{' '}
+                Checked <AnimatedNumber speed="snappy" value={done} format={(n) => String(Math.round(n))} /> of {total || '…'} families ·{' '}
               </>
             ) : null}
-            <AnimatedNumber value={items.length} format={(n) => String(Math.round(n))} /> {items.length === 1 ? 'family' : 'families'} changed this week
+            <AnimatedNumber speed="snappy" value={items.length} format={(n) => String(Math.round(n))} /> {items.length === 1 ? 'family' : 'families'} changed this week
           </p>
         </div>
         <Button variant="secondary" onClick={run} loading={status === 'running'} data-testid="rerun">

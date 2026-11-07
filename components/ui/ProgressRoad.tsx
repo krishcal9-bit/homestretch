@@ -26,7 +26,9 @@ export const ProgressRoad = memo(function ProgressRoad({ value, label, last = fa
       </div>
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden className="mb-[1px] shrink-0">
         <path d="M1.5 16.5V7.5L9 1.5l7.5 6v9z" fill="none" stroke="var(--pine)" strokeWidth="1.5" strokeLinejoin="round" />
-        <motion.rect x="6.75" y="10.5" width="4.5" height="6" initial={false} animate={{ fill: last ? 'var(--brass)' : 'rgba(0,0,0,0)', stroke: last ? 'var(--brass)' : 'var(--pine)' }} transition={{ duration: 0.3, ease: ease.out }} strokeWidth="1.2" />
+        <rect x="6.75" y="10.5" width="4.5" height="6" fill="none" stroke="var(--pine)" strokeWidth="1.2" />
+        {/* the door turns brass on the last step (opacity only) */}
+        <motion.rect x="6.75" y="10.5" width="4.5" height="6" fill="var(--brass)" stroke="var(--brass)" strokeWidth="1.2" initial={false} animate={{ opacity: last ? 1 : 0 }} transition={{ duration: 0.3, ease: ease.out }} />
       </svg>
     </div>
   );

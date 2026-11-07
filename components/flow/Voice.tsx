@@ -3,7 +3,7 @@ import { memo, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Mic, X } from 'lucide-react';
 import { useLang } from '@/lib/i18n';
-import { spring, exit as exitT } from '@/lib/motion';
+import { spring, reveal } from '@/lib/motion';
 import { Button } from '@/components/ui/Button';
 import type { SpeechFields } from '@/lib/speech';
 
@@ -115,7 +115,7 @@ export const VoiceControl = memo(function VoiceControl({ screen, onFields }: { s
         )}
         <AnimatePresence initial={false}>
           {open && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0, transition: exitT }} transition={spring.smooth} className="overflow-hidden">
+            <motion.div {...reveal}>
               <div className="panel mt-4 !p-4">
                 <div className="flex items-start justify-between gap-3">
                   <label htmlFor="voice-text" className="text-[15px] font-medium text-ink">

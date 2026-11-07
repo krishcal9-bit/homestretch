@@ -142,11 +142,11 @@ export function Insights({ homes, families }: { homes: Home[]; families: Fam[] }
         </p>
         <p className="mt-8 border-t border-line pt-6 text-[20px] leading-[28px]" aria-hidden>
           <span className="tnum font-semibold" data-testid="more-ready">
-            <AnimatedNumber value={more} format={(n) => String(Math.round(n))} />
+            <AnimatedNumber speed="snappy" value={more} format={(n) => String(Math.round(n))} />
           </span>{' '}
           more {more === 1 ? 'family' : 'families'} ready by {monthName(addMonths(today, target))}, for{' '}
           <span className="tnum font-semibold">
-            <AnimatedNumber value={sim.cost} format={(n) => money(n)} />
+            <AnimatedNumber speed="snappy" value={sim.cost} format={(n) => money(n)} />
           </span>
           .
         </p>

@@ -8,7 +8,7 @@ import { Segmented } from '@/components/ui/Segmented';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { AnimatePresence, motion } from 'motion/react';
-import { spring, exit as exitT } from '@/lib/motion';
+import { spring, exit as exitT, reveal } from '@/lib/motion';
 import type { CreditBand } from '@/lib/types';
 import { useMemo, type ReactNode } from 'react';
 import { HouseholdArt } from '@/components/illustrations/intake/HouseholdArt';
@@ -49,13 +49,7 @@ function InlineNote({ show, text }: { show: boolean; text: string }) {
   return (
     <AnimatePresence initial={false}>
       {show && (
-        <motion.p
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0, transition: exitT }}
-          transition={spring.smooth}
-          className="overflow-hidden"
-        >
+        <motion.p {...reveal}>
           <span className="mt-3 block border-l-2 border-signal-amber pl-3 text-[15px] leading-[22px] text-signal-amber">{text}</span>
         </motion.p>
       )}
@@ -205,7 +199,7 @@ export function IncomeScreen({ draft, update, showErrors, titleAction, flash, ex
         <Checkbox id="otherOn" checked={draft.otherIncomeOn} onChange={(v) => update({ otherIncomeOn: v })} label={t('flow.income.addOther')} help={t('flow.income.otherHelp')} />
         <AnimatePresence initial={false}>
           {draft.otherIncomeOn && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0, transition: exitT }} transition={spring.smooth} className="overflow-hidden px-[2px]">
+            <motion.div {...reveal} className="px-[2px]">
               <div className="pt-2">
                 <Field id="other" label={t('flow.income.other')}>
                   <CurrencyInput id="other" value={draft.otherMonthlyIncome} flash={flash.otherMonthlyIncome} onChange={(v) => update({ otherMonthlyIncome: v })} />

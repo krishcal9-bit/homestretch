@@ -6,7 +6,7 @@ import { useLang } from '@/lib/i18n';
 import { computeReadiness, monthsUntil, solveForDate } from '@/lib/engine';
 import { fittingHomes } from '@/lib/homes';
 import { monthName, money } from '@/lib/format';
-import { ease, spring, exit as exitT } from '@/lib/motion';
+import { ease, spring, exit as exitT, reveal } from '@/lib/motion';
 import type { Home, Levers, Profile } from '@/lib/types';
 import { Section } from './Panels';
 import { HomeGlyph } from '@/components/illustrations/result/HomeGlyph';
@@ -215,11 +215,7 @@ export const AimForHome = memo(function AimForHome({ profile, onSolve }: { profi
         {outcome && (
           <motion.div
             key={outcome.homeId + outcome.text.join()}
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0, transition: exitT }}
-            transition={spring.smooth}
-            className="overflow-hidden"
+            {...reveal}
           >
             <p data-testid="aim-sentence" className={`tnum mt-4 border-l-2 pl-3 text-[16px] leading-[24px] ${outcome.ok ? 'border-pine text-ink' : 'border-signal-amber text-ink'}`}>
               {outcome.text.join(' ')}

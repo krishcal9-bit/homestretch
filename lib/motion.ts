@@ -14,3 +14,14 @@ export const stagger = 0.04;
 /** Exits are ~30% faster than entrances (pro-ui-craft). */
 export const exit = { type: 'tween', duration: 0.16, ease: ease.out } as const;
 export const exitDrawer = { type: 'tween', duration: 0.22, ease: [0.32, 0.72, 0, 1] as [number, number, number, number] } as const;
+
+/**
+ * Disclosure: content unrolls from the top (clip-path) while rising 4px and fading in, instead of animating
+ * height (only transform, opacity and clip-path animate). The clip is removed afterwards so focus rings show.
+ */
+export const reveal = {
+  initial: { opacity: 0, y: -4, clipPath: 'inset(0% 0% 100% 0%)' },
+  animate: { opacity: 1, y: 0, clipPath: 'inset(0% 0% 0% 0%)', transitionEnd: { clipPath: 'none' } },
+  exit: { opacity: 0, y: -4, transition: exit },
+  transition: { duration: dur.short + 0.04, ease: ease.out },
+} as const;

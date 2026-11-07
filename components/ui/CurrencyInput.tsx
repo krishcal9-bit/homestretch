@@ -44,7 +44,7 @@ export function CurrencyInput({
         aria-invalid={invalid || undefined}
         aria-describedby={describedBy}
         placeholder={placeholder}
-        className={`field tnum pl-[28px] ${flash ? 'just-filled' : ''} ${invalid ? 'border-signal-red' : ''} ${!focused && value !== null ? 'text-transparent' : ''}`}
+        className={`field tnum pl-[28px] ${invalid ? 'border-signal-red' : ''} ${!focused && value !== null ? 'text-transparent' : ''}`}
         value={text}
         onFocus={() => setFocused(true)}
         onChange={(e) => {
@@ -56,6 +56,7 @@ export function CurrencyInput({
           setText(fmt(parseMoney(text)));
         }}
       />
+      {flash ? <span key={`w${flash}`} className="fill-wash" aria-hidden /> : null}
       {/* filled by scan, voice or a lever: the amount rolls to its new value */}
       {!focused && value !== null && (
         <span className="tnum pointer-events-none absolute inset-y-0 left-[28px] flex items-center text-ink" aria-hidden>

@@ -3,10 +3,10 @@ import { useEffect, useRef } from 'react';
 import { useSpring, useReducedMotion } from 'motion/react';
 import { spring } from '@/lib/motion';
 
-/** Rolling number: springs between values (spring.gentle), tabular numerals, never jumps. */
-export function AnimatedNumber({ value, format, className = '' }: { value: number; format: (n: number) => string; className?: string }) {
+/** Rolling number: springs between values (spring.gentle; 'snappy' ≈ 250ms for the staff console), tabular numerals, never jumps. */
+export function AnimatedNumber({ value, format, className = '', speed = 'gentle' }: { value: number; format: (n: number) => string; className?: string; speed?: 'gentle' | 'snappy' }) {
   const reduce = useReducedMotion();
-  const mv = useSpring(value, spring.gentle);
+  const mv = useSpring(value, spring[speed]);
   const ref = useRef<HTMLSpanElement>(null);
   const fmtRef = useRef(format);
   fmtRef.current = format;

@@ -371,16 +371,18 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
             transition={{ duration: drawDuration, ease: drawEase === 'inOut' ? ease.inOut : ease.out, delay: entranceDelay }}
           />
           {progressTo !== undefined && (
+            // the pine fill is the full track with its drawn length animated (pathLength), not its x2
             <motion.line
               x1={PAD}
+              x2={w - PAD}
               y1={g.trackY}
               y2={g.trackY}
               stroke="var(--pine)"
               strokeWidth={g.track}
               strokeLinecap="round"
-              initial={play ? { x2: PAD, opacity: 0 } : false}
-              animate={{ x2: PAD + (Math.min(progressTo, maxMonth) / maxMonth) * usable, opacity: 1 }}
-              transition={{ x2: play && !entranceOver ? { duration: drawDuration, ease: drawEase === 'inOut' ? ease.inOut : ease.out, delay: entranceDelay } : spring.gentle, opacity: { duration: 0.2, delay: play && !entranceOver ? entranceDelay : 0 } }}
+              initial={play ? { pathLength: 0, opacity: 0 } : false}
+              animate={{ pathLength: Math.min(progressTo, maxMonth) / maxMonth, opacity: 1 }}
+              transition={{ pathLength: play && !entranceOver ? { duration: drawDuration, ease: drawEase === 'inOut' ? ease.inOut : ease.out, delay: entranceDelay } : spring.gentle, opacity: { duration: 0.2, delay: play && !entranceOver ? entranceDelay : 0 } }}
               data-testid="road-progress"
             />
           )}
@@ -407,11 +409,11 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
                   key={c.id}
                   y={c.side === 'above' ? g.trackY - g.above : g.trackY + g.below}
                   textAnchor="start"
-                  style={{ fontSize: g.font, fontWeight: c.keys.includes('keys') ? 600 : 400 }}
+                  style={{ fontSize: g.font, fontWeight: c.keys.includes('keys') ? 600 : 400, fill: strong ? 'var(--ink)' : 'var(--ink-2)' }}
                   initial={{ opacity: 0, x: c.left }}
-                  animate={{ opacity: 1, x: c.left, fill: strong ? 'var(--ink)' : 'var(--ink-2)' }}
+                  animate={{ opacity: 1, x: c.left }}
                   exit={{ opacity: 0, transition: { duration: 0.1 } }}
-                  transition={{ x: spring.gentle, fill: { duration: 0.2 }, opacity: { duration: 0.2, ease: ease.out, delay: play && !entranceOver ? (c.keys.includes('keys') && keysAt !== undefined ? keysAt + 0.05 : reachDelay(c.x) + 0.05) : 0 } }}
+                  transition={{ x: spring.gentle, opacity: { duration: 0.2, ease: ease.out, delay: play && !entranceOver ? (c.keys.includes('keys') && keysAt !== undefined ? keysAt + 0.05 : reachDelay(c.x) + 0.05) : 0 } }}
                   pointerEvents="none"
                   data-label={c.id}
                 >

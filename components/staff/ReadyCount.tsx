@@ -11,9 +11,9 @@ export function ReadyCount({ projected, readyNow }: { projected: number; readyNo
   const seen = useInView(ref, { once: true, margin: '0px 0px -40px 0px' });
   return (
     <span ref={ref}>
-      <AnimatedNumber value={seen ? projected : 0} format={whole} className="font-medium" />{' '}
+      <AnimatedNumber speed="snappy" value={seen ? projected : 0} format={whole} className="font-medium" />{' '}
       <span className="text-ink-2">{projected === 1 ? 'family' : 'families'} projected ready,</span>{' '}
-      <AnimatedNumber value={seen ? readyNow : 0} format={whole} className="font-medium" /> <span className="text-ink-2">ready now</span>
+      <AnimatedNumber speed="snappy" value={seen ? readyNow : 0} format={whole} className="font-medium" /> <span className="text-ink-2">ready now</span>
     </span>
   );
 }

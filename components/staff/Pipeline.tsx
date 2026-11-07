@@ -245,7 +245,7 @@ export function Pipeline({ families }: { families: FamilyRow[] }) {
                             <span className="text-[15px] font-semibold text-ink">{s.key === 'not_eligible' ? 'Not eligible (why)' : s.label}</span>
                             {/* Plain number on first paint; rolls to the new count when a filter changes it. */}
                             <span className="ml-2 text-[13px] font-normal text-ink-2" data-testid="stage-count">
-                              <AnimatedNumber value={rows.length} format={whole} />
+                              <AnimatedNumber speed="snappy" value={rows.length} format={whole} />
                             </span>
                             {filtersOn && rows.length !== total && <span className="tnum text-[13px] font-normal text-ink-2"> of {total}</span>}
                           </th>

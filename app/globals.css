@@ -115,25 +115,30 @@ textarea {
 
 }
 
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+/* Loading placeholders breathe (opacity only) */
+@keyframes skeleton-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
 }
 .skeleton {
-  background: linear-gradient(90deg, var(--line) 25%, #e9eeeb 50%, var(--line) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.6s linear infinite;
+  background: var(--line);
+  animation: skeleton-breathe 1.6s ease-in-out infinite;
   border-radius: 8px;
 }
 @media (prefers-reduced-motion: reduce) {
   .skeleton { animation: none; }
 }
 
-@keyframes filled-pulse {
-  0% { background-color: var(--pine-soft); }
-  100% { background-color: var(--surface); }
+/* A field the app just filled (voice, pay stub): a pine-soft wash fades off it (opacity only, on an overlay) */
+@keyframes filled-wash {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
-.just-filled { animation: filled-pulse 600ms ease-out; }
+.just-filled { position: relative; isolation: isolate; }
+.just-filled::after { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: var(--pine-soft); pointer-events: none; animation: filled-wash 600ms ease-out both; }
+/* inputs can't hold a pseudo-element: they get a wash element between the input and the value shown over it */
+.fill-wash { position: absolute; inset: 1px; border-radius: 7px; background: var(--pine-soft); pointer-events: none; animation: filled-wash 600ms ease-out both; }
+@media (prefers-reduced-motion: reduce) { .just-filled::after, .fill-wash { animation-duration: 150ms; } }
 
 /* Slider: keep the native input for a11y; show a focus ring on the custom thumb's track */
 .slider-input:focus-visible { opacity: 1; background: transparent; outline: 2px solid var(--pine); outline-offset: 2px; border-radius: 8px; }

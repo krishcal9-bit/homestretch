@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { RefreshCw, Copy, MessageSquare, Download } from 'lucide-react';
 import { useLang } from '@/lib/i18n';
 import { useStored } from '@/lib/useStored';
-import { exit as exitT, spring } from '@/lib/motion';
+import { exit as exitT, reveal } from '@/lib/motion';
 import { useToast } from '@/components/Toast';
 import { Button } from '@/components/ui/Button';
 import type { PlanOutput } from '@/lib/plan';
@@ -177,11 +177,7 @@ export const FamilyExtras = memo(function FamilyExtras({ profile }: ResultExtras
                 <AnimatePresence initial={false}>
                   {phoneOpen && (
                     <motion.form
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={spring.smooth}
-                      className="overflow-hidden"
+                      {...reveal}
                       onSubmit={(e) => {
                         e.preventDefault();
                         // Mock send: no SMS provider in the demo.

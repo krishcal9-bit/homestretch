@@ -115,7 +115,8 @@ export type SkylineProps = {
   stagger?: number;
 };
 
-export function Skyline({ mode = 'static', count = 16, drawInAt = false, flashKey = 0, litIndex = null, litCount = 0, keysLit = false, parallax = false, className = '', height = 120, stagger = 0.04 }: SkylineProps) {
+/** Memoized: parents that re-render on every slider frame don't re-render the street. */
+export const Skyline = memo(function Skyline({ mode = 'static', count = 16, drawInAt = false, flashKey = 0, litIndex = null, litCount = 0, keysLit = false, parallax = false, className = '', height = 120, stagger = 0.04 }: SkylineProps) {
   const reduce = useReducedMotion();
   const houses = useMemo(() => buildStreet(count), [count]);
   const [active, setActive] = useState<number | null>(null);
@@ -198,4 +199,4 @@ export function Skyline({ mode = 'static', count = 16, drawInAt = false, flashKe
       </svg>
     </motion.div>
   );
-}
+});

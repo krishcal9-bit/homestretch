@@ -90,8 +90,9 @@ export function Stepper({
         }}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        className={`tnum h-[48px] w-[56px] border-x border-line bg-transparent text-center text-[18px] font-medium ${focused ? '' : 'text-transparent'} [appearance:textfield] focus:outline-none focus-visible:bg-pine-soft [&::-webkit-inner-spin-button]:appearance-none ${flash ? 'just-filled' : ''}`}
+        className={`tnum h-[48px] w-[56px] border-x border-line bg-transparent text-center text-[18px] font-medium ${focused ? '' : 'text-transparent'} [appearance:textfield] focus:outline-none focus-visible:bg-pine-soft [&::-webkit-inner-spin-button]:appearance-none`}
       />
+        {flash ? <span key={`w${flash}`} className="fill-wash !inset-0 !rounded-none" aria-hidden /> : null}
         {/* the number rolls when it changes (input stays underneath for typing and a11y) */}
         {!focused && (
           <span className="tnum pointer-events-none absolute inset-0 flex items-center justify-center text-[18px] font-medium text-ink" aria-hidden>

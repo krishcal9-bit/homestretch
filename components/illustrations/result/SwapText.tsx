@@ -14,9 +14,9 @@ export function SwapText({ text, testId, className = '' }: { text: string; testI
       <AnimatePresence initial={false}>
         <motion.span
           key={text}
-          initial={{ y: 8, opacity: 0, filter: 'blur(2px)' }}
-          animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
-          exit={{ y: -8, opacity: 0, filter: 'blur(2px)' }}
+          initial={{ y: 8, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -8, opacity: 0 }}
           transition={{ duration: dur.short, ease: ease.out }}
           className="col-start-1 row-start-1 whitespace-nowrap"
         >

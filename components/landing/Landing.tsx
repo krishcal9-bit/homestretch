@@ -112,7 +112,7 @@ function Headline({ text, phase }: { text: string; phase: Phase }) {
     }
     setLines(out.map((l) => l.join(' ')));
   }, [lines, text]);
-  const cls = 't-display text-[44px] text-ink sm:text-[60px] lg:text-[76px] xl:text-[88px]';
+  const cls = 't-display text-[44px] text-ink sm:text-[60px] lg:text-[64px] xl:text-[88px]';
   if (!lines || phase === 'pending')
     return (
       <h1 ref={ref} className={cls} style={{ visibility: 'hidden', textWrap: 'wrap' }} data-intro>
@@ -235,9 +235,11 @@ function HeroDoors({ phase }: { phase: Phase }) {
   return (
     <nav aria-label={t('landing.doorsLabel')} className="w-full" data-intro style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
       <p className="mb-3 text-[15px] text-ink-2 lg:text-[16px]">{t('landing.doorsLabel')}</p>
-      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+      {/* two equal columns, stretched: both arches always share one width and height (phones: stacked, equal rows) */}
+      <div className="grid auto-rows-fr grid-cols-1 items-stretch gap-3 sm:[grid-template-columns:1fr_1fr] sm:gap-4">
         {doors.map((d, i) => (
           <motion.div
+            className="h-full min-w-0"
             key={`${d.key}-${phase === 'pending'}`}
             initial={play ? { opacity: 0, y: 12 } : phase === 'reduced' ? { opacity: 0 } : false}
             animate={{ opacity: 1, y: 0 }}
@@ -333,7 +335,7 @@ function Hero({ phase, intro }: { phase: Phase; intro: boolean | null }) {
       <HeroScene layout={layout} road={road} />
       {/* the sky: headline on the left, the ready date and slider over the family's house */}
       <div className="relative z-[1] mx-auto grid max-w-[1440px] grid-cols-1 content-center items-center gap-x-8 gap-y-5 px-5 pb-4 pt-4 sm:px-8 lg:grid-cols-12 lg:gap-y-0 lg:px-20 lg:pb-6 lg:pt-6" style={{ minHeight: 'calc(100svh - 64px - var(--street-h))' }}>
-        <div className="lg:col-span-7">
+        <div className="lg:col-span-6 xl:col-span-7">
           <motion.p key={`partner-${phase === 'pending'}`} {...fadeUp} transition={play ? { duration: 0.3, ease: ease.out, delay: t0 } : fadeUp.transition} className="mb-3 text-[15px] text-ink-2 lg:mb-4">
             {t('app.partner')}
           </motion.p>
@@ -342,7 +344,7 @@ function Hero({ phase, intro }: { phase: Phase; intro: boolean | null }) {
             {t('landing.sub')}
           </motion.p>
         </div>
-        <div ref={controlsRef} className="mx-auto w-full max-w-[520px] lg:col-span-5">
+        <div ref={controlsRef} className="mx-auto w-full max-w-[540px] lg:col-span-6 xl:col-span-5">
           <HeroDoors phase={phase} />
         </div>
       </div>

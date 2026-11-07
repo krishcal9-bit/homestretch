@@ -491,9 +491,10 @@ function useLabels(texts: { span: string; key: string }) {
       root.appendChild(d);
       return d;
     };
-    els.current = [mk(texts.span), mk(texts.key)];
+    // only the keystone label: the span is shown as a dimension line, never as text
+    els.current = [mk(texts.key)];
     return () => els.current.forEach((d) => d.remove());
-  }, [gl, texts.span, texts.key]);
+  }, [gl, texts.key]);
   return els;
 }
 
@@ -724,7 +725,8 @@ export function IntroWorld({ start, mode, ctl, labels, onArchOut }: FilmProps) {
     if (world.current) world.current.visible = t < FILM.total + 0.2;
 
     // ---- the annotations ----
-    const [spanEl, keyEl] = labelEls.current;
+    // the span is drawn as a dimension line only: no "span 4.2m" text in the opening
+    const [keyEl] = labelEls.current;
     const col = `#${bpCol.getHexString()}`;
     const place = (el: HTMLDivElement | undefined, x: number, y: number, z: number, o: number, dy: number) => {
       if (!el) return;
@@ -737,8 +739,6 @@ export function IntroWorld({ start, mode, ctl, labels, onArchOut }: FilmProps) {
       el.style.opacity = o.toFixed(3);
       el.style.color = col;
     };
-    const marks = 1 - inOut(prog(t, 1.9, 0.45));
-    place(spanEl, 0, 0, ZA + DEPTH / 2 + 1.55, easeOut(prog(t, 0.38, 0.3)) * marks, -12);
     place(keyEl, 0, ARCH_TOP, ZA + DEPTH / 2, easeOut(prog(t, 0.62, 0.3)) * (1 - inOut(prog(t, FILM.beam - 0.15, 0.3))), -16);
   });
 

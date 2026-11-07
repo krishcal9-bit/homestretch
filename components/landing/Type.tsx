@@ -97,8 +97,11 @@ export function SplitHeading({
 }
 
 /**
- * A door-shaped panel (an arched doorway) with an illustrated door that opens a little on hover (fine pointers)
- * and on press, letting warm light out. The title and line under it say where the door leads.
+ * A door-shaped panel (an arched doorway) with an illustrated door that opens a little on hover (fine pointers),
+ * on focus and on press, letting warm light out. Both panels are identical in shape: the same 1px --line border,
+ * the same 4/5 arch (≥640px), the same door at the same place, and the same text block (the title reserves two
+ * lines, the subtitle two), so wrapping never changes the height and the text sits at the same height in both.
+ * Only the fill differs (pine for the primary). Phones: full width, the door beside the text, same height.
  */
 export function DoorPanel({
   title,
@@ -124,13 +127,14 @@ export function DoorPanel({
       whileTap={{ scale: 0.97 }}
       transition={spring.snappy}
       data-testid={testId}
+      data-door={primary ? 'primary' : 'secondary'}
       style={style}
-      className={`door-panel group relative flex min-h-[236px] flex-col overflow-hidden rounded-b-[14px] rounded-t-[999px] border px-4 pb-4 pt-5 text-center sm:min-h-[272px] sm:px-5 sm:pb-5 ${
-        primary ? 'border-pine bg-pine text-on-pine' : 'border-line-strong bg-surface text-ink'
+      className={`door-panel group relative grid h-full grid-cols-[56px_minmax(0,1fr)] items-center gap-4 overflow-hidden rounded-b-[14px] rounded-t-[36px] border border-line px-4 py-3 text-left sm:flex sm:aspect-[4/5] sm:flex-col sm:items-stretch sm:gap-0 sm:rounded-t-[999px] sm:px-4 sm:pb-4 sm:pt-6 sm:text-center ${
+        primary ? 'door-primary bg-pine text-on-pine' : 'door-secondary bg-surface text-ink'
       }`}
     >
-      {/* the doorway */}
-      <span className="relative mx-auto block aspect-[3/4] w-[58%] max-w-[112px] [perspective:420px]" aria-hidden>
+      {/* the doorway: the same size and place in both panels */}
+      <span className="relative mx-auto block aspect-[3/4] w-[56px] [perspective:420px] sm:w-[44%] sm:max-w-[112px]" aria-hidden>
         {/* the warm light behind the door */}
         <span className={`absolute inset-0 rounded-t-[999px] ${primary ? 'bg-[var(--il-honey-light)]' : 'bg-[var(--il-glow)]'}`} />
         <span className="door-light absolute inset-0 rounded-t-[999px] bg-[radial-gradient(70%_60%_at_30%_70%,var(--il-honey),transparent)] opacity-0" />
@@ -143,9 +147,10 @@ export function DoorPanel({
         {/* threshold */}
         <span className={`absolute -bottom-[3px] -left-[8%] -right-[8%] h-[3px] rounded-full ${primary ? 'bg-white/30' : 'bg-line-strong'}`} />
       </span>
-      <span className="mt-auto block pt-4">
-        <span className="block text-[17px] font-semibold leading-[22px] sm:text-[19px] sm:leading-[25px]">{title}</span>
-        <span className={`mt-1 block text-[14px] leading-[20px] sm:text-[15px] sm:leading-[22px] ${primary ? 'opacity-85' : 'text-ink-2'}`}>{sub}</span>
+      {/* the text block: pinned to the bottom, fixed heights (two lines each) */}
+      <span className="block sm:mt-auto sm:pt-3">
+        <span className="line-clamp-2 block h-[44px] text-[17px] font-semibold leading-[22px] xl:h-[50px] xl:text-[19px] xl:leading-[25px]">{title}</span>
+        <span className={`mt-1 line-clamp-2 block h-[40px] text-[14px] leading-[20px] xl:h-[44px] xl:text-[15px] xl:leading-[22px] ${primary ? 'opacity-85' : 'text-ink-2'}`}>{sub}</span>
       </span>
     </motion.a>
   );

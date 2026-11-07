@@ -511,12 +511,15 @@ html.lenis, html.lenis body { height: auto; }
 @media (hover: hover) and (pointer: fine) {
   .door-panel:hover .door-leaf { transform: rotateY(-30deg); }
   .door-panel:hover .door-light { opacity: 0.9; }
-  .door-panel.border-line-strong:hover { background: var(--pine-soft); }
-  .door-panel.bg-pine:hover { background: var(--pine-hover); }
+  .door-panel.door-secondary:hover { background: var(--pine-soft); }
+  .door-panel.door-primary:hover { background: var(--pine-hover); }
 }
 .door-panel:active .door-leaf, .door-panel:focus-visible .door-leaf { transform: rotateY(-36deg); }
 .door-panel:active .door-light, .door-panel:focus-visible .door-light { opacity: 0.9; }
 .door-panel { transition: background-color 160ms ease; }
+/* focus: the same shape and border, only the fill changes (plus the focus ring outside) */
+.door-panel.door-secondary:focus-visible { background: var(--pine-soft); }
+.door-panel.door-primary:focus-visible { background: var(--pine-hover); }
 
 /* magnetic CTA: the label slides up and a copy rises in on hover */
 .mag-label { transition: transform 280ms cubic-bezier(0.23, 1, 0.32, 1); }

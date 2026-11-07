@@ -87,6 +87,19 @@ export function Flow() {
     return () => cancelAnimationFrame(id);
   }, [step]);
 
+  // Stable pieces, so a tap on a stepper re-renders only what changed (4× CPU throttle budget: no frame > 34ms).
+  const speechRef = useRef<(f: SpeechFields) => number>(() => 0);
+  const onSpeech = useCallback((f: SpeechFields) => speechRef.current(f), []);
+  const skyline = useMemo(() => <Skyline mode="static" count={10} height={64} className="-mx-5 mt-6 opacity-40" />, []);
+  const submit = useMemo(
+    () => (
+      <Button type="submit" size="lg" full>
+        {step === INTAKE_STEPS ? t('flow.seePath') : t('app.continue')}
+      </Button>
+    ),
+    [step, t],
+  );
+
   if (!ready) return <div className="min-h-[60vh]" aria-busy />;
 
   /** D3: apply spoken fields to the draft (any screen), highlight each filled field. Returns how many. */
@@ -128,7 +141,8 @@ export function Flow() {
     fill(patch, keys);
     return keys.length;
   };
-  const mic = (screen: 'household' | 'income' | 'housing' | 'money') => <VoiceControl key={`${screen}-${lang}`} screen={screen} onFields={applySpeech} />;
+  speechRef.current = applySpeech;
+  const mic = (screen: 'household' | 'income' | 'housing' | 'money') => <VoiceControl key={`${screen}-${lang}`} screen={screen} onFields={onSpeech} />;
   const props: ScreenProps = { draft, update, showErrors, flash };
   const stubCard = (
     <UploadCard
@@ -137,10 +151,14 @@ export function Flow() {
       body={t('flow.income.scanBody')}
       button={t('flow.income.scanButton')}
       endpoint="/api/extract/paystub"
+      art="paystub"
       onResult={(d) => {
         const monthly = Number(d.monthlyGross) || 0;
-        fill({ grossMonthlyIncome: monthly, incomeSource: 'paystub' }, ['grossMonthlyIncome']);
-        return t('upload.stubDone', { employer: String(d.employer ?? '—'), amount: money(monthly, lang) });
+        // The amount flies from the scanned stub into the field; the form fills when it lands.
+        return {
+          message: t('upload.stubDone', { employer: String(d.employer ?? '—'), amount: money(monthly, lang) }),
+          fly: { text: money(monthly, lang), to: 'gross', land: () => fill({ grossMonthlyIncome: monthly, incomeSource: 'paystub' }, ['grossMonthlyIncome']) },
+        };
       }}
     />
   );
@@ -209,11 +227,7 @@ export function Flow() {
               className="pb-8 pt-2"
             >
               <div className="intake-screen">{screens[step]}</div>
-              <div className="mt-10">
-                <Button type="submit" size="lg" full>
-                  {step === INTAKE_STEPS ? t('flow.seePath') : t('app.continue')}
-                </Button>
-              </div>
+              <div className="mt-10">{submit}</div>
             </form>
           )}
           {step > INTAKE_STEPS && <ResultScreen draft={draft} setDraft={setDraft} onEdit={() => go(1)} Extras={FamilyExtras} />}
@@ -244,18 +258,14 @@ export function Flow() {
               className="pb-8 pt-2"
             >
               <div className="intake-screen">{screens[step]}</div>
-              <div className="mt-10">
-                <Button type="submit" size="lg" full>
-                  {step === INTAKE_STEPS ? t('flow.seePath') : t('app.continue')}
-                </Button>
-              </div>
+              <div className="mt-10">{submit}</div>
             </form>
           )}
           {step > INTAKE_STEPS && <ResultScreen draft={draft} setDraft={setDraft} onEdit={() => go(1)} Extras={FamilyExtras} />}
         </motion.div>
       </AnimatePresence>
       )}
-      {step <= INTAKE_STEPS && <Skyline mode="static" count={10} height={64} className="-mx-5 mt-6 opacity-40" />}
+      {step <= INTAKE_STEPS && skyline}
     </div>
   );
 }

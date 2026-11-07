@@ -378,5 +378,20 @@
     "tMatched": "{city} family of {n} · matched to a {br}-bedroom",
     "closingA": "Habitat finishes {n} homes.",
     "closingB": "Homestretch helps {n} families be ready to buy them."
+  },
+  "intakeArt": {
+    "rentShare": "Rent is {pct} of your income",
+    "rentOver": "More than 30% of income: {pct}",
+    "thirty": "30%",
+    "overcrowded": "Overcrowded",
+    "tag": {
+      "car": "Car",
+      "card": "Cards",
+      "student": "Student",
+      "collection": "Collections",
+      "other": "Other",
+      "savings": "Savings"
+    },
+    "more": "+{n} more"
   }
 }

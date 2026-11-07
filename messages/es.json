@@ -378,5 +378,20 @@
     "tMatched": "Familia de {n} en {city} · asignada a una casa de {br} recámaras",
     "closingA": "Habitat termina {n} casas.",
     "closingB": "Homestretch ayuda a que {n} familias estén listas para comprarlas."
+  },
+  "intakeArt": {
+    "rentShare": "La renta es el {pct} de su ingreso",
+    "rentOver": "Más del 30% del ingreso: {pct}",
+    "thirty": "30%",
+    "overcrowded": "Hacinamiento",
+    "tag": {
+      "car": "Auto",
+      "card": "Tarjetas",
+      "student": "Estudios",
+      "collection": "Cobranzas",
+      "other": "Otros",
+      "savings": "Ahorros"
+    },
+    "more": "+{n} más"
   }
 }

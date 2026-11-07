@@ -49,7 +49,7 @@ export default async function HomesPage() {
                 <td className="whitespace-nowrap px-3 py-2 font-medium">
                   <div className="flex items-center gap-4">
                     <span className={LIFT}>
-                      <IsoHouse size={56} />
+                      <IsoHouse size={56} doorBrass={false} />
                     </span>
                     {h.address}
                   </div>

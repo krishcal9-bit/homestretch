@@ -166,7 +166,8 @@
     "sooner": "{n} meses antes",
     "sooner1": "1 mes antes",
     "later": "{n} meses después",
-    "later1": "1 mes después"
+    "later1": "1 mes después",
+    "signature": "Firma de la familia"
   },
   "road": {
     "labels": {

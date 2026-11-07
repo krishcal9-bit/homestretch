@@ -214,3 +214,9 @@ html.landing-snap.landing-snap-off { scroll-snap-type: none; }
 @keyframes arrow-bob { 0%, 80%, 100% { transform: translateY(0); } 88% { transform: translateY(4px); } }
 .arrow-bob { animation: arrow-bob 2.5s var(--ease-in-out) infinite; }
 @media (prefers-reduced-motion: reduce) { .arrow-bob { animation: none; } }
+
+/* r5:result-art */
+/* "Ten years from now": the lines stay hidden until they draw (useLineDraw); their end labels arrive after. */
+[data-draw="pending"] .recharts-line-curve { opacity: 0; }
+[data-draw] .recharts-label-list { transition: opacity 240ms ease; }
+[data-draw="pending"] .recharts-label-list, [data-draw="drawing"] .recharts-label-list { opacity: 0; }

@@ -17,6 +17,8 @@ import { PanelStreet } from '@/components/illustrations/result/PanelStreet';
 import { useDateDelta } from '@/components/illustrations/result/DeltaPill';
 import { keysReachAt, panelRoadWidth } from '@/components/illustrations/result/timing';
 import { ReadyHero, useEntrance } from '@/components/illustrations/result/ReadyHero';
+import { RoadHouse } from '@/components/illustrations/result/RoadHouse';
+import type { Home } from '@/lib/types';
 
 export { ReadyHero };
 
@@ -54,9 +56,19 @@ export function ResultScreen({
   // Entrance, once per session (the Road's own key, so a revisit in the same tab is calm).
   const play = useEntrance('hs.roadPlayed');
   const [settled, setSettled] = useState(false);
-  const [roadDone, setRoadDone] = useState(false);
   const onSettled = useCallback(() => setSettled(true), []);
-  const onRoadDone = useCallback(() => setRoadDone(true), []);
+  // The 3D house builds once per session as the road reaches it; its porch light comes on once the date has
+  // settled and the house is finished.
+  // Once built it stays built: the scene restarts its clock when it pauses off screen, so a house still set to
+  // 'short' would build again on the way back into view.
+  const [houseBuild, setHouseBuild] = useState(() => (play ? 'short' : 'none') as 'short' | 'none');
+  const [built, setBuilt] = useState(!play);
+  const onBuilt = useCallback(() => {
+    setBuilt(true);
+    setHouseBuild('none');
+  }, []);
+  // A home chosen in "Aim for a specific home" stands at the end of the Road instead of the 3D house.
+  const [chosen, setChosen] = useState<Home | null>(null);
   const [ticks, setTicks] = useState(0);
   useEffect(() => {
     const on = (e: Event) => setTicks((e as CustomEvent<number>).detail);
@@ -98,7 +110,7 @@ export function ResultScreen({
   leversRef.current = levers;
   const keysMonth = result.milestones.find((m) => m.key === 'keys')?.month ?? 0;
   // The Keys house builds as the drawing line reaches it; the date lands as its door turns brass.
-  const [keysAt] = useState(() => keysReachAt(result, dur.long, panelRoadWidth(), 'inOut'));
+  const [keysAt] = useState(() => keysReachAt(result, dur.long, panelRoadWidth(), 'inOut', 0, 'house'));
   const dateAt = Math.max(0.3, keysAt);
   const { baseline, keysGlow, begin } = useDateDelta(result.monthsToReady);
 
@@ -177,16 +189,16 @@ export function ResultScreen({
           result={result}
           entrance={play ? 'always' : 'none'}
           drawEase="inOut"
-          onEntranceDone={onRoadDone}
           vtName="road"
-          keysVariant="house"
-          keysBuild={play && !roadDone ? 'quick' : 'none'}
-          keysBuildDelay={keysAt}
+          keysVariant="slot"
+          slotKind="house"
+          keysSlot={<RoadHouse build={houseBuild} lit={ticks} porch={settled && built} chosen={chosen?.id ?? null} onBuilt={onBuilt} />}
+          keysLabel={chosen ? chosen.city : undefined}
           progressTo={result.monthsToReady}
           keysGlow={keysGlow}
         />
-        {/* the street: the Keys house lights brass once the date settles; each ticked plan item lights a window */}
-        <PanelStreet keysLit={settled} litCount={ticks} />
+        {/* the street the road runs along */}
+        <PanelStreet />
       </div>
 
       <div className="panel mt-4 !p-5">
@@ -197,7 +209,7 @@ export function ResultScreen({
 
       <WhyThisDate sentences={why} />
       <FinancePanel result={settledResult} rent={settledProfile.rent} />
-      <AimForHome profile={deferredProfile} onSolve={onSolve} />
+      <AimForHome profile={deferredProfile} onSolve={onSolve} onChosen={setChosen} />
       <TwoFutures profile={baseProfile} />
       {Extras && <Extras profile={settledProfile} draft={extrasDraft} setDraft={setDraft} />}
 

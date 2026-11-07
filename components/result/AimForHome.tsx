@@ -1,92 +1,91 @@
 'use client';
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { motion, AnimatePresence, animate, useReducedMotion, useSpring } from 'motion/react';
+import { motion, AnimatePresence, animate, useReducedMotion } from 'motion/react';
 import { Road } from './Road';
 import { useLang } from '@/lib/i18n';
 import { computeReadiness, monthsUntil, solveForDate } from '@/lib/engine';
 import { fittingHomes } from '@/lib/homes';
 import { monthName, money } from '@/lib/format';
-import { ease, spring, exit as exitT, reveal } from '@/lib/motion';
+import { ease, exit as exitT, reveal } from '@/lib/motion';
+import { P } from '@/lib/illustrationPalette';
 import type { Home, Levers, Profile } from '@/lib/types';
 import { Section } from './Panels';
-import { HomeGlyph } from '@/components/illustrations/result/HomeGlyph';
-import { keysX } from '@/components/illustrations/result/timing';
+import { IsoHouse } from '@/components/illustrations/IsoHouse';
 
 type Outcome = { homeId: string; text: string[]; ok: boolean };
-
-const GLYPH_C = 32; // the card's house drawing centre, from the card's near edge (12px padding + half of 40px)
+/** Where a flight starts: the row's house at the tap, and the page's scroll then. */
+type Flight = { rect: DOMRect; scrollY: number };
+/** The plan re-solves once the flying home has landed (cause, then effect; and the flight runs on a quiet frame budget). */
+const LAND = 0.7;
 
 /**
- * The chosen home flies from its row to sit right over the Keys marker of the small Road: its house drawing
- * travels on two springs (x settles before y, so it arcs rather than sliding straight) and grows to size,
- * then the card's frame and words settle in around it. Afterwards the card rides along with Keys (same
- * spring as the Road's markers) while the sliders glide and the Road re-flows.
+ * The chosen home, standing at the end of the small Road. On arrival it flies there from its row: a small
+ * lift first (anticipation), then it travels on two springs (x settles before y, so it arcs rather than
+ * sliding straight), grows to size, and lands with a little squash while its shadow gathers under it.
+ * Positioned from its bottom centre, so it scales about the point it lands on.
  */
-function LiftedHome({ home, from, label, kx, w }: { home: Home; from: DOMRect | null; label: string; kx: number; w: number }) {
-  const glyph = useRef<HTMLDivElement>(null);
+const FlyingHome = memo(function FlyingHome({ from }: { from: Flight | null }) {
+  // three nested layers so each axis has its own curve: x settles first, y lifts then falls, the house scales
+  const xs = useRef<HTMLDivElement>(null);
+  const ys = useRef<HTMLDivElement>(null);
+  const ss = useRef<HTMLDivElement>(null);
+  const shadow = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
-  // Near the right edge the words go to the left of the house, so the card never leaves the column.
-  const textLeft = kx > w - 168;
-  const target = textLeft ? Math.min(0, kx + GLYPH_C - w) : Math.max(0, kx - GLYPH_C);
-  const x = useSpring(target, spring.gentle);
-  const side = useRef(textLeft);
-  useEffect(() => {
-    if (reduce || side.current !== textLeft) x.jump(target);
-    else x.set(target);
-    side.current = textLeft;
-  }, [target, textLeft, reduce, x]);
   useLayoutEffect(() => {
-    const el = glyph.current;
-    if (!el || !from || reduce) return;
-    const to = el.getBoundingClientRect();
-    const dx = from.left + from.width / 2 - (to.left + to.width / 2);
-    const dy = from.top + from.height / 2 - (to.top + to.height / 2);
-    const runs = [
-      animate(el, { x: [dx, 0] }, { type: 'spring', duration: 0.5, bounce: 0 }),
-      animate(el, { y: [dy, 0] }, { type: 'spring', duration: 0.7, bounce: 0 }),
-      animate(el, { scale: [from.width / Math.max(1, to.width), 1] }, { type: 'spring', duration: 0.6, bounce: 0.15 }),
-    ];
-    return () => runs.forEach((r) => r.stop());
-  }, [from, reduce, home.id]);
-  const settle = (delay: number) => ({ initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.2, ease: ease.out, delay: reduce || !from ? 0 : delay } });
+    const [xe, ye, se, sh] = [xs.current, ys.current, ss.current, shadow.current];
+    if (!xe || !ye || !se || !sh || !from || reduce) return;
+    // hidden for one frame while the Road settles its own layout (its slot is placed in an effect), then measured
+    xe.style.opacity = '0';
+    sh.style.opacity = '0';
+    const runs: { stop: () => void }[] = [];
+    const raf = requestAnimationFrame(() => {
+      const to = se.getBoundingClientRect();
+      // the row was measured at the tap; the page may have scrolled since
+      const scrolled = window.scrollY - from.scrollY;
+      const s0 = from.rect.width / Math.max(1, to.width);
+      const dx = from.rect.left + from.rect.width / 2 - (to.left + to.width / 2);
+      const dy = from.rect.bottom - scrolled - to.bottom;
+      const T = 0.74;
+      const lift = 0.16; // share of the flight spent lifting off the row (anticipation)
+      xe.style.opacity = '1';
+      runs.push(
+        // across fast and easing off; meanwhile it comes down gathering speed, so the path arcs and it lands with weight
+        animate(xe, { x: [dx, dx, 0] }, { duration: 0.62, times: [0, lift, 1], ease: [ease.out, ease.out] }),
+        animate(ye, { y: [dy, dy - 12, 0] }, { duration: T, times: [0, lift, 1], ease: [ease.out, [0.45, 0, 0.7, 0.55]] }),
+        animate(se, { scale: [s0, s0 * 1.08, 1] }, { duration: T, times: [0, lift, 1], ease: [ease.out, ease.out] }),
+        // the landing: a little squash and recovery from the ground up
+        animate(se, { scaleY: [1, 0.88, 1.03, 1], scaleX: [1, 1.06, 0.99, 1] }, { duration: 0.4, ease: ease.out, delay: T - 0.02 }),
+        // its shadow gathers under it as it comes down
+        animate(sh, { opacity: [0, 1], scaleX: [0.4, 1] }, { duration: 0.4, ease: ease.out, delay: T - 0.32 }),
+      );
+    });
+    return () => {
+      cancelAnimationFrame(raf);
+      runs.forEach((r) => r.stop());
+      xe.style.opacity = '';
+      sh.style.opacity = '';
+    };
+  }, [from, reduce]);
   return (
-    <motion.div style={{ x }} className={`absolute top-0 flex items-center gap-3 px-3 py-2 ${textLeft ? 'right-0 flex-row-reverse text-right' : 'left-0'}`} data-testid="aim-card">
-      <motion.span aria-hidden className="absolute inset-0 rounded-[8px] border border-line bg-surface" {...settle(0.3)} />
-      <div ref={glyph} className="relative z-10 will-change-transform">
-        <HomeGlyph bedrooms={home.bedrooms} size={40} brass />
+    <div className="relative h-full w-full" data-testid="aim-card">
+      <div ref={shadow} aria-hidden className="absolute -bottom-[3px] left-[2%] h-[10px] w-[96%]" style={{ background: `radial-gradient(closest-side, ${P.shadow}, transparent)` }} />
+      <div ref={xs} className="absolute inset-0 will-change-transform">
+        <div ref={ys} className="absolute inset-0 will-change-transform">
+          <div ref={ss} className="absolute inset-0 will-change-transform" style={{ transformOrigin: '50% 100%' }}>
+            <IsoHouse size={100} lit porch doorBrass className="!h-auto !w-full" />
+          </div>
+        </div>
       </div>
-      <motion.div className="relative whitespace-nowrap" {...settle(0.38)}>
-        <p className="text-[13px] font-medium leading-[18px] text-ink">{home.city}</p>
-        <p className="t-helper tnum text-ink-2">{label}</p>
-      </motion.div>
-    </motion.div>
-  );
-}
-
-/** The small Road with the chosen home standing over its Keys marker. */
-function AimLane({ home, from, label, result }: { home: Home; from: DOMRect | null; label: string; result: ReturnType<typeof computeReadiness> }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [w, setW] = useState<number | null>(null);
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const measure = () => setW(el.clientWidth);
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-  return (
-    <div ref={ref} className="relative">
-      <div className="relative h-[60px]">{w !== null && <LiftedHome home={home} from={from} label={label} kx={keysX(result, w)} w={w} />}</div>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2, ease: ease.out }}>
-        <Road result={result} entrance="none" progressTo={result.monthsToReady} />
-      </motion.div>
     </div>
   );
+});
+
+/** The small Road with the chosen home standing where it ends. */
+function AimLane({ home, from, label, result }: { home: Home; from: Flight | null; label: string; result: ReturnType<typeof computeReadiness> }) {
+  return <Road result={result} entrance="none" progressTo={result.monthsToReady} keysVariant="slot" slotKind="home" keysLabel={label} keysSlot={<FlyingHome key={home.id} from={from} />} />;
 }
 
-export const AimForHome = memo(function AimForHome({ profile, onSolve }: { profile: Profile; onSolve: (l: Levers) => void }) {
+export const AimForHome = memo(function AimForHome({ profile, onSolve, onChosen }: { profile: Profile; onSolve: (l: Levers) => void; onChosen?: (h: Home | null) => void }) {
   const { t, lang } = useLang();
   const [homes, setHomes] = useState<Home[] | null>(null);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
@@ -99,7 +98,7 @@ export const AimForHome = memo(function AimForHome({ profile, onSolve }: { profi
   const fits = useMemo(() => (homes ? fittingHomes(homes, profile.householdSize) : []), [homes, profile.householdSize]);
   const describe = (h: Home) => ({ city: h.city, br: h.bedrooms, month: monthName(h.completion, lang) });
 
-  const [from, setFrom] = useState<DOMRect | null>(null);
+  const [from, setFrom] = useState<Flight | null>(null);
   const resultNow = useMemo(() => computeReadiness(profile), [profile]);
   const reduceMotion = useReducedMotion();
   const outRef = useRef<HTMLDivElement>(null);
@@ -115,13 +114,35 @@ export const AimForHome = memo(function AimForHome({ profile, onSolve }: { profi
     });
     return () => cancelAnimationFrame(id);
   }, [outcomeKey, reduceMotion]);
+  const solveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => void (solveTimer.current && clearTimeout(solveTimer.current)), []);
+  // the chosen row's own house leaves while its copy flies to the Road, and comes back lit
+  const [flying, setFlying] = useState<string | null>(null);
+  useEffect(() => {
+    if (!flying) return;
+    const id = setTimeout(() => setFlying(null), 760);
+    return () => clearTimeout(id);
+  }, [flying]);
+  // the home standing at the end of the result Road (only while a plan reaches it)
+  const chosenId = outcome?.ok ? outcome.homeId : null;
+  useEffect(() => {
+    onChosen?.(chosenId && homes ? (homes.find((x) => x.id === chosenId) ?? null) : null);
+  }, [chosenId, homes, onChosen]);
   const pick = (h: Home, el?: HTMLElement) => {
+    // a second tap on the chosen home puts it back
+    if (outcome?.homeId === h.id) {
+      if (solveTimer.current) clearTimeout(solveTimer.current);
+      setOutcome(null);
+      return;
+    }
     // the flight starts from this row's house drawing
-    const g = el?.querySelector('[data-home-glyph]');
-    setFrom(g ? g.getBoundingClientRect() : null);
+    const g = el?.querySelector('[data-home-glyph] svg');
+    setFrom(g ? { rect: g.getBoundingClientRect(), scrollY: window.scrollY } : null);
+    const fly = () => !reduceMotion && setFlying(h.id);
     const target = monthsUntil(h.completion);
     const now = computeReadiness(profile);
     if (now.monthsToReady <= target) {
+      fly();
       setOutcome({ homeId: h.id, ok: true, text: [t('result.aimAlready', describe(h))] });
       return;
     }
@@ -132,6 +153,7 @@ export const AimForHome = memo(function AimForHome({ profile, onSolve }: { profi
       return;
     }
     const delta = sol.addedPerMonth;
+    fly();
     setOutcome({
       homeId: h.id,
       ok: true,
@@ -140,13 +162,17 @@ export const AimForHome = memo(function AimForHome({ profile, onSolve }: { profi
         delta > 0 ? t('result.aimMore', { amount: money(delta, lang) }) : delta < 0 ? t('result.aimLess', { amount: money(-delta, lang) }) : t('result.aimSame'),
       ],
     });
-    onSolve({ ...profile.levers, extraDebt: sol.extraDebt, monthlySavings: sol.monthlySavings });
+    const levers = { ...profile.levers, extraDebt: sol.extraDebt, monthlySavings: sol.monthlySavings };
+    if (solveTimer.current) clearTimeout(solveTimer.current);
+    if (reduceMotion || !g) onSolve(levers);
+    else solveTimer.current = setTimeout(() => onSolve(levers), LAND * 1000);
   };
 
   // The rows don't change while a slider moves; they're built once per selection (pick reads the live profile).
   const pickRef = useRef(pick);
   pickRef.current = pick;
   const selectedId = outcome?.homeId;
+  const flyingId = flying;
   const rows = useMemo(
     () => (
     <ul className="panel flex flex-col divide-y divide-line !p-0" data-testid="homes">
@@ -161,8 +187,8 @@ export const AimForHome = memo(function AimForHome({ profile, onSolve }: { profi
               aria-pressed={selected}
               className={`relative flex min-h-[60px] w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-[120ms] first:rounded-t-[13px] last:rounded-b-[13px] ${selected ? 'bg-pine-soft' : 'hover:bg-paper'}`}
             >
-              <span data-home-glyph className="shrink-0">
-                <HomeGlyph bedrooms={h.bedrooms} size={30} brass={selected} />
+              <span data-home-glyph className={`block w-[46px] shrink-0 transition-opacity ${flyingId === h.id ? 'opacity-0 duration-0' : 'opacity-100 duration-200'}`}>
+                <IsoHouse size={46} lit={selected} porch={selected} doorBrass={selected} />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-[16px] font-medium text-ink">
@@ -181,7 +207,7 @@ export const AimForHome = memo(function AimForHome({ profile, onSolve }: { profi
     </ul>
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [fits, selectedId, lang],
+    [fits, selectedId, flyingId, lang],
   );
 
   return (
@@ -206,7 +232,7 @@ export const AimForHome = memo(function AimForHome({ profile, onSolve }: { profi
           if (!h) return null;
           return (
             <motion.div key={`lift-${h.id}`} exit={{ opacity: 0, transition: exitT }} className="mt-4">
-              <AimLane home={h} from={from} label={t('result.done', { month: monthName(h.completion, lang, true) })} result={resultNow} />
+              <AimLane home={h} from={from} label={`${h.city} · ${t('result.done', { month: monthName(h.completion, lang, true) })}`} result={resultNow} />
             </motion.div>
           );
         })()}

@@ -128,3 +128,30 @@ Ambiguities resolved during the build, with the choice made.
   no new table, so production (Turso) needs no migration. A family's own Keep data stays on their device.
 - **Tokens**: the spec's light `--signal-amber` #9A6B12 is 4.2:1 on paper (fails AA for body text); kept #8A5F0E.
 - **Down payment** already 1% of the financeable price + $1,500 closing; 2026 tiers already in lib/incomeTiers.ts.
+
+## Staff KEEP console (keep-5, keep-6, keep-10)
+- **Staff home is Early warning** (`/staff`): the 40 sample homeowners sorted by risk (Act now, Watch, Stable; then the
+  thinnest cushion in the next 6 months). The Ready pipeline moved to `/staff/ready` and gained a "Homes they fit"
+  column (homes that fit the household and complete on or after the family's ready date). The Monday check-in for
+  families stays at `/staff/checkin`, reached from the Ready pipeline.
+- **One "Sample data" label** sits in the console bar (every household in the console is fictional).
+- **Shock Shield moves are derived, never written by Claude** (lib/earlyWarning.ts `shieldMoves`): shop the renewal and
+  ask for the wildfire (Safer from Wildfires) discount; file the Homeowners' Exemption ($7,000 off assessed value ≈
+  $6/month at 1.06%); CARE/FERA when household income is under the CARE limit ($42,300 for 1–2 people, $53,300 for 3,
+  +$11,000 each) or the FERA limit (households of 3+, ≈1.25× CARE); set aside the engine's `recommendedSetAside`; talk
+  with Habitat. Done = in the household's `movesDone` (or the profile flag / current set-aside covers it).
+- **Home Health "due soon"** = 2 years or less of typical life left.
+- **Homeowner outreach** (`POST /api/outreach/homeowner`, `{ id, lang? }`): the server looks the household up and
+  passes only engine numbers and the one next step (the first move not done). Spanish households get a Spanish note
+  plus an English translation for staff. A model draft that drops the surname or runs over 120 words is replaced by
+  the deterministic template. Approving logs a sample send to the console and shows a toast; nothing is sent.
+- **Stress test**: "pushed out of Stable" compares each home under the scenario's shock with premiums and taxes held
+  flat (0%, no supplemental). Defaults: 29% insurance (the FAIR Plan's 29.1% rounded), $150/month matched repair (so
+  the funder headline opens on the case it is about), no hardship fund, no supplemental bills. The headline rounds
+  dollars protected to the nearest $100 ("about $15,600"); the stat beside it shows the exact figure.
+- **Weekly digest** (`POST /api/digest`, NDJSON): last week's snapshot is derived, not stored — the same household
+  seven days ago with this week's fixed sample events undone (a take-home dip for five households, a finished move for
+  four). A shock counts as new when it moved inside 90 days this week; a check-in counts as missed when it crossed 45
+  days this week. Four households are drafted at a time, each streamed as it finishes. Rules template on any failure.
+- Staff strings stay in English in the components, as in the rest of the staff console (staff work in English;
+  families' notes are bilingual).

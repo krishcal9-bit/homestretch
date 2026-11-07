@@ -3,6 +3,7 @@ export const spring = {
   snappy: { type: 'spring', stiffness: 500, damping: 38, mass: 0.8 }, // buttons, toggles, chips
   smooth: { type: 'spring', stiffness: 260, damping: 30 }, // panels, drawers, layout shifts
   gentle: { type: 'spring', stiffness: 140, damping: 22 }, // numbers settling, Road markers
+  drop: { type: 'spring', stiffness: 420, damping: 17 }, // a marker landing with one small bounce (Keep shock markers)
 } as const;
 export const ease = {
   out: [0.22, 1, 0.36, 1] as [number, number, number, number],

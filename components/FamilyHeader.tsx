@@ -43,7 +43,7 @@ export function StaffLink({ className = '' }: { className?: string }) {
  * 64px sticky header. On the landing page it is wide and transparent at the top, gaining a surface
  * background and hairline after 24px of scroll. Inside the app it is the narrow, solid version.
  */
-export function FamilyHeader({ variant = 'app' }: { variant?: 'landing' | 'app' }) {
+export function FamilyHeader({ variant = 'app', wide = false }: { variant?: 'landing' | 'app'; /** app pages with a desktop layout (Keep) */ wide?: boolean }) {
   const { t } = useLang();
   const landing = variant === 'landing';
   const [scrolled, setScrolled] = useState(!landing);
@@ -68,7 +68,7 @@ export function FamilyHeader({ variant = 'app' }: { variant?: 'landing' | 'app' 
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-10 focus:rounded focus:bg-surface focus:px-3 focus:py-2">
         {t('app.skipToContent')}
       </a>
-      <div className={`relative mx-auto flex h-16 items-center justify-between px-5 ${landing ? 'max-w-[1280px] lg:px-8' : 'max-w-[560px]'}`}>
+      <div className={`relative mx-auto flex h-16 items-center justify-between px-5 ${landing ? 'max-w-[1280px] lg:px-8' : wide ? 'max-w-[1120px] lg:px-8' : 'max-w-[560px]'}`}>
         <Link href="/" className="-ml-1 flex items-center rounded px-1" aria-label="HomeStretch">
           <HeaderWordmark />
         </Link>

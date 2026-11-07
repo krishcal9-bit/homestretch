@@ -1,0 +1,15 @@
+{
+  "documentType": "insurance_renewal",
+  "insurer": "California FAIR Plan Association",
+  "fairPlan": true,
+  "currentPremium": 1416,
+  "renewalPremium": 1828,
+  "effectiveDate": "2027-03-01",
+  "currentEscrow": null,
+  "newEscrow": null,
+  "escrowShortage": null,
+  "mortgagePrincipal": null,
+  "propertyTaxAnnual": null,
+  "hoaCurrent": null,
+  "hoaNew": null
+}

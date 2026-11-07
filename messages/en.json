@@ -701,5 +701,241 @@
   },
   "landingArt": {
     "grossPay": "Gross pay"
+  },
+  "keep": {
+    "nav": {
+      "label": "Keep sections",
+      "forecast": "Forecast",
+      "home": "Home health",
+      "relief": "Relief",
+      "checkin": "Check-in"
+    },
+    "demoNote": "You're looking at a sample family: the Ramirez family in Santa Ana, insured by the California FAIR Plan.",
+    "editHome": "Edit my home",
+    "startOver": "Start over",
+    "privacy": "Your numbers stay on this device.",
+    "field": {
+      "mortgage": "Monthly mortgage payment",
+      "escrow": "Escrow each month",
+      "insurer": "Insurance company",
+      "premium": "Yearly insurance premium",
+      "fairPlan": "FAIR Plan",
+      "renewalMonth": "Policy renews in",
+      "propertyTax": "Yearly property tax",
+      "hoa": "HOA dues each month",
+      "homeType": "Home type",
+      "yearBuilt": "Year built",
+      "zip": "ZIP code",
+      "householdSize": "People in your household",
+      "income": "Household income per year, before taxes",
+      "takeHome": "Take-home pay each month",
+      "savings": "Savings"
+    },
+    "homeType": {
+      "single": "Single-family",
+      "townhome": "Townhome",
+      "condo": "Condo"
+    },
+    "setup": {
+      "title": "Set up your home",
+      "lede": "About two minutes. We use these numbers to see changes to your payment before they arrive.",
+      "sampleTitle": "Try it with a sample family",
+      "sampleDetail": "The Ramirez family, Santa Ana, on the California FAIR Plan",
+      "sampleButton": "Try the sample family",
+      "stepOf": "Step {n} of {total}",
+      "step": {
+        "payment": "Your payment",
+        "home": "Your home",
+        "money": "Your money"
+      },
+      "stepLede": {
+        "payment": "What goes into your monthly payment. A notice from your insurer, lender, county or HOA can fill these in.",
+        "home": "Older homes need more set aside for repairs.",
+        "money": "So we can see how much breathing room you have each month."
+      },
+      "help": {
+        "mortgage": "Just the loan part, without taxes and insurance.",
+        "escrow": "The part of your payment for taxes and insurance. Leave it blank and we'll estimate it.",
+        "premium": "On your declarations page or renewal notice.",
+        "propertyTax": "Both installments together, from your tax bill.",
+        "hoa": "Optional. Leave it blank if you don't have an HOA.",
+        "takeHome": "What lands in your bank account each month after taxes.",
+        "income": "Optional. We use it to check for utility discounts.",
+        "savings": "Optional. Money you could use for a repair or a bigger bill."
+      },
+      "insurerPlaceholder": "For example, California FAIR Plan",
+      "fairPlan": "This is a California FAIR Plan policy",
+      "fairPlanHelp": "The FAIR Plan raised its rates 29.1% starting October 15, 2026. We'll use that for your next renewal.",
+      "fromDoc": "From your document",
+      "edit": "Edit",
+      "editField": "Edit {field}",
+      "required": "Add this to see your forecast.",
+      "zipError": "Enter a 5-digit ZIP code.",
+      "yearError": "Enter a year between 1900 and {year}.",
+      "fewer": "Fewer people",
+      "more": "More people",
+      "back": "Back",
+      "continue": "Continue",
+      "finish": "See my forecast",
+      "privacy": "Your numbers stay on this device. Nothing is sent to Habitat unless you send a message yourself."
+    },
+    "doc": {
+      "title": "Have a notice from your insurer, lender, county or HOA?",
+      "body": "Upload a renewal notice, declarations page, escrow statement, tax bill or HOA notice. A photo or PDF works. We'll fill in what we can read.",
+      "upload": "Upload a document",
+      "sample": "Use the sample notice",
+      "reading": "Reading your document",
+      "privacy": "Your file is read once to fill in this form and is not stored.",
+      "done": "Filled in from your {doc}: {fields}. Check them below.",
+      "explaining": "Working out what this means for your payment",
+      "error": "Something went wrong reading that file. Type the numbers in instead.",
+      "type": {
+        "insurance_renewal": "insurance renewal notice",
+        "insurance_declarations": "insurance declarations page",
+        "escrow_analysis": "escrow statement",
+        "property_tax": "property tax bill",
+        "hoa_notice": "HOA notice",
+        "unknown": "document"
+      }
+    },
+    "explain": {
+      "insuranceUp": "Your insurance is going up {annualChange} a year, from {premiumOld} to {premiumNew}.",
+      "insuranceWhenMonthly": "That's why your payment goes up about {monthlyChange} a month in {month}.",
+      "insuranceWhen": "That's why your payment changes in {month}.",
+      "insuranceSame": "Your insurance renews at {premiumNew} a year.",
+      "escrowUp": "The part of your payment for taxes and insurance goes up from {escrowOld} to {escrowNew} a month.",
+      "escrowDown": "The part of your payment for taxes and insurance goes down from {escrowOld} to {escrowNew} a month.",
+      "tax": "Your property tax is {propertyTax} a year. That's about {taxMonthly} of your payment each month.",
+      "hoaUp": "Your HOA dues go up from {hoaOld} to {hoaNew} a month.",
+      "hoa": "Your HOA dues are {hoaNew} a month.",
+      "generic": "We filled in what we could read. Check the numbers below."
+    },
+    "headline": {
+      "rise": "Your payment is likely to rise {amount} a month in {month}.",
+      "riseSub": "Here's how to be ready.",
+      "covered": "With {amount} a month set aside, {month} won't hurt.",
+      "coveredSub": "Your savings jar covers the rise.",
+      "tight": "Your costs hold steady, but money is tight every month.",
+      "tightSub": "Here's where to find room.",
+      "solid": "You're on solid ground for the next 24 months.",
+      "solidSub": "We'll keep an eye on your insurance, taxes and HOA."
+    },
+    "cause": {
+      "insurance": "insurance renewal",
+      "tax": "property tax",
+      "supplemental": "supplemental tax bill",
+      "hoa": "HOA dues"
+    },
+    "zone": {
+      "safe": "Room to spare",
+      "tight": "Tight",
+      "short": "Short"
+    },
+    "chart": {
+      "title": "Your monthly housing cost, next 24 months",
+      "legendPay": "What you pay",
+      "legendWithout": "Without setting aside",
+      "breathing": "Breathing room",
+      "readout": "{month}: you pay {pay} · breathing room {room}",
+      "marker": "{month}: +{amount}/month, {cause}",
+      "flagRise": "+{amount}/month",
+      "flagCovered": "Covered",
+      "noShocks": "no big changes ahead",
+      "aria": "Your monthly housing cost for the next 24 months, starting at {now}. Changes ahead: {shocks}.",
+      "tableCaption": "Your housing cost and breathing room by month",
+      "colMonth": "Month",
+      "colPay": "You pay",
+      "note": "Mortgage, escrow (taxes and insurance), HOA and a set-aside for repairs. Breathing room is your take-home pay minus housing and basic living costs."
+    },
+    "slider": {
+      "label": "Set aside each month",
+      "value": "{amount} a month",
+      "tick": "{amount} recommended",
+      "recommend": "Set aside {amount} a month starting now and {month} won't hurt.",
+      "use": "Set aside {amount}",
+      "using": "Setting aside {amount}",
+      "applied": "Setting aside {amount} a month",
+      "jar": "By {month} you'll have {amount} saved.",
+      "noRise": "No rise to get ready for right now. Setting a little aside still helps with repairs."
+    },
+    "stats": {
+      "now": "This month",
+      "after": "After {month}",
+      "later": "In 2 years",
+      "lowest": "Lowest breathing room"
+    },
+    "shield": {
+      "title": "Shock shield",
+      "lede": "{month}: +{amount}/month from your {cause}. Here are the moves that help most, in order.",
+      "pick": "Which change to plan for",
+      "loading": "Finding moves",
+      "effect": "+{amount}/month breathing room",
+      "effort": {
+        "low": "Low effort",
+        "medium": "Some effort",
+        "high": "More effort"
+      },
+      "newTab": "(opens in a new tab)",
+      "apply": "Apply to my forecast",
+      "appliedUndo": "Applied. Undo",
+      "markFiled": "Mark as filed",
+      "filedUndo": "Filed. Undo",
+      "showUpgrades": "See upgrades that qualify",
+      "hideUpgrades": "Hide upgrades",
+      "upgradesTitle": "Upgrades that can earn a wildfire discount",
+      "upgrade": {
+        "roof": "A Class A fire-rated roof",
+        "vents": "Ember-resistant vents (1/8-inch metal mesh)",
+        "zone0": "A 5-foot noncombustible zone around the house: gravel or pavers, no bark or plants",
+        "eaves": "Enclosed eaves",
+        "base": "6 inches of noncombustible material at the base of outside walls",
+        "windows": "Dual-pane or tempered glass windows"
+      },
+      "setAsideCta": "Set aside {amount} a month",
+      "goalCreated": "Savings goal set: {amount} a month",
+      "goalSet": "Savings goal: {amount} a month",
+      "write": "Write to Habitat",
+      "messageLabel": "Your message to Habitat homeowner services",
+      "send": "Send to Habitat",
+      "sent": "Sent",
+      "sentNote": "Sent. Homeowner services will get back to you.",
+      "setAside": {
+        "title": "Set aside {amount} a month, starting now",
+        "detail": "Put {amount} a month in a savings jar now. In {month} it covers the {rise} rise, so what you pay doesn't jump."
+      },
+      "insurance": {
+        "title": "Ask about a higher deductible",
+        "titleFair": "Shop your insurance and ask about wildfire discounts",
+        "detail": "A higher deductible (for example $2,500 instead of $1,000) can lower a {premium} premium by about {saves} a year. California's Safer from Wildfires rules also give discounts for upgrades like the ones below."
+      },
+      "claim": {
+        "title": "Claim what you're owed",
+        "exemption": "File the California Homeowners' Exemption: it takes {value} off your home's assessed value, about {saves} a year off your property tax.",
+        "care": "You may qualify for CARE, which takes 30 to 35% off electricity and 20% off gas: about {saves} a month.",
+        "fera": "You may qualify for FERA, which takes 18% off electricity: about {saves} a month."
+      },
+      "habitat": {
+        "title": "Talk to Habitat early",
+        "detail": "Homeowner services can help you plan before {month}. Reaching out early gives you the most options."
+      },
+      "habitatWho": "this is a Habitat homeowner",
+      "habitatWhoFamily": "this is the {family} family",
+      "habitatMessage": "Hello, {who}. Our {cause} in {month} will raise our monthly payment by about {amount}. We'd like to talk about our options before then. Thank you."
+    },
+    "docField": {
+      "mortgage": "mortgage payment",
+      "escrow": "escrow",
+      "insurer": "insurance company",
+      "fairPlan": "FAIR Plan",
+      "premium": "yearly premium",
+      "renewalMonth": "renewal month",
+      "propertyTax": "property tax",
+      "hoa": "HOA dues"
+    },
+    "resource": {
+      "wildfire": "Safer from Wildfires",
+      "exemption": "Homeowners' Exemption (OC Assessor)",
+      "care": "CARE and FERA discounts"
+    }
   }
 }

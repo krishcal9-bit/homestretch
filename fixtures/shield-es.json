@@ -1,0 +1,33 @@
+{
+  "moves": [
+    {
+      "key": "setAside",
+      "title": "Empiece hoy un colchón de {setAside} al mes",
+      "detail": "Pase {setAside} al mes a sus ahorros desde ahora. Cuando llegue {month}, ese dinero cubre el aumento de {rise} y su pago se siente igual.",
+      "monthlyEffect": 0,
+      "effort": "low"
+    },
+    {
+      "key": "insurance",
+      "title": "Compare seguros y pregunte por descuentos por incendios",
+      "detail": "Llame a su agente antes de la renovación. Un deducible más alto puede quitar unos {saves} al año a una prima de {premium}, y las reglas Safer from Wildfires de California premian mejoras como un techo Clase A y ventilas resistentes a brasas.",
+      "monthlyEffect": 0,
+      "effort": "medium"
+    },
+    {
+      "key": "claim",
+      "title": "Reclame los ahorros que le corresponden",
+      "detail": "{claimDetail}",
+      "monthlyEffect": 0,
+      "effort": "low"
+    },
+    {
+      "key": "habitat",
+      "title": "Avise a Habitat desde ahora",
+      "detail": "Servicios al propietario puede ayudarle a planear antes de {month}. Escribir pronto le da más opciones.",
+      "monthlyEffect": 0,
+      "effort": "low",
+      "message": "{habitatMessage}"
+    }
+  ]
+}

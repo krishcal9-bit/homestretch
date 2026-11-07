@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Sample renewal notice</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { width: 1100px; background: #fff; color: #1d1d1b; font-family: 'Liberation Serif', 'Times New Roman', serif; font-size: 19px; line-height: 1.4; }
+  .page { position: relative; padding: 64px 76px 56px; overflow: hidden; }
+  .wm { position: absolute; left: 50%; top: 48%; transform: translate(-50%, -50%) rotate(-24deg); font: 700 150px/1 'Liberation Sans', Arial, sans-serif; color: rgba(190, 30, 30, 0.08); letter-spacing: 0.08em; white-space: nowrap; pointer-events: none; }
+  .top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1d1d1b; padding-bottom: 18px; }
+  .org { font: 700 27px/1.15 'Liberation Sans', Arial, sans-serif; }
+  .org small { display: block; font: 400 16px/1.4 'Liberation Sans', Arial, sans-serif; color: #444; margin-top: 6px; }
+  .stamp { border: 2px solid #b22; color: #b22; font: 700 18px/1 'Liberation Sans', Arial, sans-serif; padding: 9px 14px; letter-spacing: 0.12em; }
+  h1 { font: 700 30px/1.2 'Liberation Sans', Arial, sans-serif; margin: 30px 0 4px; }
+  .sub { color: #444; font-family: 'Liberation Sans', Arial, sans-serif; font-size: 17px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 30px; }
+  .box { border: 1px solid #999; padding: 16px 20px; }
+  .box h2 { font: 700 15px/1 'Liberation Sans', Arial, sans-serif; letter-spacing: 0.06em; color: #444; margin-bottom: 10px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 30px; font-family: 'Liberation Sans', Arial, sans-serif; font-size: 18px; }
+  th, td { border: 1px solid #999; padding: 12px 16px; text-align: left; }
+  th { background: #efefea; font-weight: 700; }
+  td.n { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.total td { font-weight: 700; background: #f7f7f3; }
+  .note { margin-top: 28px; font-size: 18px; }
+  .note p + p { margin-top: 12px; }
+  .foot { margin-top: 36px; border-top: 1px solid #999; padding-top: 14px; font: 400 14px/1.45 'Liberation Sans', Arial, sans-serif; color: #555; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="wm">SAMPLE</div>
+  <div class="top">
+    <div class="org">California FAIR Plan Association
+      <small>Dwelling fire policy · Renewal department · Sample document for HomeStretch</small>
+    </div>
+    <div class="stamp">SAMPLE · NOT A REAL POLICY</div>
+  </div>
+
+  <h1>Renewal notice</h1>
+  <p class="sub">Notice date: December 1, 2026 &nbsp;·&nbsp; Policy number: SAMPLE-0000-0000</p>
+
+  <div class="grid">
+    <div class="box">
+      <h2>NAMED INSURED</h2>
+      <p>The Ramirez family<br />100 Sample Lane<br />Santa Ana, CA 92701</p>
+    </div>
+    <div class="box">
+      <h2>POLICY PERIOD</h2>
+      <p>Current term: March 1, 2026 to March 1, 2027<br />Renewal term: March 1, 2027 to March 1, 2028<br />Renewal effective: <b>March 1, 2027</b></p>
+    </div>
+  </div>
+
+  <table>
+    <tr><th>Premium</th><th style="text-align:right">Current term</th><th style="text-align:right">Renewal term</th></tr>
+    <tr><td>Dwelling (Coverage A)</td><td class="n">$1,231.00</td><td class="n">$1,589.00</td></tr>
+    <tr><td>Other structures and fees</td><td class="n">$185.00</td><td class="n">$239.00</td></tr>
+    <tr class="total"><td>Total annual premium</td><td class="n">$1,416.00</td><td class="n">$1,828.00</td></tr>
+  </table>
+
+  <div class="note">
+    <p>Your policy will renew on <b>March 1, 2027</b> at a total annual premium of <b>$1,828.00</b>. This change reflects the statewide rate increase approved for the California FAIR Plan.</p>
+    <p>Your premium is paid from your mortgage escrow account. Your lender will receive a copy of this notice.</p>
+  </div>
+
+  <p class="foot">This is a fictional sample created for a demonstration. It is not issued by the California FAIR Plan Association, and the people, address and policy number are not real.</p>
+</div>
+</body>
+</html>

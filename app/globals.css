@@ -201,6 +201,9 @@ textarea {
 .slider-input:focus-visible::-webkit-slider-thumb { opacity: 0; }
 .slider-input:focus-visible::-moz-range-thumb { opacity: 0; }
 .slider-input::-webkit-slider-runnable-track { background: transparent; }
+/* no native track or fill shows through when the (keyboard-focused) input becomes visible */
+.slider-input { -webkit-appearance: none; appearance: none; background: transparent; }
+.slider-input::-moz-range-track, .slider-input::-moz-range-progress { background: transparent; }
 
 /* ---------- View transitions (lib/vt.ts) ---------- */
 @keyframes vt-fade-out { to { opacity: 0; } }

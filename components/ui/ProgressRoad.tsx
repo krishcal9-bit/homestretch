@@ -1,12 +1,15 @@
 'use client';
 import { motion } from 'motion/react';
+import { memo } from 'react';
 import { spring, ease } from '@/lib/motion';
 
 /**
  * The intake's progress bar is a small Road: a pine line growing toward a house at the right end.
- * On the last step the door turns brass. It is the shared element that grows into the result Road.
+ * The line grows with spring.smooth (scaleX, transform only) on each Continue; on the last step the door
+ * turns brass. It is the shared element that grows into the result Road (`vtName`: "cta" lands from the
+ * landing CTA, "road" morphs into the result Road). Memoized: it only re-renders when the step changes.
  */
-export function ProgressRoad({ value, label, last = false, vtName }: { value: number; label: string; last?: boolean; vtName?: string }) {
+export const ProgressRoad = memo(function ProgressRoad({ value, label, last = false, vtName }: { value: number; label: string; last?: boolean; vtName?: string }) {
   return (
     <div
       className="flex h-[24px] items-end gap-2 px-5"
@@ -27,4 +30,4 @@ export function ProgressRoad({ value, label, last = false, vtName }: { value: nu
       </svg>
     </div>
   );
-}
+});

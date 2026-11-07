@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Mic, X } from 'lucide-react';
 import { useLang } from '@/lib/i18n';
@@ -23,8 +23,11 @@ const getRecognition = (): (new () => Rec) | null => {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 };
 
-/** D3: mic button + panel. Speech (Web Speech API) or typed text → /api/parse-speech → form fills. */
-export function VoiceControl({ screen, onFields }: { screen: 'household' | 'income' | 'housing' | 'money'; onFields: (f: SpeechFields) => number }) {
+/**
+ * D3: mic button + panel. Speech (Web Speech API) or typed text → /api/parse-speech → form fills.
+ * Memoized: with a stable `onFields` it doesn't re-render on every keystroke or stepper tap.
+ */
+export const VoiceControl = memo(function VoiceControl({ screen, onFields }: { screen: 'household' | 'income' | 'housing' | 'money'; onFields: (f: SpeechFields) => number }) {
   const { t, lang } = useLang();
   const [supported, setSupported] = useState(false);
   const [open, setOpen] = useState<null | 'voice' | 'type'>(null);
@@ -152,7 +155,7 @@ export function VoiceControl({ screen, onFields }: { screen: 'household' | 'inco
       </VoicePanelPortal>
     </>
   );
-}
+});
 
 /** Renders the panel just below the screen title (sibling slot), so the mic stays next to the title. */
 function VoicePanelPortal({ children }: { children: React.ReactNode }) {

@@ -392,5 +392,20 @@
     "arrowNext": "Next section",
     "arrowTop": "Back to the top",
     "mapReady": "{n} ready"
+  },
+  "intakeArt": {
+    "rentShare": "Rent is {pct} of your income",
+    "rentOver": "More than 30% of income: {pct}",
+    "thirty": "30%",
+    "overcrowded": "Overcrowded",
+    "tag": {
+      "car": "Car",
+      "card": "Cards",
+      "student": "Student",
+      "collection": "Collections",
+      "other": "Other",
+      "savings": "Savings"
+    },
+    "more": "+{n} more"
   }
 }

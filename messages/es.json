@@ -392,5 +392,20 @@
     "arrowNext": "Siguiente sección",
     "arrowTop": "Volver al inicio",
     "mapReady": "{n} listas"
+  },
+  "intakeArt": {
+    "rentShare": "La renta es el {pct} de su ingreso",
+    "rentOver": "Más del 30% del ingreso: {pct}",
+    "thirty": "30%",
+    "overcrowded": "Hacinamiento",
+    "tag": {
+      "car": "Auto",
+      "card": "Tarjetas",
+      "student": "Estudios",
+      "collection": "Cobranzas",
+      "other": "Otros",
+      "savings": "Ahorros"
+    },
+    "more": "+{n} más"
   }
 }

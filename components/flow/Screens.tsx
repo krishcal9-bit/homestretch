@@ -6,10 +6,18 @@ import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { Stepper } from '@/components/ui/Stepper';
 import { Segmented } from '@/components/ui/Segmented';
 import { Checkbox } from '@/components/ui/Checkbox';
+import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { AnimatePresence, motion } from 'motion/react';
 import { spring, exit as exitT } from '@/lib/motion';
 import type { CreditBand } from '@/lib/types';
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
+import { HouseholdArt } from '@/components/illustrations/intake/HouseholdArt';
+import { OCOutline } from '@/components/illustrations/intake/OCOutline';
+import { CoinStack } from '@/components/illustrations/intake/CoinStack';
+import { RentShare } from '@/components/illustrations/intake/RentShare';
+import { FloorPlan } from '@/components/illustrations/intake/FloorPlan';
+import { DebtScale } from '@/components/illustrations/intake/DebtScale';
+import { CreditGauge } from '@/components/illustrations/intake/CreditGauge';
 
 export type ScreenProps = {
   draft: Draft;
@@ -55,79 +63,143 @@ function InlineNote({ show, text }: { show: boolean; text: string }) {
   );
 }
 
-function YesNo({ id, label, value, onChange }: { id: string; label: string; value: boolean | null; onChange: (v: boolean) => void }) {
+function YesNo({ id, label, value, onChange, art }: { id: string; label: string; value: boolean | null; onChange: (v: boolean) => void; art?: ReactNode }) {
   const { t } = useLang();
+  const control = (
+    <Segmented<'yes' | 'no'>
+      label={label}
+      value={value === null ? undefined : value ? 'yes' : 'no'}
+      onChange={(v) => onChange(v === 'yes')}
+      options={[
+        { value: 'yes', label: t('flow.household.yes') },
+        { value: 'no', label: t('flow.household.no') },
+      ]}
+    />
+  );
   return (
     <div>
       <p id={id} className="mb-2 text-[15px] font-medium text-ink">
         {label}
       </p>
-      <Segmented<'yes' | 'no'>
-        label={label}
-        value={value === null ? undefined : value ? 'yes' : 'no'}
-        onChange={(v) => onChange(v === 'yes')}
-        options={[
-          { value: 'yes', label: t('flow.household.yes') },
-          { value: 'no', label: t('flow.household.no') },
-        ]}
-      />
+      {art ? (
+        <div className="flex items-center gap-4">
+          <div className="min-w-0 flex-1">{control}</div>
+          {art}
+        </div>
+      ) : (
+        control
+      )}
     </div>
+  );
+}
+
+/** "$62,400 a year": the amount rolls as the monthly figure is typed; screen readers get the settled text. */
+function PerYear({ annual }: { annual: number }) {
+  const { t, lang } = useLang();
+  if (!(annual > 0)) return <span />;
+  const [pre, post] = t('flow.income.perYear', { amount: '\u0000' }).split('\u0000');
+  return (
+    <span className="tnum text-[15px] text-ink-2">
+      <span aria-hidden>
+        {pre}
+        <AnimatedNumber value={annual} format={(n) => money(Math.round(n), lang)} />
+        {post}
+      </span>
+      <span className="sr-only" aria-live="polite">
+        {t('flow.income.perYear', { amount: money(annual, lang) })}
+      </span>
+    </span>
   );
 }
 
 export function HouseholdScreen({ draft, update, titleAction, flash }: ScreenProps) {
   const { t } = useLang();
+  // The yes/no questions only re-render when their own answer changes: a stepper tap must not make the
+  // segmented highlights (Motion layoutId) re-measure the page.
+  const { inOC, residentOrCitizen } = draft;
+  const ocFlash = flash.inOC;
+  const resFlash = flash.residentOrCitizen;
+  const ocBlock = useMemo(
+    () => (
+      <div className={ocFlash ? 'just-filled rounded-[8px]' : ''} key={`oc-${ocFlash}`}>
+        <YesNo id="inOC" label={t('flow.household.inOC')} value={inOC} onChange={(v) => update({ inOC: v })} art={<OCOutline value={inOC} />} />
+        <InlineNote show={inOC === false} text={t('flow.inlineReq')} />
+      </div>
+    ),
+    [inOC, ocFlash, t, update],
+  );
+  const residentBlock = useMemo(
+    () => (
+      <div className={resFlash ? 'just-filled rounded-[8px]' : ''} key={`res-${resFlash}`}>
+        <YesNo id="resident" label={t('flow.household.resident')} value={residentOrCitizen} onChange={(v) => update({ residentOrCitizen: v })} />
+        <InlineNote show={residentOrCitizen === false} text={t('flow.inlineReq')} />
+      </div>
+    ),
+    [residentOrCitizen, resFlash, t, update],
+  );
   return (
     <>
       <ScreenTitle action={titleAction}>{t('flow.household.title')}</ScreenTitle>
       <div className="flex flex-col gap-8">
         <Field id="householdSize" label={t('flow.household.size')} help={t('flow.household.sizeHelp')}>
-          <Stepper
-            id="householdSize"
-            value={draft.householdSize}
-            min={1}
-            max={8}
-            flash={flash.householdSize}
-            decLabel={t('flow.household.decrease')}
-            incLabel={t('flow.household.increase')}
-            onChange={(n) => update({ householdSize: n, occupants: Math.max(draft.occupants, n) })}
-          />
+          {/* the family in front of the house stands beside the stepper, rising into the label's empty right side */}
+          <div className="relative">
+            <Stepper
+              id="householdSize"
+              value={draft.householdSize}
+              min={1}
+              max={8}
+              flash={flash.householdSize}
+              decLabel={t('flow.household.decrease')}
+              incLabel={t('flow.household.increase')}
+              onChange={(n) => update({ householdSize: n, occupants: Math.max(draft.occupants, n) })}
+            />
+            <HouseholdArt count={draft.householdSize} className="!absolute bottom-0 right-0" />
+          </div>
         </Field>
-        <div className={flash.inOC ? 'just-filled rounded-[8px]' : ''} key={`oc-${flash.inOC}`}>
-          <YesNo id="inOC" label={t('flow.household.inOC')} value={draft.inOC} onChange={(v) => update({ inOC: v })} />
-          <InlineNote show={draft.inOC === false} text={t('flow.inlineReq')} />
-        </div>
-        <div className={flash.residentOrCitizen ? 'just-filled rounded-[8px]' : ''} key={`res-${flash.residentOrCitizen}`}>
-          <YesNo id="resident" label={t('flow.household.resident')} value={draft.residentOrCitizen} onChange={(v) => update({ residentOrCitizen: v })} />
-          <InlineNote show={draft.residentOrCitizen === false} text={t('flow.inlineReq')} />
-        </div>
+        {ocBlock}
+        {residentBlock}
       </div>
     </>
   );
 }
 
 export function IncomeScreen({ draft, update, showErrors, titleAction, flash, extra }: ScreenProps) {
-  const { t, lang } = useLang();
+  const { t } = useLang();
   const err = showErrors && !draft.grossMonthlyIncome ? t('flow.income.required') : null;
-  const annual = ((draft.grossMonthlyIncome ?? 0) + (draft.otherIncomeOn ? draft.otherMonthlyIncome ?? 0 : 0)) * 12;
+  const monthly = (draft.grossMonthlyIncome ?? 0) + (draft.otherIncomeOn ? draft.otherMonthlyIncome ?? 0 : 0);
   return (
     <>
       <ScreenTitle action={titleAction}>{t('flow.income.title')}</ScreenTitle>
       <div className="flex flex-col gap-4">
         <Field id="gross" label={t('flow.income.gross')} help={t('flow.income.grossHelp')} error={err}>
-          <CurrencyInput id="gross" value={draft.grossMonthlyIncome} flash={flash.grossMonthlyIncome} invalid={!!err} describedBy="gross-help gross-error" onChange={(v) => update({ grossMonthlyIncome: v, incomeSource: undefined })} />
-          <div className="mt-2 flex min-h-[20px] items-center justify-between gap-2">
-            <span className="tnum text-[15px] text-ink-2" aria-live="polite">
-              {annual > 0 ? t('flow.income.perYear', { amount: money(annual, lang) }) : ''}
-            </span>
-            {draft.incomeSource === 'paystub' && (
-              <span className="t-helper inline-flex items-center gap-1 rounded-[6px] bg-pine-soft px-2 py-1 text-pine" data-testid="from-paystub">
-                {t('flow.income.fromStub')} ·
-                <button type="button" className="font-medium underline-offset-2 hover:underline" onClick={() => document.getElementById('gross')?.focus()}>
-                  {t('flow.income.edit')}
-                </button>
-              </span>
-            )}
+          {/* coins stack up beside the field as income grows (rising into the label's empty right side) */}
+          <div className="flex items-end gap-3">
+            <div className="min-w-0 flex-1">
+              <CurrencyInput id="gross" value={draft.grossMonthlyIncome} flash={flash.grossMonthlyIncome} invalid={!!err} describedBy="gross-help gross-error" onChange={(v) => update({ grossMonthlyIncome: v, incomeSource: undefined })} />
+            </div>
+            <CoinStack monthly={monthly} />
+          </div>
+          <div className="mt-2 flex min-h-[26px] items-center justify-between gap-2">
+            <PerYear annual={monthly * 12} />
+            <AnimatePresence initial={false}>
+              {draft.incomeSource === 'paystub' && (
+                <motion.span
+                  key="from-paystub"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, transition: exitT }}
+                  transition={spring.snappy}
+                  className="t-helper inline-flex items-center gap-1 rounded-[6px] bg-pine-soft px-2 py-1 text-pine"
+                  data-testid="from-paystub"
+                >
+                  {t('flow.income.fromStub')} ·
+                  <button type="button" className="font-medium underline-offset-2 hover:underline" onClick={() => document.getElementById('gross')?.focus()}>
+                    {t('flow.income.edit')}
+                  </button>
+                </motion.span>
+              )}
+            </AnimatePresence>
           </div>
         </Field>
         <Checkbox id="otherOn" checked={draft.otherIncomeOn} onChange={(v) => update({ otherIncomeOn: v })} label={t('flow.income.addOther')} help={t('flow.income.otherHelp')} />
@@ -151,22 +223,51 @@ export function IncomeScreen({ draft, update, showErrors, titleAction, flash, ex
 export function HousingScreen({ draft, update, showErrors, titleAction, flash }: ScreenProps) {
   const { t } = useLang();
   const err = showErrors && draft.rent === null ? t('flow.housing.required') : null;
+  const income = (draft.grossMonthlyIncome ?? 0) + (draft.otherIncomeOn ? draft.otherMonthlyIncome ?? 0 : 0);
+  // Each block re-renders only when its own value changes, so a stepper tap touches just that stepper and the plan.
+  const { rent, bedrooms, occupants, unsafeConditions } = draft;
+  const rentBlock = useMemo(
+    () => (
+      <Field id="rent" label={t('flow.housing.rent')} help={t('flow.housing.rentHelp')} error={err}>
+        <CurrencyInput id="rent" value={rent} flash={flash.rent} invalid={!!err} describedBy="rent-help rent-error" onChange={(v) => update({ rent: v })} />
+        <RentShare rent={rent} income={income} />
+      </Field>
+    ),
+    [rent, flash.rent, err, income, t, update],
+  );
+  const bedroomsBlock = useMemo(
+    () => (
+      <Field id="bedrooms" label={t('flow.housing.bedrooms')}>
+        <Stepper id="bedrooms" value={bedrooms} min={0} max={8} flash={flash.bedrooms} decLabel={t('flow.housing.fewerBedrooms')} incLabel={t('flow.housing.moreBedrooms')} onChange={(n) => update({ bedrooms: n })} />
+      </Field>
+    ),
+    [bedrooms, flash.bedrooms, t, update],
+  );
+  const occupantsBlock = useMemo(
+    () => (
+      <Field id="occupants" label={t('flow.housing.occupants')}>
+        <Stepper id="occupants" value={occupants} min={1} max={16} flash={flash.occupants} decLabel={t('flow.housing.fewerPeople')} incLabel={t('flow.housing.morePeople')} onChange={(n) => update({ occupants: n })} />
+      </Field>
+    ),
+    [occupants, flash.occupants, t, update],
+  );
+  const unsafeBlock = useMemo(
+    () => <Checkbox id="unsafe" checked={unsafeConditions} onChange={(v) => update({ unsafeConditions: v })} label={t('flow.housing.unsafe')} help={t('flow.housing.unsafeHelp')} />,
+    [unsafeConditions, t, update],
+  );
   return (
     <>
       <ScreenTitle action={titleAction}>{t('flow.housing.title')}</ScreenTitle>
       <div className="flex flex-col gap-6">
-        <Field id="rent" label={t('flow.housing.rent')} help={t('flow.housing.rentHelp')} error={err}>
-          <CurrencyInput id="rent" value={draft.rent} flash={flash.rent} invalid={!!err} describedBy="rent-help rent-error" onChange={(v) => update({ rent: v })} />
-        </Field>
+        {rentBlock}
         <div className="grid grid-cols-2 gap-4">
-          <Field id="bedrooms" label={t('flow.housing.bedrooms')}>
-            <Stepper id="bedrooms" value={draft.bedrooms} min={0} max={8} flash={flash.bedrooms} decLabel={t('flow.housing.fewerBedrooms')} incLabel={t('flow.housing.moreBedrooms')} onChange={(n) => update({ bedrooms: n })} />
-          </Field>
-          <Field id="occupants" label={t('flow.housing.occupants')}>
-            <Stepper id="occupants" value={draft.occupants} min={1} max={16} flash={flash.occupants} decLabel={t('flow.housing.fewerPeople')} incLabel={t('flow.housing.morePeople')} onChange={(n) => update({ occupants: n })} />
-          </Field>
+          {bedroomsBlock}
+          {occupantsBlock}
         </div>
-        <Checkbox id="unsafe" checked={draft.unsafeConditions} onChange={(v) => update({ unsafeConditions: v })} label={t('flow.housing.unsafe')} help={t('flow.housing.unsafeHelp')} />
+        <div className="-mt-4">
+          <FloorPlan bedrooms={bedrooms} occupants={occupants} />
+        </div>
+        {unsafeBlock}
       </div>
     </>
   );
@@ -213,12 +314,19 @@ export function MoneyScreen({ draft, update, showErrors, titleAction, flash, ext
           ))}
         </div>
       </section>
-      <div className="mt-8 flex flex-col gap-6">
+      {/* what's owed against what's saved: tags drop onto the pans as values are entered */}
+      <div className="mt-6 flex justify-center">
+        <DebtScale debts={draft.debts} savings={draft.savings} />
+      </div>
+      <div className="mt-6 flex flex-col gap-6">
         <Field id="savings" label={t('flow.money.savings')} help={t('flow.money.savingsHelp')} error={savingsErr}>
           <CurrencyInput id="savings" value={draft.savings} flash={flash.savings} invalid={!!savingsErr} describedBy="savings-help savings-error" onChange={(v) => update({ savings: v })} />
         </Field>
         <div>
-          <p className="mb-2 text-[15px] font-medium text-ink">{t('flow.money.credit')}</p>
+          <div className="mb-2 flex items-end justify-between gap-3">
+            <p className="text-[15px] font-medium text-ink">{t('flow.money.credit')}</p>
+            <CreditGauge value={draft.creditBand} />
+          </div>
           <Segmented<CreditBand>
             label={t('flow.money.credit')}
             value={draft.creditBand ?? undefined}

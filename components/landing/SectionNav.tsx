@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, startTransition, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { motion } from 'motion/react';
 
 /**
@@ -34,6 +34,14 @@ export function SectionNavProvider({ ids, children, enabled = true }: { ids: str
   const [activations, setActivations] = useState<number[]>(() => ids.map((_, i) => (i === 0 ? 1 : 0)));
   const moving = useRef(false);
   const activeRef = useRef(0);
+  // During a programmatic move, a section's activation (which mounts its illustration) waits for the scroll to settle.
+  const pending = useRef<number | null>(null);
+  const activate = useCallback((i: number) => {
+    activeRef.current = i;
+    setActive(i);
+    // mounting a section's illustration is the heaviest render on the page: let React slice it across frames
+    startTransition(() => setActivations((a) => a.map((n, k) => (k === i ? n + 1 : n))));
+  }, []);
 
   // Scroll snapping only on the landing page.
   useEffect(() => {
@@ -59,16 +67,15 @@ export function SectionNavProvider({ ids, children, enabled = true }: { ids: str
           }
         });
         if (bestR >= 0.45 && best !== activeRef.current) {
-          activeRef.current = best;
-          setActive(best);
-          setActivations((a) => a.map((n, i) => (i === best ? n + 1 : n)));
+          if (moving.current) pending.current = best;
+          else activate(best);
         }
       },
       { threshold: [0, 0.25, 0.45, 0.6, 0.8, 1], rootMargin: `-${HEADER}px 0px 0px 0px` },
     );
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
-  }, [ids]);
+  }, [ids, activate]);
 
   const goTo = useCallback(
     (i: number) => {
@@ -90,11 +97,13 @@ export function SectionNavProvider({ ids, children, enabled = true }: { ids: str
         else {
           html.classList.remove('landing-snap-off');
           moving.current = false;
+          if (pending.current !== null && pending.current !== activeRef.current) activate(pending.current);
+          pending.current = null;
         }
       };
       requestAnimationFrame(step);
     },
-    [ids],
+    [ids, activate],
   );
   const next = useCallback(() => goTo(activeRef.current + 1 >= ids.length ? 0 : activeRef.current + 1), [goTo, ids.length]);
 
@@ -123,6 +132,35 @@ export function SectionNavProvider({ ids, children, enabled = true }: { ids: str
 
   const value = useMemo(() => ({ ids, active, activations, goTo, next }), [ids, active, activations, goTo, next]);
   return <NavCtx.Provider value={value}>{children}</NavCtx.Provider>;
+}
+
+/**
+ * A section's play count: increments each time it becomes active (keys its content so it replays),
+ * and drops to 0 once the section has left the viewport entirely, so a return slides in clean and
+ * animates in again instead of popping from finished to blank.
+ */
+export function useSectionPlay(index: number, ref: RefObject<HTMLElement | null>) {
+  const { activations } = useSectionNav();
+  const n = activations[index] ?? 0;
+  const nRef = useRef(n);
+  useEffect(() => {
+    nRef.current = n;
+  }, [n]);
+  const [clearedAt, setClearedAt] = useState(-1);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    // ignore the strip under the sticky header (and a few px of edge contact) when deciding "fully out of view"
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting) setClearedAt(nRef.current);
+      },
+      { rootMargin: `-${HEADER + 8}px 0px -8px 0px` },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [ref]);
+  return clearedAt === n ? 0 : n;
 }
 
 /** Round arrow at the bottom center of a section: next section, or back to the top on the last one. */

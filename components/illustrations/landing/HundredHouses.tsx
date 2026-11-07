@@ -1,4 +1,5 @@
 'use client';
+import { useEffect, useState } from 'react';
 
 /**
  * Closing band: 100 tiny houses that fill in white one by one (8ms stagger) — the hundred homes.
@@ -7,9 +8,15 @@
 export function HundredHouses({ reduce, cols = 20 }: { reduce: boolean; cols?: number }) {
   const rows = Math.ceil(100 / cols);
   const cell = 22;
+  // the 200 paths mount one frame after the band's text (keeps each commit short); the svg box is there from the start
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setReady(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
   return (
     <svg viewBox={`0 0 ${cols * cell} ${rows * cell}`} className="block w-full max-w-[560px]" aria-hidden data-testid="hundred-houses">
-      {Array.from({ length: 100 }, (_, i) => {
+      {ready && Array.from({ length: 100 }, (_, i) => {
         const x = (i % cols) * cell + 3;
         const y = Math.floor(i / cols) * cell + 3;
         return (

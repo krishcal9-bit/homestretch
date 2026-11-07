@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { motion, useReducedMotion, useSpring } from 'motion/react';
 import { useLang } from '@/lib/i18n';
 import { computeReadiness, monthsUntil, isEligible } from '@/lib/engine';
@@ -15,7 +15,7 @@ import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { Road } from '@/components/result/Road';
 import { Skyline } from '@/components/ui/Skyline';
 import { Intro, INTRO } from '@/components/Intro';
-import { SectionArrow, SectionDots, SectionNavProvider, useSectionNav } from './SectionNav';
+import { SectionArrow, SectionDots, SectionNavProvider, useSectionPlay } from './SectionNav';
 import { PhoneVoice } from '@/components/illustrations/landing/PhoneVoice';
 import { JourneyRoad } from '@/components/illustrations/landing/JourneyRoad';
 import { NeighborhoodMap } from '@/components/illustrations/landing/NeighborhoodMap';
@@ -499,16 +499,25 @@ function MaskHeading({ children, reduce }: { children: React.ReactNode; reduce: 
 function SceneSection({ id, index, flip = false, bob = false, text, graphic, minGraphic = 420 }: { id: string; index: number; flip?: boolean; bob?: boolean; text: (reduce: boolean) => React.ReactNode; graphic: (reduce: boolean) => React.ReactNode; minGraphic?: number }) {
   const { t } = useLang();
   const reduce = !!useReducedMotion();
-  const { activations } = useSectionNav();
-  const n = activations[index] ?? 0; // replays its animation each time the section becomes active
+  const ref = useRef<HTMLElement>(null);
+  const n = useSectionPlay(index, ref); // replays its animation each time the section becomes active
+  // Elements are memoized by activation count, so another section's activation never re-renders this one's illustration.
+  const textEl = useMemo(() => (n > 0 ? text(reduce) : <div className="invisible">{text(true)}</div>), [n, reduce, text]);
+  // The illustration mounts one frame after the text, so the two commits land in separate frames.
+  const [gn, setGn] = useState(n);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setGn(n));
+    return () => cancelAnimationFrame(id);
+  }, [n]);
+  const graphicEl = useMemo(() => (gn > 0 ? graphic(reduce) : null), [gn, reduce, graphic]);
   return (
-    <section id={id} data-testid={id} className="snap-section relative flex min-h-[calc(100svh-64px)] items-center overflow-hidden" aria-label={t(`landing.nav${index}`)}>
+    <section ref={ref} id={id} data-testid={id} className="snap-section relative flex min-h-[calc(100svh-64px)] items-center overflow-hidden" aria-label={t(`landing.nav${index}`)}>
       <div className="mx-auto grid w-full max-w-[1280px] grid-cols-1 items-center gap-10 px-5 pb-24 pt-12 lg:grid-cols-12 lg:gap-12 lg:px-8 lg:pb-20 lg:pt-8">
         <div className={`lg:col-span-5 ${flip ? 'lg:order-2' : ''}`} key={`t${n}`}>
-          {n > 0 ? text(reduce) : <div className="invisible">{text(true)}</div>}
+          {textEl}
         </div>
         <div className={`order-first lg:col-span-7 ${flip ? 'lg:order-1' : 'lg:order-2'}`} style={{ minHeight: minGraphic }}>
-          {n > 0 && <div key={`g${n}`}>{graphic(reduce)}</div>}
+          {graphicEl && <div key={`g${gn}`}>{graphicEl}</div>}
         </div>
       </div>
       <SectionArrow index={index} label={t('landing.arrowNext')} topLabel={t('landing.arrowTop')} bob={bob} />
@@ -603,17 +612,31 @@ function SceneHomes() {
 /** The only dark section: 100 houses fill in white while the counter rolls to 100; then the sentence and button rise. */
 function Closing() {
   const { t } = useLang();
-  const router = useVTRouter();
   const reduce = !!useReducedMotion();
-  const { activations } = useSectionNav();
-  const n = activations[4] ?? 0;
+  const ref = useRef<HTMLElement>(null);
+  const n = useSectionPlay(4, ref);
+  return (
+    <section ref={ref} id="closing" data-testid="closing" className="snap-section relative flex min-h-[calc(100svh-64px)] flex-col bg-pine text-white" aria-label={t('landing.nav4')}>
+      <div className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col justify-center px-5 py-16 lg:px-8" key={n}>
+        {n > 0 && <ClosingBody reduce={reduce} />}
+      </div>
+      {/* the up arrow sits in the pine band, above the footer */}
+      <div className="relative h-[76px]">
+        <SectionArrow index={4} label={t('landing.arrowNext')} topLabel={t('landing.arrowTop')} tone="dark" />
+      </div>
+      <Footer />
+    </section>
+  );
+}
+
+/** The closing's animated content; memoized so it only renders when the section (re)activates. */
+const ClosingBody = memo(function ClosingBody({ reduce }: { reduce: boolean }) {
+  const { t } = useLang();
+  const router = useVTRouter();
   const [a1, a2] = t('landing.closingA').split('{n}');
   const [b1, b2] = t('landing.closingB').split('{n}');
   const fmt = (v: number) => String(Math.round(v));
   return (
-    <section id="closing" data-testid="closing" className="snap-section relative flex min-h-[calc(100svh-64px)] flex-col bg-pine text-white" aria-label={t('landing.nav4')}>
-      <div className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col justify-center px-5 py-16 lg:px-8" key={n}>
-        {n > 0 && (
           <>
             <div className="flex flex-wrap items-end gap-x-10 gap-y-6">
               <HundredHouses reduce={reduce} />
@@ -649,16 +672,8 @@ function Closing() {
               </motion.a>
             </motion.div>
           </>
-        )}
-      </div>
-      {/* the up arrow sits in the pine band, above the footer */}
-      <div className="relative h-[76px]">
-        <SectionArrow index={4} label={t('landing.arrowNext')} topLabel={t('landing.arrowTop')} tone="dark" />
-      </div>
-      <Footer />
-    </section>
   );
-}
+});
 
 /** Starts at 0 and rolls to `to` (springs), unless reduced motion. */
 function RollTo({ to, reduce, format }: { to: number; reduce: boolean; format: (n: number) => string }) {
@@ -703,6 +718,12 @@ function Footer() {
 }
 
 const SECTIONS = ['hero', 'scene-intake', 'scene-road', 'scene-homes', 'closing'];
+// Memoized so the intro ending (a Landing state change) doesn't re-render every section mid-animation.
+const HeroM = memo(Hero);
+const SceneIntakeM = memo(SceneIntake);
+const SceneRoadM = memo(SceneRoad);
+const SceneHomesM = memo(SceneHomes);
+const ClosingM = memo(Closing);
 
 export function Landing() {
   const { t } = useLang();
@@ -727,11 +748,11 @@ export function Landing() {
         )}
       </AnimatePresence>
       {/* a skip remounts the hero straight into its final state */}
-      <Hero key={phase === 'static' ? 'static' : 'live'} phase={phase} />
-      <SceneIntake />
-      <SceneRoad />
-      <SceneHomes />
-      <Closing />
+      <HeroM key={phase === 'static' ? 'static' : 'live'} phase={phase} />
+      <SceneIntakeM />
+      <SceneRoadM />
+      <SceneHomesM />
+      <ClosingM />
       <SectionDots labels={SECTIONS.map((_, i) => t(`landing.nav${i}`))} />
     </SectionNavProvider>
   );

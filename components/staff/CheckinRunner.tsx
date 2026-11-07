@@ -84,9 +84,9 @@ export function CheckinRunner() {
 
   return (
     <div>
-      <Link href="/staff" className="-ml-2 inline-flex min-h-[44px] items-center gap-1 rounded-[8px] px-2 text-[15px] font-medium text-pine hover:bg-pine-soft">
+      <Link href="/staff/ready" className="-ml-2 inline-flex min-h-[44px] items-center gap-1 rounded-[8px] px-2 text-[15px] font-medium text-pine hover:bg-pine-soft">
         <ChevronLeft size={18} strokeWidth={1.75} aria-hidden />
-        Pipeline
+        Ready pipeline
       </Link>
       <div className="mt-2 flex items-end justify-between gap-6">
         <div>

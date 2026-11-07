@@ -15,4 +15,4 @@ export async function middleware(req: NextRequest) {
 }
 
 // Staff pages plus the staff-only APIs. /api/referral stays open: a family downloads its own packet by code.
-export const config = { matcher: ['/staff', '/staff/:path*', '/api/outreach', '/api/match-reason', '/api/checkin'] };
+export const config = { matcher: ['/staff', '/staff/:path*', '/api/outreach', '/api/outreach/:path*', '/api/match-reason', '/api/checkin', '/api/digest'] };

@@ -93,6 +93,14 @@ export async function staffLogin(page: Page) {
   await page.goto('/staff/login');
   await page.locator('input[type=password]').fill(process.env.STAFF_PASSWORD ?? 'habitat2026');
   await page.keyboard.press('Enter');
+  // The console opens on Early warning (homeowners); the Ready pipeline lives at /staff/ready.
+  await page.waitForSelector('[data-testid=homeowner-row]', { timeout: 60_000 });
+}
+
+/** Signs in and opens the Ready pipeline. */
+export async function staffReady(page: Page) {
+  await staffLogin(page);
+  await page.goto('/staff/ready');
   await page.waitForSelector('[data-testid=family-row]', { timeout: 60_000 });
 }
 

@@ -6,9 +6,11 @@ import { AnimatePresence, LayoutGroup, motion, useReducedMotion, type Transition
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { monthName } from '@/lib/format';
+import { homeFits } from '@/lib/homes';
+import type { Home } from '@/lib/types';
 import { dur, ease } from '@/lib/motion';
 import type { FamilyRow } from '@/lib/staffData';
-import { STAGES, TIER_LABEL } from '@/lib/staffLogic';
+import { STAGES, TIER_LABEL, homeTitle } from '@/lib/staffLogic';
 import { ChipGroup } from './ChipGroup';
 import { FamilyDrawer } from './FamilyDrawer';
 
@@ -39,8 +41,8 @@ const fold = (reduce: boolean): Variants => ({
 // lands, a beat later, as a new copy.
 const FAR = 3;
 const FAR_DELAY = 0.06;
-// Six columns on a grid (not table layout) so a row lifted out of the flow keeps its column widths.
-const COLS = 'grid grid-cols-[24%_11%_13%_minmax(0,1fr)_12%_9%] items-center';
+// Seven columns on a grid (not table layout) so a row lifted out of the flow keeps its column widths.
+const COLS = 'grid grid-cols-[22%_10%_11%_minmax(0,1fr)_14%_11%_8%] items-center';
 const whole = (n: number) => String(Math.round(n));
 let staggered = false; // module scope: one stagger per page load, not per tab visit
 export function relativeDays(iso: string, now = Date.now()) {
@@ -48,7 +50,13 @@ export function relativeDays(iso: string, now = Date.now()) {
   return d === 0 ? 'Today' : d === 1 ? 'Yesterday' : `${d} days ago`;
 }
 
-export function Pipeline({ families }: { families: FamilyRow[] }) {
+/** Homes a family fits (size) and would be ready for by completion, soonest first. */
+function homesFor(f: FamilyRow, homes: Home[]) {
+  if (!f.eligible) return [];
+  return homes.filter((h) => homeFits(f.householdSize, h.bedrooms) && h.completion >= f.result.readyDate).sort((a, b) => a.completion.localeCompare(b.completion));
+}
+
+export function Pipeline({ families, homes = [] }: { families: FamilyRow[]; homes?: Home[] }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -146,7 +154,7 @@ export function Pipeline({ families }: { families: FamilyRow[] }) {
     <>
       <div className="flex items-end justify-between gap-6">
         <div>
-          <h1 className="t-title">Pipeline</h1>
+          <h1 className="t-title">Ready pipeline</h1>
           <p className="mt-1 text-[15px] text-ink-2">
             <span className="tnum">{families.length}</span> {families.length === 1 ? 'family has' : 'families have'} shared a plan with Habitat OC.
           </p>
@@ -215,6 +223,9 @@ export function Pipeline({ families }: { families: FamilyRow[] }) {
                   Biggest blocker
                 </th>
                 <th role="columnheader" scope="col" className="px-3 py-2 font-medium">
+                  Homes they fit
+                </th>
+                <th role="columnheader" scope="col" className="px-3 py-2 font-medium">
                   Last activity
                 </th>
                 <th role="columnheader" scope="col" className="px-3 py-2 font-medium">
@@ -241,7 +252,7 @@ export function Pipeline({ families }: { families: FamilyRow[] }) {
                     >
                       <AnimatePresence initial={false} mode="popLayout">
                         <motion.tr key={keyOf(h)} role="row" layout="position" variants={folds} initial="shut" animate="open" exit="shut" transition={enterT(h)} className="block">
-                          <th role="columnheader" colSpan={6} scope="colgroup" className="block border-b border-line px-3 pb-2 pt-6 text-left">
+                          <th role="columnheader" colSpan={7} scope="colgroup" className="block border-b border-line px-3 pb-2 pt-6 text-left">
                             <span className="text-[15px] font-semibold text-ink">{s.key === 'not_eligible' ? 'Not eligible (why)' : s.label}</span>
                             {/* Plain number on first paint; rolls to the new count when a filter changes it. */}
                             <span className="ml-2 text-[13px] font-normal text-ink-2" data-testid="stage-count">
@@ -253,7 +264,7 @@ export function Pipeline({ families }: { families: FamilyRow[] }) {
                       </AnimatePresence>
                       {rows.length === 0 && (
                         <motion.tr role="row" layout="position" transition={GLIDE} className="block">
-                          <td role="cell" colSpan={6} className="block border-b border-line px-3 py-3 text-[13px] text-ink-2">
+                          <td role="cell" colSpan={7} className="block border-b border-line px-3 py-3 text-[13px] text-ink-2">
                             No families in this stage.
                           </td>
                         </motion.tr>
@@ -319,6 +330,19 @@ export function Pipeline({ families }: { families: FamilyRow[] }) {
                               ) : (
                                 (f.result.blockers[0]?.text ?? 'None')
                               )}
+                            </td>
+                            <td role="cell" className="tnum px-3 py-3 text-ink-2" data-testid="fits">
+                              {(() => {
+                                const fit = homesFor(f, homes);
+                                if (!f.eligible) return 'n/a';
+                                if (!fit.length) return 'None yet';
+                                return (
+                                  <>
+                                    <span className="block whitespace-nowrap">{homeTitle(fit[0])}</span>
+                                    {fit.length > 1 && <span className="block text-[13px]">and {fit.length - 1} more</span>}
+                                  </>
+                                );
+                              })()}
                             </td>
                             <td role="cell" className="tnum px-3 py-3 text-ink-2">
                               {relativeDays(f.lastActivity)}

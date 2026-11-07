@@ -1,12 +1,12 @@
 import { Suspense } from 'react';
-import { Pipeline } from '@/components/staff/Pipeline';
-import { loadFamilies } from '@/lib/staffData';
+import { EarlyWarning } from '@/components/staff/EarlyWarning';
+import { homeownerRows } from '@/lib/earlyWarning';
 
-export default async function PipelinePage() {
-  const families = await loadFamilies();
+export default function EarlyWarningPage() {
+  const today = new Date();
   return (
     <Suspense>
-      <Pipeline families={families} />
+      <EarlyWarning rows={homeownerRows(today)} today={today.toISOString()} />
     </Suspense>
   );
 }

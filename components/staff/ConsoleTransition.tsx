@@ -13,7 +13,7 @@ import { arrivingFromLogin, clearConsoleArrival } from './handoff';
 // then slides in: never a fade over an empty page followed by a pop. Straight after sign-in the first page
 // arrives the same way (from the right), continuing the login panel's exit to the left.
 // A direct load or reload of a console page appears without travel.
-const ORDER = ['/staff', '/staff/checkin', '/staff/homes', '/staff/match', '/staff/insights'];
+const ORDER = ['/staff', '/staff/stress', '/staff/ready', '/staff/checkin', '/staff/homes', '/staff/match', '/staff/insights', '/staff/digest'];
 const SLIDE = 12;
 const ENTER = { duration: dur.short, ease: ease.out };
 const EXIT = { duration: dur.short * 0.7, ease: ease.out }; // exits ~70% of the entrance

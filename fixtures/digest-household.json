@@ -1,0 +1,7 @@
+{
+  "summary": "{surname} ({level}): {change} Suggested step: {stepEn}.",
+  "draft": {
+    "es": "Hola, {givenName}. Le escribe el equipo de Habitat OC. Esta semana revisamos los pagos de la casa de la familia {surname} y queremos ayudarle a mantenerse al día. Un paso que ayuda ahora: {step}. Responda y lo hacemos con usted.",
+    "en": "Hi {givenName}, this is the Habitat OC team. This week we looked at the payments on the {surname} family home and want to help you stay on track. One step that helps now: {stepEn}. Reply and we'll do it with you."
+  }
+}

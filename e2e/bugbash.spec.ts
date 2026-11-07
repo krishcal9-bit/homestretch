@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { DEMO_DRAFT, staffLogin } from './helpers';
+import { DEMO_DRAFT, staffReady } from './helpers';
 
 const base = { ...DEMO_DRAFT, debts: { car: { payment: null, balance: null }, card: { payment: null, balance: null }, student: { payment: null, balance: null }, collection: { payment: null, balance: null }, other: { payment: null, balance: null } } };
 async function result(page: Page, d: Record<string, unknown>) {
@@ -42,7 +42,7 @@ test('sliders at 0 and max keep the screen sane', async ({ page }) => {
 });
 
 test('staff drawer then browser back leaves a clean pipeline', async ({ page }) => {
-  await staffLogin(page);
+  await staffReady(page);
   await page.getByTestId('family-row').first().click();
   await expect(page.getByTestId('drawer')).toBeVisible();
   await page.goBack();

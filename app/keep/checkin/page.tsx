@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: 'Monthly check-in · HomeStretch' };
 
 export default function Page() {
   return (
-    <KeepFrame>
+    <KeepFrame bare>
       <CheckinChat />
     </KeepFrame>
   );

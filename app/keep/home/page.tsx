@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: 'Home health · HomeStretch' };
 
 export default function Page() {
   return (
-    <KeepFrame>
+    <KeepFrame bare>
       <HomeHealth />
     </KeepFrame>
   );

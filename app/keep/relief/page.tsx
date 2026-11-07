@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: 'Relief · HomeStretch' };
 
 export default function Page() {
   return (
-    <KeepFrame>
+    <KeepFrame bare>
       <ReliefFinder />
     </KeepFrame>
   );

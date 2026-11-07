@@ -17,7 +17,12 @@ import { alpha, KitDefs, Shade, Tree, useOnScreen, useStaged } from './kit';
  * up the street to the finished homes they're ready for, and each porch light comes on as they arrive.
  * Counts come from the real seed data (passed in). Ambient loop: the crane slowly slews back and forth.
  */
-export type Lot = { id: string; label: string; ready: number; stage?: HouseStage; finishing?: boolean };
+export type LotStatus = 'stable' | 'watch' | 'act';
+/**
+ * A lot on the block. `ready` drives the count badge; `status` switches it to an early-warning marker (text
+ * with a coloured rule: Stable / Watch / Act now) that starts Stable and turns to its status at `turnsAt` s.
+ */
+export type Lot = { id: string; label: string; ready: number; stage?: HouseStage; finishing?: boolean; status?: LotStatus; turnsAt?: number };
 
 const VB = { w: 600, h: 350 };
 /** Ground (u across, w back) → screen. A step back moves up and to the right, like the house's side wall. */
@@ -41,7 +46,7 @@ const SLOTS: { u: number; w: number; side: 'L' | 'R' }[] = [
 ];
 const pct = (v: number, of: number) => `${(v / of) * 100}%`;
 /** The block's geometry, for scenery drawn around it in the same projection (components/landing/scenes). */
-export const NB = { VB, G, at, SLOTS, STREET, SLAB, ROWS, HOUSE_W, HOUSE_D };
+export const NB = { VB, G, at, S, SLOTS, STREET, SLAB, ROWS, HOUSE_W, HOUSE_D };
 const z = (w: number) => Math.round(1000 - w * 2);
 const T = { slab: 0, houses: 0.2, crane: 0.5, badges: 0.95, walk: 0.95, worker: 0.85, unscaffold: 1.45, finished: 1.85 };
 const WALK_SPEED = 125; // ground units per second
@@ -53,6 +58,30 @@ const FAMILIES: { kinds: ('adult' | 'teen' | 'child' | 'toddler')[]; skin: numbe
   { kinds: ['adult', 'child', 'child'], skin: [1, 2, 1], hair: [1, 2, 1], tops: ['pine', 'honey', 'sky'] },
   { kinds: ['adult', 'adult'], skin: [2, 0], hair: [0, 3], tops: ['slate', 'honey'] },
 ];
+
+/**
+ * An early-warning marker: the status as text with a 2px coloured rule (pine Stable, amber Watch, red Act
+ * now), on a thin paper backing so it reads over the block. Starts Stable; turns to `status` at `turnsAt` s,
+ * the new word swapping in vertically.
+ */
+function StatusMarker({ status, turnsAt }: { status: LotStatus; turnsAt: number }) {
+  const { t } = useLang();
+  const [now, setNow] = useState<LotStatus>(turnsAt > 0 ? 'stable' : status);
+  useEffect(() => {
+    if (turnsAt <= 0) return setNow(status);
+    const id = setTimeout(() => setNow(status), turnsAt * 1000);
+    return () => clearTimeout(id);
+  }, [status, turnsAt]);
+  const tone = now === 'act' ? 'border-signal-red text-signal-red' : now === 'watch' ? 'border-signal-amber text-signal-amber' : 'border-pine text-pine';
+  const key = now === 'act' ? 'landing.statusAct' : now === 'watch' ? 'landing.statusWatch' : 'landing.statusStable';
+  return (
+    <span className={`relative block overflow-hidden whitespace-nowrap border-l-2 py-[1px] pl-[7px] pr-[8px] text-[13px] font-semibold leading-[19px] transition-colors duration-300 ${tone}`} style={{ background: alpha(P.paper, 0.86) }} data-status={now}>
+      <motion.span key={now} className="block" initial={turnsAt > 0 && now !== 'stable' ? { y: 8, opacity: 0 } : false} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}>
+        {t(key)}
+      </motion.span>
+    </span>
+  );
+}
 
 /** Starts at 0 and rolls up to `to` at `at` seconds. */
 function RollUp({ to, at: when, format }: { to: number; at: number; format: (n: number) => string }) {
@@ -69,7 +98,7 @@ function RollUp({ to, at: when, format }: { to: number; at: number; format: (n: 
  * `plain`: the block sits flush on a ground plane drawn by the page (no plinth, no lawn or street of its own,
  * no rise). `badgeY`: extra travel for the count badges, so they float above the block when the page moves.
  */
-export function NeighborhoodMap({ lots, reduce, plain = false, badgeY }: { lots: Lot[]; reduce: boolean; plain?: boolean; badgeY?: MotionValue<number> }) {
+export function NeighborhoodMap({ lots, reduce, plain = false, badgeY, night = false, site = true, built = false, badges = true }: { lots: Lot[]; reduce: boolean; plain?: boolean; badgeY?: MotionValue<number>; /** night: the finished homes' windows and porch lights are on */ night?: boolean; /** the tower crane (a block still being built) */ site?: boolean; /** the homes stand already (no build-in) */ built?: boolean; /** show the badges / markers */ badges?: boolean }) {
   const { t } = useLang();
   const id = `nb${useId().replace(/:/g, '')}`;
   const box = useRef<HTMLDivElement>(null);
@@ -119,7 +148,7 @@ export function NeighborhoodMap({ lots, reduce, plain = false, badgeY }: { lots:
   const hp = isoPx(S, 0, 0);
 
   return (
-    <div ref={box} className="relative mx-auto w-full max-w-[620px]" style={{ aspectRatio: `${VB.w} / ${VB.h}` }} aria-hidden data-testid="neighborhood-map">
+    <div ref={box} className={plain ? 'relative w-full' : 'relative mx-auto w-full max-w-[620px]'} style={{ aspectRatio: `${VB.w} / ${VB.h}` }} aria-hidden data-testid="neighborhood-map">
       <motion.div
         className="absolute inset-0"
         initial={reduce || plain ? false : { opacity: 0, y: 26 }}
@@ -133,7 +162,7 @@ export function NeighborhoodMap({ lots, reduce, plain = false, badgeY }: { lots:
           const delay = T.houses + (SLOTS[i].w / 92) * 0.09 + (SLOTS[i].side === 'R' ? 0.05 : 0);
           return (
             <div key={lot.id} className={`absolute ${reduce ? '' : 'la-show'}`} style={{ left: pct(c.x - hp.x, VB.w), top: pct(c.y - hp.y, VB.h), width: pct(S, VB.w), zIndex: z(SLOTS[i].w), animationDelay: `${delay + 0.09}s` }}>
-              <IsoHouse size={S} stage={lot.stage ?? 'finished'} build={reduce ? 'none' : 'quick'} delay={delay} porch={home[i] && finishedLot(lot)} lit={finishedLot(lot) && (lot.finishing ? done : home[i])} ground={false} className="h-auto w-full" />
+              <IsoHouse size={S} stage={lot.stage ?? 'finished'} build={reduce || built ? 'none' : 'quick'} delay={delay} porch={(home[i] || night) && finishedLot(lot)} lit={finishedLot(lot) && (night || (lot.finishing ? done : home[i]))} ground={false} className="h-auto w-full" />
             </div>
           );
         })}
@@ -155,13 +184,13 @@ export function NeighborhoodMap({ lots, reduce, plain = false, badgeY }: { lots:
             </div>
           );
         })}
-        {st >= 3 && <Crane id={id} reduce={reduce} onScreen={onScreen} />}
+        {st >= 3 && site && <Crane id={id} reduce={reduce} onScreen={onScreen} />}
         {/* families walking up the street */}
         {st >= 4 && walks.map((wk) => (
           <Family key={wk.lot} walk={wk} reduce={reduce} />
         ))}
         {/* count badges pop above each home and roll up from 0 */}
-        {st >= 4 && (
+        {st >= 4 && badges && (
         <motion.div className="absolute inset-0" style={{ zIndex: 2000, y: badgeY }}>
         {six.map((lot, i) => {
           const c = corner(i);
@@ -178,13 +207,19 @@ export function NeighborhoodMap({ lots, reduce, plain = false, badgeY }: { lots:
                 <span className="mb-[3px] hidden whitespace-nowrap rounded-full px-[6px] text-[11px] font-medium leading-[16px] text-ink-2 sm:block" style={{ background: alpha(P.paper, 0.85) }}>
                   {lot.label}
                 </span>
-                <span className={`tnum whitespace-nowrap rounded-full border px-[9px] text-[12px] font-semibold leading-[20px] ${ready ? 'text-white' : 'text-ink-2'}`} style={{ background: ready ? P.pine : P.trim, borderColor: ready ? P.pine : P.trimShade }}>
-                  <RollUp to={lot.ready} at={reduce ? 0 : T.badges + i * 0.06 + 0.05} format={(n) => t('landing.mapReady', { n: Math.round(n) })} />
-                </span>
-                {/* the pin's pointer */}
-                <svg width="10" height="5" viewBox="0 0 10 5" className="-mt-px block">
-                  <path d="M0 0H10L5 5Z" fill={ready ? P.pine : P.trim} />
-                </svg>
+                {lot.status ? (
+                  <StatusMarker status={lot.status} turnsAt={reduce ? 0 : (lot.turnsAt ?? 0)} />
+                ) : (
+                  <>
+                    <span className={`tnum whitespace-nowrap rounded-full border px-[9px] text-[12px] font-semibold leading-[20px] ${ready ? 'text-white' : 'text-ink-2'}`} style={{ background: ready ? P.pine : 'var(--surface)', borderColor: ready ? P.pine : 'var(--line)' }}>
+                      <RollUp to={lot.ready} at={reduce ? 0 : T.badges + i * 0.06 + 0.05} format={(n) => t('landing.mapReady', { n: Math.round(n) })} />
+                    </span>
+                    {/* the pin's pointer */}
+                    <svg width="10" height="5" viewBox="0 0 10 5" className="-mt-px block">
+                      <path d="M0 0H10L5 5Z" fill={ready ? P.pine : 'var(--surface)'} />
+                    </svg>
+                  </>
+                )}
               </motion.div>
             </div>
           );

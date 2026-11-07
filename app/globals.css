@@ -457,6 +457,8 @@ html[data-vt='theme']::view-transition-new(theme-toggle) { animation: none; }
 .sc-puff { animation: sc-puff 1.6s ease-out infinite both; }
 @keyframes sc-twinkle { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 .sc-twinkle { animation: sc-twinkle 3.2s ease-in-out infinite; }
+@keyframes sc-pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+.sc-pulse { animation: sc-pulse 1.6s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
 @keyframes sc-on { from { opacity: 0; } to { opacity: 1; } }
 .sc-on { opacity: 0; animation: sc-on 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
 @media (prefers-reduced-motion: reduce) {

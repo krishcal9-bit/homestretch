@@ -180,10 +180,10 @@ export function Palm({ x, base, h, lean = 4, haze = 0, hazeTo, sway = true, dela
  * along a street come on, or go off, one after another: give each lamp its place along the street in `i`
  * (CSS transition-delay i × 80ms); the first one (`flicker`, default when i is 0) flickers before it holds.
  * Lit, it shows a warm bulb, a halo, a soft cone of light under the head and a pool on the ground; `pool`
- * stretches the pool along the road (1 = round). `lit="always"` keeps it on regardless of the theme (a dusk
- * scene that lights its own lamps). CSS: .sc-lamp in app/globals.css (r6:scenes).
+ * stretches the pool along the road (1 = round). `lit="always"` keeps it on regardless of the theme;
+ * `lit="none"` draws the lamp only (a scene that lights its lamps itself). CSS: .sc-lamp (globals, r6:scenes).
  */
-export function StreetLamp({ x, base, h = 80, i = 0, flicker, pool = 1.6, lit = 'theme' }: { x: number; base: number; h?: number; i?: number; flicker?: boolean; pool?: number; lit?: 'theme' | 'always' }) {
+export function StreetLamp({ x, base, h = 80, i = 0, flicker, pool = 1.6, lit = 'theme' }: { x: number; base: number; h?: number; i?: number; flicker?: boolean; pool?: number; lit?: 'theme' | 'always' | 'none' }) {
   const id = `sl${useId().replace(/:/g, '')}`;
   const k = h / 80; // the drawing is designed at h = 80
   const top = base - h;
@@ -211,10 +211,12 @@ export function StreetLamp({ x, base, h = 80, i = 0, flicker, pool = 1.6, lit = 
       {/* contact shadow (falls right) */}
       <ellipse cx={x + 6 * k} cy={base} rx={9 * k} ry={1.8 * k} fill={P.ink} opacity={0.14} />
       {/* night: the pool on the ground and the cone under the head (behind the pole) */}
+      {lit !== 'none' && (
       <g className={lightCls} style={{ ['--i' as string]: i }}>
         <ellipse cx={hx} cy={base + 1} rx={20 * k * pool} ry={5 * k} fill={`url(#${id}-pool)`} />
         <path d={`M${hx - 3.4 * k} ${hy + 2 * k}L${hx + 3.4 * k} ${hy + 2 * k}L${hx + 17 * k * Math.min(pool, 1.4)} ${base}L${hx - 17 * k * Math.min(pool, 1.4)} ${base}Z`} fill={`url(#${id}-cone)`} />
       </g>
+      )}
       {/* plinth, pole (lit left edge), swan-neck arm */}
       <path d={`M${x - 3.6 * k} ${base}l${0.8 * k} ${-6 * k}h${5.6 * k}l${0.8 * k} ${6 * k}Z`} fill={P.pineDark} />
       <rect x={x - 1.7 * k} y={top} width={3.4 * k} height={h - 5 * k} fill={P.pineDark} />
@@ -226,10 +228,12 @@ export function StreetLamp({ x, base, h = 80, i = 0, flicker, pool = 1.6, lit = 
       <rect x={hx - 6.4 * k} y={hy - 1.4 * k} width={12.8 * k} height={1.8 * k} rx={0.6 * k} fill={P.brassDark} />
       <path d={`M${hx - 3.2 * k} ${hy + 0.4 * k}h${6.4 * k}l${-0.8 * k} ${2.6 * k}h${-4.8 * k}Z`} fill={mix(P.glassLight, P.trim, 0.4)} />
       {/* night: the warm bulb and its halo */}
-      <g className={lightCls} style={{ ['--i' as string]: i }}>
-        <circle cx={hx} cy={hy + 2 * k} r={16 * k} fill={`url(#${id}-halo)`} />
-        <path d={`M${hx - 3.2 * k} ${hy + 0.4 * k}h${6.4 * k}l${-0.8 * k} ${2.6 * k}h${-4.8 * k}Z`} fill={P.glow} />
-      </g>
+      {lit !== 'none' && (
+        <g className={lightCls} style={{ ['--i' as string]: i }}>
+          <circle cx={hx} cy={hy + 2 * k} r={16 * k} fill={`url(#${id}-halo)`} />
+          <path d={`M${hx - 3.2 * k} ${hy + 0.4 * k}h${6.4 * k}l${-0.8 * k} ${2.6 * k}h${-4.8 * k}Z`} fill={P.glow} />
+        </g>
+      )}
     </g>
   );
 }

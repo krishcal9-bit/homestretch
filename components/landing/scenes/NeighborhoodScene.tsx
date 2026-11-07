@@ -1,36 +1,135 @@
 'use client';
-import { memo, type RefObject } from 'react';
-import { useReducedMotion, useTransform } from 'motion/react';
+import { memo } from 'react';
+import { motion } from 'motion/react';
+import { useLang } from '@/lib/i18n';
 import { P, mix } from '@/lib/illustrationPalette';
-import { NB } from '@/components/illustrations/landing/NeighborhoodMap';
-import { Layer, SceneRoot, useRestOffset, useSceneMount } from './Scene';
-import { nightStyle } from './parts';
+import { useTheme } from '@/lib/theme';
+import { IsoHouse, isoPx, type HouseStage } from '@/components/illustrations/IsoHouse';
+import { NB, NeighborhoodMap, type Lot } from '@/components/illustrations/landing/NeighborhoodMap';
+import { Layer, SceneRoot, useDepthOffset, useSceneMount } from './Scene';
+import { StreetLamp } from './parts';
 
 /**
- * Section 4, "Habitat sees who's ready": an elevated, isometric view of a block under construction on a
- * clean ground plane. The plane (HomesGround) is drawn in the block's own projection and runs out to every
- * edge of the section: the block's street continues front and back, cross streets frame it, neighbouring
- * lots are quiet lawns with a few trees and two cleared pads waiting for the next builds. The far ground
- * dissolves into a high, pale haze; the side under the text is hazed too, so it stays calm. Count badges
- * float above the homes: they travel a little faster than the block when the page moves, so they read as
- * hovering. Ambient (the block's own, only while on screen): the crane slews.
+ * Section 4, "Habitat sees it first": Habitat's early-warning view of a neighbourhood of its homeowners, seen
+ * from above at an isometric angle, edge to edge: the block (NeighborhoodMap: six families' homes, families
+ * walking home) runs off the right and bottom edges, the neighbouring blocks continue in every direction on
+ * one clean ground plane (more homes, cleared pads, street trees, the streets that frame the block). The
+ * side under the text dissolves into a soft haze.
  *
- * The plane lives with the block in the section's content (it must stay registered with the block's
- * streets); the scene root adds two out-of-focus tree crowns near the camera at the bottom corners (the
- * fastest layer, above the plane). Night slots: street lamps along the front cross street, work lights
- * by the frames.
+ * Over every home floats a status marker: text with a coloured rule (Stable, Watch, Act now), no filled
+ * badge. On each activation the markers rise in Stable, two turn to Watch and one to Act now, and an outreach
+ * note ("Draft outreach") flies from the text side to that home and settles beside it. The markers travel a
+ * little faster than the ground when the page moves, so they read as hovering.
+ * One stage in the block's projection (600×350 units, scaled to fill the screen beside the text).
+ * Layers: ground, homes 1 · markers 1.14 · out-of-focus tree crowns near the camera 1.28. Night (dark
+ * theme): windows and porch lights, five street lamps along the front street.
  */
-export const HomesScene = memo(function HomesScene({ night = false }: { night?: boolean }) {
+export const NeighborhoodScene = memo(function NeighborhoodScene({ play, reduce, lots, night = false }: { play: number; reduce: boolean; lots: Lot[]; night?: boolean }) {
   const mounted = useSceneMount(3);
+  const dark = useTheme() === 'dark' || night;
   return (
-    <SceneRoot index={3} night={night} testId="homes-scene" className="z-[2] [container-type:size]">
+    <SceneRoot index={3} night={night} testId="neighborhood-scene" className="[container-type:size]">
       {mounted && (
-        <Layer speed={1.28}>
-          <Canopy className="bottom-[-11cqh] left-[-6cqw] w-[clamp(120px,13cqw,230px)]" />
-          <Canopy className="bottom-[-13cqh] right-[-5cqw] w-[clamp(140px,15cqw,270px)]" flip />
-        </Layer>
+        <>
+          <Layer speed={1}>
+            <Site play={play} reduce={reduce} lots={lots} night={dark} />
+            {/* the haze where the text sits (desktop): the streets dissolve before they reach it */}
+            <div className="absolute inset-y-0 left-0 hidden w-[52cqw] lg:block" style={{ background: `linear-gradient(90deg, ${P.skyBottom} 0%, ${P.skyBottom} 58%, transparent 100%)`, opacity: 0.93 }} />
+          </Layer>
+          <Layer speed={1.28}>
+            <Canopy className="bottom-[-11cqh] left-[-6cqw] w-[clamp(120px,13cqw,230px)]" />
+            <Canopy className="bottom-[-13cqh] right-[-5cqw] w-[clamp(140px,15cqw,270px)]" flip />
+          </Layer>
+        </>
       )}
     </SceneRoot>
+  );
+});
+
+/**
+ * The site's stage: the block's box (600×350 units), sized and placed with container units so the block
+ * fills the right of the screen beside the text, its first home clear of the text column, its last home and
+ * marker in view. --bw is the box width.
+ *   desktop: --bw = min(130% of the height, what fits between the text column and the right edge)
+ *   phones:  the block under the text, a little wider than the screen
+ */
+function Site({ play, reduce, lots, night }: { play: number; reduce: boolean; lots: Lot[]; night: boolean }) {
+  const badgeY = useDepthOffset(-0.14);
+  return (
+    <div
+      className="absolute bottom-[-2cqh] left-[-8cqw] aspect-[600/350] w-[122cqw] [--bw:122cqw] lg:bottom-auto lg:left-[calc(42cqw_+_10px_-_var(--bw)/600*136)] lg:top-[calc(50cqh_-_var(--bw)/600*200)] lg:w-[var(--bw)] lg:[--bw:min(130cqh,90.5cqw_-_61px)]"
+    >
+      <HomesGround />
+      <Neighbours where="back" night={night} />
+      <div className="absolute inset-0" key={play}>
+        {/* the homes stand; the markers rise (and turn) on each activation */}
+        <NeighborhoodMap lots={lots} reduce={reduce} plain badgeY={badgeY} night={night} site={false} built badges={play > 0 || reduce} />
+      </div>
+      {(play > 0 || reduce) && <Outreach key={`note${play}`} lots={lots} reduce={reduce} />}
+      <Neighbours where="front" night={night} />
+    </div>
+  );
+}
+
+/**
+ * The outreach note: a folded paper with an envelope mark and "Draft outreach", flying from the text side to
+ * the home marked Act now (after its marker turns) and settling beside it.
+ */
+function Outreach({ lots, reduce }: { lots: Lot[]; reduce: boolean }) {
+  const { t } = useLang();
+  const i = lots.findIndex((l) => l.status === 'act');
+  if (i < 0) return null;
+  const s = NB.SLOTS[i];
+  const c = NB.at(s.u, s.w);
+  const hf = NB.S / 92;
+  // beside the home's marker (which floats at the ridge, 44 house units in, 84 up)
+  const x = c.x + 44 * hf + 34;
+  const y = c.y - 84 * hf + 6;
+  return (
+    <div className="absolute" style={{ left: `${(x / NB.VB.w) * 100}%`, top: `${(y / NB.VB.h) * 100}%`, zIndex: 2100 }}>
+      <motion.div
+        className="absolute left-0 top-0 flex items-center gap-[6px] whitespace-nowrap border-l-2 border-pine py-[3px] pl-[7px] pr-[9px] text-[13px] font-semibold text-pine"
+        style={{ background: P.paper }}
+        initial={reduce ? false : { x: '-320%', y: '-140%', opacity: 0, rotate: -10, scale: 0.9 }}
+        animate={{ x: 0, y: 0, opacity: 1, rotate: -2, scale: 1 }}
+        transition={{ duration: 1, delay: reduce ? 0 : 2.5, ease: [0.65, 0, 0.35, 1], opacity: { duration: 0.2, delay: reduce ? 0 : 2.5 } }}
+      >
+        <svg width="16" height="12" viewBox="0 0 16 12" aria-hidden>
+          <rect x="0.75" y="0.75" width="14.5" height="10.5" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+          <path d="M1.5 1.5 8 6.5 14.5 1.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        </svg>
+        {t('landing.watchOutreach')}
+      </motion.div>
+    </div>
+  );
+}
+
+/** Homes on the neighbouring blocks (static): behind the block, and in front of it. */
+const NEIGHBOURS: { u: number; w: number; stage: HouseStage; where: 'back' | 'front' }[] = [
+  { u: 10, w: 372, stage: 'finished', where: 'back' },
+  { u: 104, w: 372, stage: 'finished', where: 'back' },
+  { u: 214, w: 372, stage: 'finished', where: 'back' },
+  { u: 420, w: 34, stage: 'finished', where: 'back' },
+  { u: 420, w: 130, stage: 'finished', where: 'back' },
+  { u: 420, w: 226, stage: 'finished', where: 'back' },
+  { u: 214, w: -150, stage: 'finished', where: 'front' },
+  { u: 420, w: -150, stage: 'finished', where: 'front' },
+];
+const Neighbours = memo(function Neighbours({ where, night }: { where: 'back' | 'front'; night: boolean }) {
+  const hp = isoPx(NB.S, 0, 0);
+  return (
+    <>
+      {NEIGHBOURS.filter((n) => n.where === where)
+        .sort((a, b) => b.w - a.w)
+        .map((n) => {
+          const c = NB.at(n.u, n.w);
+          return (
+            <div key={`${n.u}-${n.w}`} className="absolute" style={{ left: `${((c.x - hp.x) / NB.VB.w) * 100}%`, top: `${((c.y - hp.y) / NB.VB.h) * 100}%`, width: `${(NB.S / NB.VB.w) * 100}%` }}>
+              <IsoHouse size={NB.S} stage={n.stage} lit={night && n.stage === 'finished'} porch={night && n.stage === 'finished'} ground={false} className="h-auto w-full" />
+            </div>
+          );
+        })}
+    </>
   );
 });
 
@@ -45,13 +144,6 @@ function Canopy({ className, flip = false }: { className: string; flip?: boolean
       <circle cx={58} cy={56} r={14} fill={P.sageLight} opacity={0.7} />
     </svg>
   );
-}
-
-/** Extra travel for the block's count badges (they hover above it), from the section's scroll offset. */
-export function useBadgeFloat(ref: RefObject<HTMLElement | null>) {
-  const reduce = !!useReducedMotion();
-  const { d } = useRestOffset(ref);
-  return useTransform(d, (v) => (reduce ? 0 : v * -0.14));
 }
 
 const { at, STREET, SLAB, SLOTS, HOUSE_W, HOUSE_D, VB, ROWS } = NB;
@@ -94,8 +186,6 @@ export const HomesGround = memo(function HomesGround() {
   ];
   const pads: [number, number][] = [[420, 120], [-230, 330]];
   const lamps: [number, number][] = [[-30, -20], [110, -20], [200, -20], [330, -20], [470, -20]];
-  // work lights on the lots still being built (two framing, one roofing): a mast and a lamp head
-  const works: [number, number][] = [[SLOTS[4].u + HOUSE_W + 10, SLOTS[4].w - 6], [SLOTS[5].u + HOUSE_W + 10, SLOTS[5].w - 6]];
   const drives = SLOTS.map((s) => (s.side === 'L' ? quad(s.u + HOUSE_W * 0.5, s.w - 22, STREET.u0 - 12, s.w - 12) : quad(STREET.u1 + 12, s.w - 22, s.u + HOUSE_W * 0.5, s.w - 12))).join('');
   const walks = SLOTS.map((s) => quad(s.u + HOUSE_W * 0.4, s.w - 22, s.u + HOUSE_W * 0.6, s.w)).join('');
   let dashes = '';
@@ -167,26 +257,7 @@ export const HomesGround = memo(function HomesGround() {
       {/* street lamps along the front cross street; night slot: their pools of light */}
       {lamps.map(([u, w], i) => {
         const p = at(u, w);
-        return (
-          <g key={u}>
-            <ellipse className="sc-light" style={nightStyle(0.2 + i * 0.12)} cx={p.x} cy={p.y + 1} rx={22} ry={8} fill="url(#sc-hm-pool)" />
-            <rect x={p.x - 0.5} y={p.y - 14} width={1} height={14} fill={P.slate} />
-            <rect x={p.x - 1.6} y={p.y - 16} width={3.2} height={2.4} rx={1} fill={P.slateDark} />
-            <circle className="sc-light" style={nightStyle(0.2 + i * 0.12)} cx={p.x} cy={p.y - 14.6} r={1.6} fill={P.glow} />
-          </g>
-        );
-      })}
-      {/* work lights by the frames; night slot: the lamps and the pools they throw */}
-      {works.map(([u, w], i) => {
-        const p = at(u, w);
-        return (
-          <g key={`w${i}`}>
-            <ellipse className="sc-light" style={nightStyle(0.5 + i * 0.15)} cx={p.x - 10} cy={p.y + 2} rx={34} ry={12} fill="url(#sc-hm-pool)" />
-            <rect x={p.x - 0.6} y={p.y - 22} width={1.2} height={22} fill={P.slate} />
-            <rect x={p.x - 3.5} y={p.y - 25} width={7} height={3.4} rx={0.8} fill={P.honey} />
-            <rect className="sc-light" style={nightStyle(0.5 + i * 0.15)} x={p.x - 3} y={p.y - 22.4} width={6} height={1.4} fill={P.glow} />
-          </g>
-        );
+        return <StreetLamp key={u} x={p.x} base={p.y} h={30} i={i} pool={1.8} />;
       })}
       {/* haze toward every edge, a little more on the text's side */}
       <rect x={box.x} y={box.y} width={box.w} height={box.h} fill="url(#sc-hm-vignette)" />

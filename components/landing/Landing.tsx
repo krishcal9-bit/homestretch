@@ -2,28 +2,23 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { useLang } from '@/lib/i18n';
-import { computeReadiness, monthsUntil, isEligible } from '@/lib/engine';
-import { homeFits } from '@/lib/homes';
+import { computeReadiness } from '@/lib/engine';
 import { ease, spring } from '@/lib/motion';
 import { useVTRouter } from '@/lib/vt';
-import { SEED_FAMILIES, SEED_HOMES } from '@/lib/seedData';
-import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
+import { SEED_HOMES } from '@/lib/seedData';
 import { Road } from '@/components/result/Road';
 import { Intro, INTRO } from '@/components/Intro';
 import { hasWebGL } from '@/components/three/HouseCanvas';
 import { HeroHouse, preloadStage } from '@/components/three/HeroHouse';
-import { P } from '@/lib/illustrationPalette';
 import { brand } from '@/lib/brand';
 import { HeroScene, streetLayout, type StreetLayout } from './scenes/HeroScene';
+import { P } from '@/lib/illustrationPalette';
 import { SectionArrow, SectionDots, SectionNavProvider, useSectionPlay } from './SectionNav';
-import { PhoneVoice } from '@/components/illustrations/landing/PhoneVoice';
-import { IntakeScene } from './scenes/IntakeScene';
-import { RoadScene } from './scenes/RoadScene';
-import { HomesGround, HomesScene, useBadgeFloat } from './scenes/HomesScene';
-import { useSceneLive, useSceneShown } from './scenes/Scene';
-import { DuskCount, DuskScene } from './scenes/DuskScene';
-import { NeighborhoodMap } from '@/components/illustrations/landing/NeighborhoodMap';
-import { AnimatePresence } from 'motion/react';
+import { HomeScene } from './scenes/HomeScene';
+import { RepairScene } from './scenes/RepairScene';
+import { NeighborhoodScene } from './scenes/NeighborhoodScene';
+import { ClosingScene } from './scenes/ClosingScene';
+import type { LotStatus } from '@/components/illustrations/landing/NeighborhoodMap';
 import { StaffLink, Wordmark } from '@/components/FamilyHeader';
 import type { Profile } from '@/lib/types';
 
@@ -371,59 +366,6 @@ function Hero({ phase, intro }: { phase: Phase; intro: boolean | null }) {
   );
 }
 
-/** One line of real sample-family progress from the seed data, crossfading every 3s. */
-function Ticker() {
-  const { t } = useLang();
-  const reduce = useReducedMotion();
-  const lines = useMemo(() => {
-    const out: string[] = [];
-    for (const f of SEED_FAMILIES) {
-      const r = computeReadiness(f.profile);
-      if (!isEligible(r)) continue;
-      const v = { city: f.city, n: f.profile.householdSize };
-      const home = SEED_HOMES.find((h) => homeFits(f.profile.householdSize, h.bedrooms) && r.monthsToReady <= monthsUntil(h.completion));
-      if (home && r.monthsToReady > 0) out.push(t('landing.tMatched', { ...v, br: home.bedrooms }));
-      else if (r.monthsToReady === 0) out.push(t('landing.tReadyNow', v));
-      else if (r.milestones.find((m) => m.key === 'savings')?.month === 0) out.push(t('landing.tSaved', v));
-      else out.push(t('landing.tReady', { ...v, m: r.monthsToReady }));
-    }
-    return out;
-  }, [t]);
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => {
-      if (document.visibilityState === 'visible') setI((x) => (x + 1) % lines.length);
-    }, 3000);
-    return () => clearInterval(id);
-  }, [lines.length]);
-  return (
-    <div className="border-l-2 border-line pl-4" data-testid="ticker">
-      <p className="t-helper text-ink-2">{t('landing.tickerLabel')}</p>
-      <div className="relative mt-2 h-[44px] overflow-hidden" aria-live="off">
-        <AnimatePresence initial={false}>
-          <motion.p
-            key={i}
-            className="absolute inset-x-0 top-0 flex items-start gap-3 text-[15px] leading-[22px] text-ink"
-            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
-            transition={{ duration: 0.25, ease: ease.out }}
-          >
-            <svg width="28" height="12" viewBox="0 0 28 12" aria-hidden className="mt-[5px] shrink-0">
-              <path d="M1 9h16" stroke="var(--line)" strokeWidth="2" strokeLinecap="round" />
-              <circle cx="3" cy="9" r="2" fill="var(--brass)" />
-              <path d="M19 10V5.5L23 2l4 3.5V10z" fill="none" stroke="var(--pine)" strokeWidth="1.5" strokeLinejoin="round" />
-            </svg>
-            <span className="tnum">{lines[i]}</span>
-          </motion.p>
-        </AnimatePresence>
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Sections                                                             */
 /* ------------------------------------------------------------------ */
 /** Section headline: rises from a mask every time its section becomes active. */
 function MaskHeading({ children, reduce }: { children: React.ReactNode; reduce: boolean }) {
@@ -437,27 +379,29 @@ function MaskHeading({ children, reduce }: { children: React.ReactNode; reduce: 
 }
 
 /**
- * A full-viewport section built around its scene: the scene fills the section behind everything (its own
- * background and depth layers, components/landing/scenes); the text sits on its calm side.
- *  - 'split': text in 5 columns, the centrepiece in 7 (text first on phones, the centrepiece below)
- *  - 'sky': the scene is the centrepiece; the text sits alone in the calm sky at the top-left
- * `scene` receives the play count (0 until the first activation), so it can replay its own moment.
+ * A full-viewport section that IS one illustrated place: its scene (components/landing/scenes) fills the
+ * section edge to edge and draws its own sky, ground and centrepiece; the text sits over a calm part of it.
+ *  - 'split': text in the left 5 columns; the centrepiece is in the scene to the right (phones: text first,
+ *    `minGraphic` px of room below it for the scene's centrepiece)
+ *  - 'sky': the text sits alone in the calm sky at the top-left
+ * `scene` receives the play count (0 until the first activation; it drops back to 0 once the section has left
+ * the screen), so the centrepiece replays on each visit. The text reveals on activation, which SectionNav
+ * only grants once the camera has landed.
  */
-function SceneSection({ id, index, layout = 'split', bob = false, text, graphic, scene, anchor, minGraphic = 420 }: { id: string; index: number; layout?: 'split' | 'sky'; bob?: boolean; text: (reduce: boolean) => React.ReactNode; graphic?: (reduce: boolean) => React.ReactNode; scene?: (play: number, reduce: boolean) => React.ReactNode; /** a persistent box around the centrepiece with scenery registered to it (drawn under it) */ anchor?: React.ReactNode; minGraphic?: number }) {
+function SceneSection({ id, index, layout = 'split', bob = false, text, scene, minGraphic = 0 }: { id: string; index: number; layout?: 'split' | 'sky'; bob?: boolean; text: (reduce: boolean) => React.ReactNode; scene: (play: number, reduce: boolean) => React.ReactNode; minGraphic?: number }) {
   const { t } = useLang();
   const reduce = !!useReducedMotion();
   const ref = useRef<HTMLElement>(null);
   const n = useSectionPlay(index, ref); // replays its animation each time the section becomes active
-  // Elements are memoized by activation count, so another section's activation never re-renders this one's illustration.
+  // Elements are memoized by activation count, so another section's activation never re-renders this one's text.
   const textEl = useMemo(() => (n > 0 ? text(reduce) : <div className="invisible">{text(true)}</div>), [n, reduce, text]);
-  // The illustration mounts one frame after the text, so the two commits land in separate frames.
+  // The scene's centrepiece replays one frame after the text, so the two commits land in separate frames.
   const [gn, setGn] = useState(n);
   useEffect(() => {
     const id = requestAnimationFrame(() => setGn(n));
     return () => cancelAnimationFrame(id);
   }, [n]);
-  const graphicEl = useMemo(() => (gn > 0 && graphic ? graphic(reduce) : null), [gn, reduce, graphic]);
-  const sceneEl = useMemo(() => (scene ? scene(gn, reduce) : null), [gn, reduce, scene]);
+  const sceneEl = useMemo(() => scene(gn, reduce), [gn, reduce, scene]);
   return (
     <section ref={ref} id={id} data-testid={id} className={`snap-section relative flex min-h-[calc(100svh-64px)] overflow-hidden ${layout === 'sky' ? 'items-start' : 'items-center'}`} aria-label={t(`landing.nav${index}`)}>
       {sceneEl}
@@ -472,37 +416,12 @@ function SceneSection({ id, index, layout = 'split', bob = false, text, graphic,
           <div className="relative z-[2] lg:col-span-5" key={`t${n}`}>
             {textEl}
           </div>
-          <div className="lg:col-span-7" style={{ minHeight: minGraphic }}>
-            {anchor ? (
-              <AnchorBox under={anchor} index={index}>
-                {graphicEl && (
-                  <div className="absolute inset-0" key={`g${gn}`}>
-                    {graphicEl}
-                  </div>
-                )}
-              </AnchorBox>
-            ) : (
-              graphicEl && <div key={`g${gn}`}>{graphicEl}</div>
-            )}
-          </div>
+          {/* room for the scene's centrepiece under the text on phones (on desktop it stands to the right) */}
+          <div className="min-h-[var(--mg)] lg:col-span-7 lg:min-h-0" style={{ ['--mg' as string]: `${minGraphic}px` }} aria-hidden />
         </div>
       )}
       <SectionArrow index={index} label={t('landing.arrowNext')} topLabel={t('landing.arrowTop')} bob={bob} />
     </section>
-  );
-}
-
-/** The homes block's box: the ground plane under it stays put while the block replays on each activation. */
-function AnchorBox({ under, index, children }: { under: React.ReactNode; index: number; children: React.ReactNode }) {
-  const live = useSceneLive(index);
-  const shown = useSceneShown(index);
-  return (
-    <div className="relative mx-auto aspect-[600/350] w-full max-w-[620px]" data-live={live ? 'true' : 'false'}>
-      <div className="absolute inset-0" style={shown ? undefined : { contentVisibility: 'hidden' }}>
-        {under}
-      </div>
-      {children}
-    </div>
   );
 }
 
@@ -512,30 +431,25 @@ function SceneIntake() {
     <SceneSection
       id="scene-intake"
       index={1}
-      minGraphic={600}
+      minGraphic={460}
       text={(reduce) => (
         <>
-          <MaskHeading reduce={reduce}>{t('landing.s1')}</MaskHeading>
+          <MaskHeading reduce={reduce}>{t('landing.shockTitle')}</MaskHeading>
           <motion.p initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: ease.out, delay: 0.15 }} className="mt-5 max-w-[40ch] text-[18px] leading-[28px] text-ink-2">
-            {t('landing.s1b')}
+            {t('landing.shockBody')}
           </motion.p>
         </>
       )}
-      graphic={(reduce) => <PhoneVoice reduce={reduce} backdrop={false} />}
-      scene={intakeScene}
+      scene={homeScene}
     />
   );
 }
-const intakeScene = () => <IntakeScene />;
-const roadScene = (play: number, reduce: boolean) => <RoadScene play={play} reduce={reduce} />;
+const homeScene = (play: number, reduce: boolean) => <HomeScene play={play} reduce={reduce} />;
+const repairScene = (play: number, reduce: boolean) => <RepairScene play={play} reduce={reduce} />;
 
+/** Section 3: fix it before it breaks (the text in the sky above the house). */
 function SceneRoad() {
   const { t } = useLang();
-  const caps = [
-    [t('landing.c1'), t('landing.c1b')],
-    [t('landing.c2'), t('landing.c2b')],
-    [t('landing.c3'), t('landing.c3b')],
-  ];
   return (
     <SceneSection
       id="scene-road"
@@ -544,77 +458,48 @@ function SceneRoad() {
       bob
       text={(reduce) => (
         <>
-          <MaskHeading reduce={reduce}>{t('landing.s2')}</MaskHeading>
-          <ul className="mt-6 flex flex-col gap-4">
-            {caps.map(([title, body], i) => (
-              <motion.li key={title} initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: ease.out, delay: 0.2 + i * 0.6 }} className="border-l-2 border-pine pl-4">
-                <span className="block text-[17px] font-semibold text-ink">{title}</span>
-                <span className="mt-1 block text-[16px] leading-[24px] text-ink-2">{body}</span>
-              </motion.li>
-            ))}
-          </ul>
+          <MaskHeading reduce={reduce}>{t('landing.fixTitle')}</MaskHeading>
+          <motion.p initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: ease.out, delay: 0.15 }} className="mt-5 max-w-[40ch] text-[18px] leading-[28px] text-ink-2">
+            {t('landing.fixBody')}
+          </motion.p>
         </>
       )}
-      scene={roadScene}
+      scene={repairScene}
     />
   );
 }
 
+/** Section 4: Habitat sees it first (its early-warning view of a block of homeowners). */
 function SceneHomes() {
   const { t } = useLang();
-  const probe = useRef<HTMLSpanElement>(null);
-  const badgeY = useBadgeFloat(probe);
   const lots = useMemo(() => {
-    const fams = SEED_FAMILIES.map((f) => ({ f, r: computeReadiness(f.profile) })).filter((x) => isEligible(x.r));
-    const homes = SEED_HOMES.slice(0, 6);
-    // build stage for the illustration, by completion: two finished, the next one finishing (its scaffolding comes
-    // down), then one roofing and two framing
-    const order = [...homes].sort((a, b) => a.completion.localeCompare(b.completion)).map((h) => h.id);
-    return homes.map((h) => {
-      const rank = order.indexOf(h.id);
-      return {
-        id: h.id,
-        label: `${h.city} · ${h.bedrooms}BR`,
-        ready: fams.filter((x) => homeFits(x.f.profile.householdSize, h.bedrooms) && x.r.monthsToReady <= monthsUntil(h.completion)).length,
-        stage: (['finished', 'finished', 'finished', 'roofing', 'framing', 'framing'] as const)[rank],
-        finishing: rank === 2,
-      };
-    });
+    // a block of homeowners: most stable, two drifting toward Watch, one that needs a call now
+    const status: { status: LotStatus; turnsAt?: number }[] = [{ status: 'stable' }, { status: 'watch', turnsAt: 1.5 }, { status: 'stable' }, { status: 'act', turnsAt: 1.1 }, { status: 'watch', turnsAt: 1.9 }, { status: 'stable' }];
+    return SEED_HOMES.slice(0, 6).map((h, i) => ({ id: h.id, label: `${h.city} · ${h.bedrooms}BR`, ready: 0, stage: 'finished' as const, ...status[i] }));
   }, []);
+  const scene = useCallback((play: number, reduce: boolean) => <NeighborhoodScene play={play} reduce={reduce} lots={lots} />, [lots]);
   return (
     <SceneSection
       id="scene-homes"
       index={3}
-      minGraphic={210}
+      minGraphic={300}
       text={(reduce) => (
         <>
-          <MaskHeading reduce={reduce}>{t('landing.s3')}</MaskHeading>
+          <MaskHeading reduce={reduce}>{t('landing.watchTitle')}</MaskHeading>
           <motion.p initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: ease.out, delay: 0.15 }} className="mt-5 max-w-[40ch] text-[18px] leading-[28px] text-ink-2">
-            {t('landing.s3b')}
+            {t('landing.watchBody')}
           </motion.p>
-          <div className="mt-8">
-            <Ticker />
-          </div>
-          <span ref={probe} className="hidden" />
         </>
       )}
-      graphic={(reduce) => <NeighborhoodMap lots={lots} reduce={reduce} plain badgeY={badgeY} />}
-      anchor={homesAnchor}
-      scene={homesScene}
+      scene={scene}
     />
   );
 }
-const homesAnchor = (
-  <>
-    <HomesGround />
-  </>
-);
-const homesScene = () => <HomesScene />;
 
 /**
- * The closing band: a dusk street of a hundred homes (DuskScene) fills it; the lamps come on, then the windows
- * light in a wave toward the horizon while the counter rolls to 100; the sentence and the button rise in the
- * open sky above. The footer sits below the band, on paper.
+ * The closing band: a dusk street of a hundred homes (ClosingScene) fills it; the lamps come on, then the windows
+ * light in a wave toward the horizon; the headline and the button rise in the open sky above. The footer sits
+ * below the band, on paper.
  */
 function Closing() {
   const { t } = useLang();
@@ -624,7 +509,7 @@ function Closing() {
   return (
     <section ref={ref} id="closing" data-testid="closing" className="snap-section relative flex min-h-[calc(100svh-64px)] flex-col text-on-band" aria-label={t('landing.nav4')}>
       <div className="relative flex flex-1 flex-col">
-        <DuskScene play={n} reduce={reduce} />
+        <ClosingScene play={n} reduce={reduce} />
         <div className="relative z-[1] mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-5 pb-[34svh] pt-10 lg:px-8 lg:pb-[30svh] lg:pt-12" key={n}>
           {n > 0 && <ClosingBody reduce={reduce} />}
         </div>
@@ -642,29 +527,17 @@ function Closing() {
 const ClosingBody = memo(function ClosingBody({ reduce }: { reduce: boolean }) {
   const { t } = useLang();
   const router = useVTRouter();
-  const [a1, a2] = t('landing.closingA').split('{n}');
-  const [b1, b2] = t('landing.closingB').split('{n}');
-  const fmt = (v: number) => String(Math.round(v));
   return (
           <>
-            <div className="flex flex-col gap-x-10 gap-y-5 lg:flex-row lg:items-end">
-              <p className="tnum text-[64px] font-semibold leading-none tracking-[-0.02em] lg:text-[112px] lg:leading-[0.9]">
-                <DuskCount reduce={reduce} format={fmt} />
-              </p>
-              <motion.p
-                initial={reduce ? false : { opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.45, ease: ease.out, delay: reduce ? 0 : 1.6 }}
-                className="tnum max-w-[24ch] text-[30px] font-semibold leading-[36px] tracking-[-0.02em] lg:pb-[2px] lg:text-[40px] lg:leading-[46px]"
-              >
-                {a1}
-                <RollTo to={100} reduce={reduce} format={fmt} />
-                {a2} {b1}
-                <RollTo to={100} reduce={reduce} format={fmt} />
-                {b2}
-              </motion.p>
-            </div>
-            <motion.div initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: ease.out, delay: reduce ? 0 : 1.8 }}>
+            <motion.h2
+              initial={reduce ? false : { opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, ease: ease.out, delay: reduce ? 0 : 1.2 }}
+              className="max-w-[16ch] text-[44px] font-semibold leading-[48px] tracking-[-0.02em] lg:text-[72px] lg:leading-[76px]"
+            >
+              {t('landing.closingTitle')}
+            </motion.h2>
+            <motion.div initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: ease.out, delay: reduce ? 0 : 1.45 }}>
               <motion.a
                 href="/start"
                 onClick={(e) => {
@@ -683,15 +556,6 @@ const ClosingBody = memo(function ClosingBody({ reduce }: { reduce: boolean }) {
   );
 });
 
-/** Starts at 0 and rolls to `to` (springs), unless reduced motion. */
-function RollTo({ to, reduce, format }: { to: number; reduce: boolean; format: (n: number) => string }) {
-  const [v, setV] = useState(reduce ? to : 0);
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setV(to));
-    return () => cancelAnimationFrame(id);
-  }, [to]);
-  return <AnimatedNumber value={v} format={format} />;
-}
 
 function Footer() {
   const { t } = useLang();

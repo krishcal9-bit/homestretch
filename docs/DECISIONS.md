@@ -94,6 +94,7 @@ Ambiguities resolved during the build, with the choice made.
   delay (`--d`), dark by day. Colours only from `P`/`mix()`; translucency only via opacity attributes.
 - Perf at 4× CPU throttle in headless Chromium (software compositing, shared 4-core box) is measured with
   `scripts/perf-r6-scenes.ts`; the compositor's software draw, not the main thread, is the bottleneck there.
+
 - **Round 6: light and dark mode (owner spec, Nov 7).** This supersedes "no dark mode" in BUILD_SPEC §4 and CLAUDE.md.
   - **One attribute drives everything.** `<html data-theme="light|dark">` is set by an inline `<head>` script before first paint (stored `hs.theme`, else `prefers-color-scheme`), so the wrong theme never flashes. With no stored choice the page follows the system setting live; another tab's choice syncs. The UI tokens and the illustration palette both key on it, so a switch is one attribute change with no React re-render. Canvases listen for the `hs:theme` window event (`{ theme, instant }`) or read `getTheme()`.
   - **Switching is a View Transition**, kind `theme`: the new theme fades in over the old snapshot (600ms, eased; the old stays opaque so nothing dips through transparency). The switch itself is excluded from the crossfade (its own `view-transition-name`) so its sun-to-crescent morph (250ms, transform/opacity) plays live. Lights in the scenery come on after the fade starts, 45ms apart (`.il-light`). Reduced motion or no View Transitions: instant.
@@ -128,3 +129,17 @@ Ambiguities resolved during the build, with the choice made.
   no new table, so production (Turso) needs no migration. A family's own Keep data stays on their device.
 - **Tokens**: the spec's light `--signal-amber` #9A6B12 is 4.2:1 on paper (fails AA for body text); kept #8A5F0E.
 - **Down payment** already 1% of the financeable price + $1,500 closing; 2026 tiers already in lib/incomeTiers.ts.
+## Round 6 — one scene per section (the keep-the-keys story)
+
+- Each landing section is one full-bleed place with its centrepiece drawn into it (components/landing/scenes):
+  the shock (the family's monthly cost drawn across the kitchen wall; a March spike drops in; coins into a jar
+  flatten it and turn the breathing room under it from amber to green), fix it early (a dollhouse view of the
+  family's house; a savings meter on the garage wall fills and the aging water heater's amber glow calms to
+  pine), Habitat sees it first (the early-warning block: Stable / Watch / Act now markers as text with a
+  coloured rule, an outreach note flying to the home that needs a call), the dusk street ("Get the keys. Keep
+  the keys."). The hero's scene is the lead's.
+- No backdrop shared between sections: each SceneRoot renders its own sky, fixed to the viewport, crossfading
+  with the neighbour's by the scroll (the incoming sky over the outgoing one, which stays opaque until covered).
+- Night is the dark theme: P's night palette plus .sc-light / .sc-lamp elements; StreetLamp (parts.tsx) is the
+  one lamp design, coming on 80ms apart along its street with a flicker on the first.
+- Removed (unused after the pivot): RoadScene, PhoneVoice, JourneyRoad, HundredHouses, the hero ticker test line.

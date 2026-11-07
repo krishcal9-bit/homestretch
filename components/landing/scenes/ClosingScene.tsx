@@ -4,7 +4,7 @@ import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { P, mix } from '@/lib/illustrationPalette';
 import { rng } from '@/components/illustrations/landing/kit';
 import { Layer, SceneRoot, useSceneMount } from './Scene';
-import { nightStyle } from './parts';
+import { StreetLamp, nightStyle } from './parts';
 
 /**
  * Closing band: a street at dusk in one-point perspective, seen from a little above (as from the end of the
@@ -135,7 +135,7 @@ const STREET = (() => {
   };
 })();
 
-export const DuskScene = memo(function DuskScene({ play, reduce, night = false }: { play: number; reduce: boolean; night?: boolean }) {
+export const ClosingScene = memo(function ClosingScene({ play, reduce, night = false }: { play: number; reduce: boolean; night?: boolean }) {
   const mounted = useSceneMount(4);
   return (
     <SceneRoot index={4} night={night} testId="closing-scene" skyArt={DUSK_SKY} className="[container-type:size] [--s:max(calc(100cqw/1600),calc(100cqh/900))]">
@@ -176,7 +176,7 @@ function Stage({ children }: { children: React.ReactNode }) {
 }
 
 /** The afterglow low on the left horizon, painted into the sky. */
-const DUSK_SKY = <div className="absolute left-[-28%] top-[38%] h-[40%] w-[104%]" style={{ background: `radial-gradient(closest-side, ${P.honeyLight}, transparent)`, opacity: 0.3 }} />;
+const DUSK_SKY = <div className="il-day absolute left-[-28%] top-[38%] h-[40%] w-[104%]" style={{ background: `radial-gradient(closest-side, ${P.honeyLight}, transparent)`, opacity: 0.3 }} />;
 
 const STARS: [number, number, number, number][] = (() => {
   const r = rng(7);
@@ -193,8 +193,8 @@ const Sky = memo(function Sky() {
       <svg viewBox={`0 0 ${W.w} ${W.h}`} className="absolute inset-0 h-full w-full overflow-visible">
         {STARS.map(([x, y, rr, o], i) => (i % 6 === 0 ? null : <circle key={i} cx={x} cy={y} r={rr} fill={P.trim} opacity={o * (y < 300 ? 1 : 0.6)} />))}
         <g className="sc-light" style={nightStyle(0.3)}>
-          <circle cx={1380} cy={110} r={40} fill={P.glow} opacity={0.12} />
-          <path d="M1388 82a26 26 0 1 0 18 42a21 21 0 1 1 -18 -42Z" fill={P.honeyLight} />
+          <circle cx={1380} cy={250} r={40} fill={P.glow} opacity={0.12} />
+          <path d="M1388 222a26 26 0 1 0 18 42a21 21 0 1 1 -18 -42Z" fill={P.honeyLight} />
         </g>
       </svg>
       {STARS.map(([x, y], i) =>
@@ -309,24 +309,42 @@ function LampLights({ play, reduce }: { play: number; reduce: boolean }) {
           <stop offset="1" stopColor={P.honey} stopOpacity="0" />
         </radialGradient>
       </defs>
-      {STREET.lamps.map((m, i) => (
-        <g key={i}>
-          <ellipse cx={m.x} cy={m.base} rx={m.r * 26} ry={m.r * 6} fill="url(#sc-dk-pool)" />
-          <circle cx={m.x} cy={m.top} r={m.r * 9} fill="url(#sc-dk-lamp)" />
-          <circle cx={m.x} cy={m.top} r={m.r * 1.4} fill={P.glow} />
-        </g>
-      ))}
+      {STREET.lamps.map((m, i) => {
+        // a StreetLamp's head sits at the end of its arm, over the street (see LampPosts)
+        const k = (m.base - m.top) / 80;
+        const drawn = m.base - m.top > 46;
+        const hx = drawn ? m.x + (m.x > VPX ? -13 : 13) * k : m.x;
+        const hy = drawn ? m.top - 1 * k : m.top;
+        return (
+          <g key={i}>
+            <ellipse cx={hx} cy={m.base} rx={m.r * 26} ry={m.r * 6} fill="url(#sc-dk-pool)" />
+            <circle cx={hx} cy={hy} r={m.r * 9} fill="url(#sc-dk-lamp)" />
+            <circle cx={hx} cy={hy} r={m.r * 1.4} fill={P.glow} />
+          </g>
+        );
+      })}
     </svg>
   );
 }
 
-/** Lamp posts (always there; their light is LampLights). */
+/**
+ * The lamp posts (always there; their light is LampLights, which comes on with the section). The nearest
+ * ones are the landing's shared StreetLamp, their arms reaching over the street; far down the street they
+ * shrink to posts.
+ */
 const LampPosts = memo(function LampPosts() {
   return (
     <svg viewBox={`0 0 ${W.w} ${W.h}`} className="absolute inset-0 h-full w-full overflow-visible">
-      {STREET.lamps.map((m, i) => (
-        <rect key={i} x={m.x - m.r * 0.5} y={m.top} width={m.r} height={m.base - m.top} fill={mix(P.slateDark, P.duskTop, 0.2)} />
-      ))}
+      {STREET.lamps.map((m, i) =>
+        m.base - m.top > 46 ? (
+          // right side: mirrored, so the arm reaches toward the street
+          <g key={i} transform={m.x > VPX ? `translate(${(2 * m.x).toFixed(1)} 0) scale(-1 1)` : undefined}>
+            <StreetLamp x={m.x} base={m.base} h={m.base - m.top} lit="none" />
+          </g>
+        ) : (
+          <rect key={i} x={m.x - m.r * 0.5} y={m.top} width={m.r} height={m.base - m.top} fill={mix(P.pineDark, P.duskTop, 0.2)} />
+        ),
+      )}
     </svg>
   );
 });
@@ -352,7 +370,7 @@ function Town({ play, reduce }: { play: number; reduce: boolean }) {
         );
       })}
       <LampPosts />
-      <LampLights key={play} play={play} reduce={reduce} />
+      <LampLights key={`lamps${play}`} play={play} reduce={reduce} />
     </>
   );
 }

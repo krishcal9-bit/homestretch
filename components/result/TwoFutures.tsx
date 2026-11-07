@@ -1,13 +1,25 @@
 'use client';
 import { Area, ComposedChart, Line, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { useLang } from '@/lib/i18n';
-import { tenYearComparison } from '@/lib/engine';
+import { computeReadiness, tenYearComparison } from '@/lib/engine';
 import { money } from '@/lib/format';
-import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
+import { P } from '@/lib/illustrationPalette';
 import type { Profile } from '@/lib/types';
 import { Section } from './Panels';
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useMemo, useRef } from 'react';
 import { useInView, useReducedMotion } from 'motion/react';
+import { EquityHouse } from '@/components/illustrations/result/EquityHouse';
+import { useLineDraw } from '@/components/illustrations/result/useLineDraw';
+
+/** The glowing dot riding a line's leading end while it draws (core in the series colour, a soft halo). */
+function LeadDot({ color, halo, setRef, on }: { color: string; halo: string; setRef: (el: HTMLDivElement | null) => void; on: boolean }) {
+  return (
+    <div ref={setRef} aria-hidden className="pointer-events-none absolute left-0 top-0 z-10" style={{ transform: 'translate(-99px, -99px)' }}>
+      <div className="absolute h-[22px] w-[22px] -translate-x-1/2 -translate-y-1/2 rounded-full transition-opacity duration-300" style={{ background: `radial-gradient(closest-side, ${halo}, transparent)`, opacity: on ? 1 : 0 }} />
+      <div className="absolute h-[7px] w-[7px] -translate-x-1/2 -translate-y-1/2 rounded-full transition-opacity duration-300" style={{ background: color, boxShadow: `0 0 0 1.5px ${P.trim}`, opacity: on ? 1 : 0 }} />
+    </div>
+  );
+}
 
 const compact = (n: number) => (n >= 1000 ? `$${Math.round(n / 1000)}k` : `$${n}`);
 
@@ -24,14 +36,14 @@ export const TwoFutures = memo(
   const cmp = useMemo(() => tenYearComparison(profile), [key]);
   // band: the money between the two futures, washed pine once both lines have drawn
   const data = useMemo(() => cmp.points.map((p) => ({ year: p.year, rent: p.rentCost, habitat: p.habitatCost, band: [Math.min(p.habitatCost, p.rentCost), Math.max(p.habitatCost, p.rentCost)] })), [cmp]);
-  const reduce = useReducedMotion();
-  const [drawn, setDrawn] = useState(false);
-  useEffect(() => {
-    if (!inView) return;
-    // after the habitat line (600ms from a 60ms start); onAnimationEnd also sets it, this covers no-animation
-    const id = setTimeout(() => setDrawn(true), reduce ? 0 : 700);
-    return () => clearTimeout(id);
-  }, [inView, reduce]);
+  const reduce = !!useReducedMotion();
+  // the lines draw left to right with a glowing dot at their leading ends; the band between them washes in after
+  const dots = useRef<(HTMLDivElement | null)[]>([]);
+  const phase = useLineDraw(chartRef, '.recharts-line-curve', dots, inView, reduce);
+  const drawn = phase === 'done';
+  // the share of the home's value (after 3% a year, as the engine projects) the family would own at year 10
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const share = useMemo(() => Math.min(1, cmp.equity10 / Math.max(1, computeReadiness(profile).financeableHome * Math.pow(1.03, 10))), [key]);
   const diff = cmp.rentTotal - cmp.habitatTotal;
   const sentence =
     diff >= 0
@@ -49,7 +61,9 @@ export const TwoFutures = memo(
   return (
     <Section title={t('result.futuresTitle')} id="futures">
       <div className="panel">
-        <div ref={chartRef} className="h-[240px] w-full" role="img" aria-label={sentence}>
+        <div ref={chartRef} className="relative h-[240px] w-full" role="img" aria-label={sentence} data-draw={phase}>
+          <LeadDot color={P.ink2} halo="rgba(74,87,83,0.28)" setRef={(el) => void (dots.current[0] = el)} on={phase === 'drawing'} />
+          <LeadDot color={P.pine} halo="rgba(78,148,120,0.45)" setRef={(el) => void (dots.current[1] = el)} on={phase === 'drawing'} />
           {/* mounted when scrolled into view, so the lines draw left to right where the reader can see them */}
           {inView && (
           <ResponsiveContainer width="100%" height="100%">
@@ -74,17 +88,15 @@ export const TwoFutures = memo(
                 activeDot={false}
                 className={`transition-opacity duration-[600ms] ease-out ${drawn ? 'opacity-100' : 'opacity-0'}`}
               />
-              <Line type="monotone" dataKey="rent" name={t('result.keepRenting')} stroke="var(--ink-2)" strokeWidth={2} dot={false} label={EndLabel(t('result.keepRenting'), 'var(--ink-2)')} animationDuration={600} animationEasing="ease-out" isAnimationActive={!reduce} />
-              <Line type="monotone" dataKey="habitat" name={t('result.habitatHome')} stroke="var(--pine)" strokeWidth={2.5} dot={false} label={EndLabel(t('result.habitatHome'), 'var(--pine)')} animationDuration={600} animationEasing="ease-out" animationBegin={60} isAnimationActive={!reduce} onAnimationEnd={() => setDrawn(true)} />
+              <Line type="monotone" dataKey="rent" name={t('result.keepRenting')} stroke="var(--ink-2)" strokeWidth={2} dot={false} label={EndLabel(t('result.keepRenting'), 'var(--ink-2)')} isAnimationActive={false} />
+              <Line type="monotone" dataKey="habitat" name={t('result.habitatHome')} stroke="var(--pine)" strokeWidth={2.5} dot={false} label={EndLabel(t('result.habitatHome'), 'var(--pine)')} isAnimationActive={false} />
             </ComposedChart>
           </ResponsiveContainer>
           )}
         </div>
-        <div className="mt-4 flex items-baseline justify-between border-t border-line pt-4">
-          <span className="text-[15px] text-ink-2">{t('result.equityAt10')}</span>
-          <span className="text-[28px] font-semibold leading-[34px] tracking-[-0.01em] text-pine">
-            <AnimatedNumber value={inView ? cmp.equity10 : 0} format={(n) => money(n, lang)} />
-          </span>
+        <div className="mt-4 flex items-end justify-between gap-4 border-t border-line pt-4">
+          <span className="pb-[6px] text-[15px] text-ink-2">{t('result.equityAt10')}</span>
+          <EquityHouse value={cmp.equity10} share={share} go={inView} delay={0.5} format={(n) => money(n, lang)} />
         </div>
         <p className="tnum mt-3 text-[15px] leading-[22px] text-ink-2" data-testid="futures-sentence">
           {sentence}

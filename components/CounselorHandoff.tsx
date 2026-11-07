@@ -44,6 +44,11 @@ function PacketSheet({ profile, org, lang, code, onWritten }: { profile: Profile
             <span className="tnum whitespace-nowrap text-ink">{m.date}</span>
           </p>
         ))}
+        {/* the family signs the summary they're sharing: the pen signs over this line once it's written */}
+        <p className="mt-[24px] flex items-end gap-3 text-[13px] leading-[24px] text-ink-2">
+          <span className="shrink-0">{t('resultArt.signature')}</span>
+          <span data-sign-line className="mb-[6px] h-px max-w-[220px] flex-1 bg-ink-2/40" />
+        </p>
       </div>
     </PaperSheet>
   );

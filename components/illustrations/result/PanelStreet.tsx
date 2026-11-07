@@ -10,7 +10,7 @@ const ASPECT = 1440 / 120; // the Skyline's street viewBox
  * Keys house) turns its door brass when the date settles. (At a fixed height the street is cropped at both
  * ends inside a narrow panel, and neither would be visible.)
  */
-export function PanelStreet({ litCount, keysLit }: { litCount: number; keysLit: boolean }) {
+export function PanelStreet({ litCount = 0, keysLit = false }: { litCount?: number; keysLit?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const [h, setH] = useState(0);
   useLayoutEffect(() => {

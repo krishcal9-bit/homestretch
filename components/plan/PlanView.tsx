@@ -11,6 +11,7 @@ import { PanelStreet } from '@/components/illustrations/result/PanelStreet';
 import { ReadyHero } from '@/components/illustrations/result/ReadyHero';
 import { Section, WhyThisDate } from '@/components/result/Panels';
 import { PlanChecklist, PlanSkeleton } from '@/components/result/PlanChecklist';
+import { RoadHouse } from '@/components/illustrations/result/RoadHouse';
 import { keysReachAt, markPlayed, panelRoadWidth, readPlayed } from '@/components/illustrations/result/timing';
 
 const DRAW = 0.6; // families revisit this page: a shorter entrance than the result screen
@@ -42,15 +43,21 @@ export function PlanView({ code, createdAt, profile, initialPlan, initialCheckli
     const key = `hs.planPlayed:${code}`;
     const played = readPlayed(key);
     markPlayed(key);
-    setKeysAt(keysReachAt(computeReadiness(profile), DRAW, panelRoadWidth(), 'inOut'));
+    setKeysAt(keysReachAt(computeReadiness(profile), DRAW, panelRoadWidth(), 'inOut', 0, 'house'));
     setPhase(!reduce && !played ? 'play' : 'static');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code]);
   const play = phase === 'play';
   const [settled, setSettled] = useState(false);
-  const [roadDone, setRoadDone] = useState(false);
   const onSettled = useCallback(() => setSettled(true), []);
-  const onRoadDone = useCallback(() => setRoadDone(true), []);
+  // the house builds (quicker than on the result screen) and its porch light comes on once the date settles
+  const [built, setBuilt] = useState(false);
+  // once built it stays built (the scene restarts its clock after pausing off screen; see ResultScreen)
+  const [houseDone, setHouseDone] = useState(false);
+  const onBuilt = useCallback(() => {
+    setBuilt(true);
+    setHouseDone(true);
+  }, []);
   const result = useMemo(() => computeReadiness(profile), [profile]);
   const why = useMemo(() => whyThisDate(profile, result, lang), [profile, result, lang]);
   // Months since the plan was made: the Road's pine fill shows progress so far.
@@ -85,6 +92,7 @@ export function PlanView({ code, createdAt, profile, initialPlan, initialCheckli
   };
 
   const keys = result.milestones.find((m) => m.key === 'keys')?.month ?? 0;
+  const doneCount = Object.values(checklist).filter(Boolean).length;
   const [keysAt, setKeysAt] = useState(0);
   return (
     <div className="pb-16 pt-8">
@@ -95,7 +103,10 @@ export function PlanView({ code, createdAt, profile, initialPlan, initialCheckli
       </div>
       <div className="panel mt-8 !px-5 !pb-2 !pt-4">
         {phase === 'pending' ? (
-          <div className="h-[78px]" />
+          // the Road's height with the house at its end (it scales with the panel's width)
+          <div className="[container-type:inline-size]">
+            <div style={{ height: 'calc(0.648 * clamp(136px, 46cqw, 236px) + 44px)' }} />
+          </div>
         ) : (
           <Road
             result={result}
@@ -103,13 +114,13 @@ export function PlanView({ code, createdAt, profile, initialPlan, initialCheckli
             entrance={play ? 'always' : 'none'}
             drawDuration={DRAW}
             drawEase="inOut"
-            onEntranceDone={onRoadDone}
-            keysVariant="house"
-            keysBuild={play && !roadDone ? 'short' : 'none'}
-            keysBuildDelay={keysAt}
+            progressTo={result.monthsToReady}
+            keysVariant="slot"
+            slotKind="house"
+            keysSlot={<RoadHouse build={play && !houseDone ? 'quick' : 'none'} lit={doneCount} porch={settled && built} tilt onBuilt={onBuilt} />}
           />
         )}
-        <PanelStreet keysLit={settled} litCount={Object.values(checklist).filter(Boolean).length} />
+        <PanelStreet />
       </div>
       <WhyThisDate sentences={why} />
       <Section title={t('plan.title')} id="plan">

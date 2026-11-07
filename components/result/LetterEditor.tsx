@@ -1,5 +1,5 @@
 'use client';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useAnimate } from 'motion/react';
 import { Download, FileText } from 'lucide-react';
 import { useLang } from '@/lib/i18n';
@@ -8,10 +8,12 @@ import { Button } from '@/components/ui/Button';
 import { PaperSheet, PAD_BOTTOM, PAD_TOP, RULE } from '@/components/illustrations/result/PaperSheet';
 
 type Finding = { finding: string; whatToDo?: string; kind?: string | null };
+const AREA = 'tnum block w-full resize-none overflow-hidden bg-transparent px-5 text-[15px] leading-[24px] text-ink outline-none';
 
 /**
  * D4: drafts a letter of explanation. A sheet of paper slides up, the letter is written onto it line by
- * line (it stays an editable text area on the paper), and "Download letter" pulses once when it's done.
+ * line (it stays an editable text area on the paper), a pen signs the signature line, and "Download letter"
+ * pulses once when it's done.
  */
 export function LetterEditor({ finding }: { finding: Finding }) {
   const { t, lang } = useLang();
@@ -78,6 +80,32 @@ export function LetterEditor({ finding }: { finding: Finding }) {
     if (pulseScope.current) pulse(pulseScope.current, { scale: [1, 1.04, 1] }, { duration: 0.4, ease: ease.out });
   };
   const busy = streaming || !written;
+  const ghost = useRef<HTMLTextAreaElement>(null);
+  const [signTop, setSignTop] = useState<number | null>(null);
+  // the letter's signature line ("______"), once the text is complete
+  const sign = useMemo(() => {
+    if (streaming) return null;
+    const m = /_{6,}/.exec(text);
+    return m ? { before: text.slice(0, m.index), line: m[0], after: text.slice(m.index + m[0].length) } : null;
+  }, [text, streaming]);
+  useLayoutEffect(() => {
+    const g = ghost.current;
+    const a = area.current;
+    if (!sign || !g || !a) {
+      setSignTop(null);
+      return;
+    }
+    const measure = () => {
+      g.style.width = `${a.offsetWidth}px`;
+      g.value = sign.before + sign.line;
+      g.style.height = '0px';
+      setSignTop(g.scrollHeight - PAD_BOTTOM - RULE);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(a);
+    return () => ro.disconnect();
+  }, [sign]);
 
   return (
     <div className="mt-4">
@@ -93,6 +121,19 @@ export function LetterEditor({ finding }: { finding: Finding }) {
             {t('letter.label')}
           </label>
           <PaperSheet streaming={streaming} minLines={10} lineCount={textLines} onWritten={onWritten}>
+            <div className="relative">
+            {/* the signature line, found by measuring the letter up to it in an identical (hidden) text area, so the
+                pen signs exactly over the "______" whatever the wrapping */}
+            {sign && (
+              <>
+                <textarea ref={ghost} aria-hidden tabIndex={-1} readOnly rows={1} className={`${AREA} pointer-events-none invisible absolute left-0 top-0`} style={{ paddingTop: PAD_TOP, paddingBottom: PAD_BOTTOM }} />
+                {signTop !== null && (
+                  <span data-sign-line aria-hidden className="tnum pointer-events-none invisible absolute left-5 whitespace-pre text-[15px] leading-[24px]" style={{ top: signTop }}>
+                    {sign.line}
+                  </span>
+                )}
+              </>
+            )}
             <textarea
               ref={area}
               id={id}
@@ -103,9 +144,10 @@ export function LetterEditor({ finding }: { finding: Finding }) {
               onChange={(e) => setText(e.target.value)}
               aria-busy={busy}
               spellCheck={!busy}
-              className="tnum block w-full resize-none overflow-hidden bg-transparent px-5 text-[15px] leading-[24px] text-ink outline-none"
+              className={AREA}
               style={{ paddingTop: PAD_TOP, paddingBottom: PAD_BOTTOM, outline: 'none' }}
             />
+            </div>
           </PaperSheet>
           <p className="t-helper mt-3 text-ink-2" aria-live="polite">
             {busy ? t('letter.writing') : t('letter.editHelp')}

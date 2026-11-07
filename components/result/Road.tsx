@@ -1,10 +1,11 @@
 'use client';
-import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useSpring } from 'motion/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react';
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { dur, ease, spring } from '@/lib/motion';
 import { useLang } from '@/lib/i18n';
 import { addMonths } from '@/lib/engine';
 import { monthName, money } from '@/lib/format';
+import { P, mix } from '@/lib/illustrationPalette';
 import type { Milestone, MilestoneKey, ReadinessResult } from '@/lib/types';
 import { IsoHouse, isoPx, type IsoBuild } from '@/components/illustrations/IsoHouse';
 
@@ -14,10 +15,35 @@ const MERGE_GAP = 72; // markers closer than this share one label
 const MIN_MARKER_GAP = 22; // markers stay at least this far apart so each stays tappable
 
 type Size = 'md' | 'lg';
-const GEOM: Record<Size, { trackY: number; h: number; r: number; keysR: number; track: number; font: number; above: number; below: number; charW: number }> = {
-  md: { trackY: 40, h: 78, r: 5, keysR: 9, track: 3, font: 13, above: 15, below: 27, charW: 6.9 },
-  lg: { trackY: 46, h: 92, r: 7, keysR: 12, track: 4, font: 15, above: 19, below: 33, charW: 8 },
+/**
+ * trackY: the road's centre line. surf/edge: the road's top surface and the front face under it.
+ * sign*: the milestone signposts (plate width/height, post height above the road's far edge).
+ */
+const GEOM: Record<Size, { trackY: number; h: number; r: number; keysR: number; font: number; above: number; below: number; charW: number; surf: number; edge: number; signW: number; signH: number; post: number }> = {
+  md: { trackY: 40, h: 78, r: 5, keysR: 9, font: 13, above: 25, below: 27, charW: 6.9, surf: 8, edge: 3, signW: 15, signH: 10, post: 6 },
+  lg: { trackY: 46, h: 92, r: 7, keysR: 12, font: 15, above: 30, below: 33, charW: 8, surf: 10, edge: 4, signW: 18, signH: 12, post: 7 },
 };
+
+/**
+ * A slot at the end of the Road for a caller's object (the 3D house on the result and plan pages, the chosen
+ * home in "Aim for a specific home"). ax/ay: the point of the slot that sits on the road at the Keys marker
+ * (the 3D house: where its stepping-stone path meets the lawn's front edge). The Road reserves room on the
+ * right so the object always fits, and the road surface ends under it.
+ */
+export type SlotKind = 'house' | 'home';
+const SLOT: Record<SlotKind, { frac: number; min: number; max: number; aspect: number; ax: number; ay: number; labelGap: number }> = {
+  house: { frac: 0.46, min: 136, max: 236, aspect: 0.8, ax: 0.31, ay: 0.81, labelGap: 6 },
+  home: { frac: 0.22, min: 72, max: 96, aspect: 94 / 92, ax: 0.03, ay: 0.99, labelGap: -6 },
+};
+export function slotBox(kind: SlotKind, roadWidth: number) {
+  const s = SLOT[kind];
+  const w = Math.max(MIN_W, Math.round(roadWidth));
+  const sw = Math.round(Math.min(s.max, Math.max(s.min, w * s.frac)));
+  const sh = Math.round(sw * s.aspect);
+  const ax = Math.round(s.ax * sw);
+  const ay = Math.round(s.ay * sh);
+  return { sw, sh, ax, ay, labelGap: s.labelGap, reserve: Math.max(0, sw - ax - PAD + 4) };
+}
 
 /** cubic-bezier(x1,y1,x2,y2) as a function of time → progress, and its inverse (progress → time). */
 function bezier(x1: number, y1: number, x2: number, y2: number) {
@@ -47,9 +73,10 @@ const CURVES = { out: bezier(...ease.out), inOut: bezier(...ease.inOut) };
 
 type Placed = Milestone & { x: number };
 type Cluster = { id: string; keys: MilestoneKey[]; x: number; text: string; side: 'above' | 'below'; left: number; width: number };
+type Span = [number, number] | null;
 
-function placeMarkers<T extends { month: number }>(ms: T[], maxMonth: number, w: number): (T & { x: number })[] {
-  const usable = w - PAD * 2;
+function placeMarkers<T extends { month: number }>(ms: T[], maxMonth: number, w: number, reserve = 0): (T & { x: number })[] {
+  const usable = w - PAD * 2 - reserve;
   const sorted = [...ms].sort((a, b) => a.month - b.month);
   const placed: (T & { x: number })[] = [];
   let lastX = -Infinity;
@@ -59,25 +86,29 @@ function placeMarkers<T extends { month: number }>(ms: T[], maxMonth: number, w:
     lastX = x;
     placed.push({ ...m, x });
   }
-  if (lastX > w - PAD) for (let i = placed.length - 1, edge = w - PAD; i >= 0; i--, edge -= MIN_MARKER_GAP) placed[i].x = Math.min(placed[i].x, edge);
+  const end = w - PAD - reserve;
+  if (lastX > end) for (let i = placed.length - 1, edge = end; i >= 0; i--, edge -= MIN_MARKER_GAP) placed[i].x = Math.min(placed[i].x, edge);
   return placed;
 }
 
 const maxMonthFor = (keysMonth: number) => Math.max(12, Math.ceil((keysMonth + 1) / 6) * 6);
 export const ROAD_MIN_W = MIN_W;
 
-/** Where the Road puts the Keys marker (px from its left edge) at a given width. */
-export function keysXAt(result: ReadinessResult, width: number): number {
+/** Where the Road puts the Keys marker (px from its left edge) at a given width (and with an end slot). */
+export function keysXAt(result: ReadinessResult, width: number, slot?: SlotKind): number {
   const w = Math.max(MIN_W, Math.round(width));
   const keysMonth = result.milestones.find((m) => m.key === 'keys')?.month ?? 9;
-  return placeMarkers(result.milestones, maxMonthFor(keysMonth), w).find((m) => m.key === 'keys')?.x ?? w - PAD;
+  const reserve = slot ? slotBox(slot, w).reserve : 0;
+  return placeMarkers(result.milestones, maxMonthFor(keysMonth), w, reserve).find((m) => m.key === 'keys')?.x ?? w - PAD - reserve;
 }
 
 /**
  * When the Road's drawing line reaches the Keys marker (seconds from mount) at a given width, from the
  * Road's own placement. Lets a screen time other things (its date, the Keys house build) to the Road.
+ * With an end slot the road ends at Keys, so it arrives there as the draw finishes.
  */
-export function keysReachAt(result: ReadinessResult, drawDuration: number, width: number, drawEase: 'out' | 'inOut' = 'out', entranceDelay = 0): number {
+export function keysReachAt(result: ReadinessResult, drawDuration: number, width: number, drawEase: 'out' | 'inOut' = 'out', entranceDelay = 0, slot?: SlotKind): number {
+  if (slot) return entranceDelay + drawDuration;
   const w = Math.max(MIN_W, Math.round(width));
   const x = keysXAt(result, width);
   return entranceDelay + drawDuration * CURVES[drawEase].timeFor(Math.min(1, Math.max(0, (x - PAD) / (w - PAD * 2))));
@@ -85,13 +116,22 @@ export function keysReachAt(result: ReadinessResult, drawDuration: number, width
 
 /**
  * Label layout that never overlaps: markers closer than 72px share one label; labels alternate above and
- * below the track; if a label would still collide with its same-side neighbour (or with "Today"), it flips
- * side or merges with its neighbour, repeating until nothing overlaps.
+ * below the track; if a label would still collide with its same-side neighbour (or with "Today", or with
+ * the space a house at Keys occupies), it flips side or merges with its neighbour, until nothing overlaps.
  */
-function layoutLabels(placed: Placed[], w: number, charW: number, todayW: number, joinText: (labels: string[]) => string, pinned: MilestoneKey[] = [], aboveBlock: [number, number] | null = null): Cluster[] {
-  // a label above the track may not cross the space a tall Keys house occupies
-  const blocked = (c: { left: number; width: number; keys: MilestoneKey[] }, side: 'above' | 'below') =>
-    side === 'above' && !!aboveBlock && !c.keys.includes('keys') && c.left < aboveBlock[1] && c.left + c.width > aboveBlock[0];
+function layoutLabels(placed: Placed[], w: number, charW: number, todayW: number, joinText: (labels: string[]) => string, pinned: MilestoneKey[] = [], blocks: { above: Span; below: Span } = { above: null, below: null }): Cluster[] {
+  const blocked = (c: { left: number; width: number; keys: MilestoneKey[] }, side: 'above' | 'below', left = c.left) => {
+    const b = blocks[side];
+    return !!b && !c.keys.includes('keys') && left < b[1] && left + c.width > b[0];
+  };
+  /** A label that runs into the house may slide left of it instead (still past its neighbour). */
+  const placeOn = (c: Cluster, side: 'above' | 'below', after: number): number | null => {
+    if (c.left >= after + 8 && !blocked(c, side)) return c.left;
+    const b = blocks[side];
+    if (!b || !blocked(c, side)) return null;
+    const left = b[0] - 4 - c.width;
+    return left >= Math.max(2, after + 8) ? left : null;
+  };
   const isPinned = (g: Placed[]) => g.some((m) => pinned.includes(m.key));
   // 1. initial clusters by distance
   let groups: Placed[][] = [];
@@ -115,13 +155,17 @@ function layoutLabels(placed: Placed[], w: number, charW: number, todayW: number
     let conflict = -1;
     for (let i = 0; i < cs.length; i++) {
       const c = cs[i];
-      if (c.left >= lastRight[c.side] + 8 && !blocked(c, c.side)) {
+      const here = placeOn(c, c.side, lastRight[c.side]);
+      if (here !== null) {
+        c.left = here;
         lastRight[c.side] = c.left + c.width;
         continue;
       }
       const other = c.side === 'above' ? 'below' : 'above';
-      if (c.left >= lastRight[other] + 8 && !blocked(c, other)) {
+      const there = placeOn(c, other, lastRight[other]);
+      if (there !== null) {
         c.side = other;
+        c.left = there;
         lastRight[other] = c.left + c.width;
         continue;
       }
@@ -148,14 +192,59 @@ function layoutLabels(placed: Placed[], w: number, charW: number, todayW: number
 
 function KeyGlyph({ s = 1 }: { s?: number }) {
   return (
-    <g stroke="white" strokeWidth={1.5} fill="none" strokeLinecap="round" transform={`scale(${s})`}>
+    <g stroke={P.trim} strokeWidth={1.5} fill="none" strokeLinecap="round" transform={`scale(${s})`}>
       <circle cx="-2.5" cy="0" r="2.4" />
       <path d="M0 0h4.5M3 0v2" />
     </g>
   );
 }
 
-function Marker({ m, g, delay, play, active, highlighted, keysGlow = 0, keysHouse = false, keysBuild = 'none', keysBuildDelay, onActive, onHover }: { m: Placed; g: (typeof GEOM)[Size]; delay: number; play: boolean; active: boolean; highlighted: boolean; keysGlow?: number; keysHouse?: boolean; keysBuild?: IsoBuild; keysBuildDelay?: number; onActive: (k: string | null) => void; onHover: (k: string | null) => void }) {
+/** A brass disc set into the road (the Keys medallion, the "you are here" puck): rim, lit face, soft shadow. */
+function BrassDisc({ r, uid, glyph = false }: { r: number; uid: string; glyph?: boolean }) {
+  return (
+    <g>
+      <ellipse cx={r * 0.35} cy={r * 0.75} rx={r * 1.05} ry={r * 0.42} fill={P.shadow} />
+      <circle cy={r * 0.16} r={r} fill={P.brassDark} />
+      <circle r={r} fill={`url(#${uid}-brass)`} />
+      <path d={`M${-r * 0.62} ${-r * 0.42}A${r * 0.75} ${r * 0.75} 0 0 1 ${r * 0.1} ${-r * 0.74}`} stroke={P.glow} strokeWidth={Math.max(1, r * 0.16)} strokeLinecap="round" fill="none" opacity={0.75} />
+      {glyph && <KeyGlyph s={r / 9} />}
+    </g>
+  );
+}
+
+/** A milestone signpost: a slate post at the road's far edge, a pine arrow plate pointing toward Keys. */
+function Signpost({ g, uid, play, delay }: { g: (typeof GEOM)[Size]; uid: string; play: boolean; delay: number }) {
+  const { signW: sw, signH: sh, post, surf } = g;
+  const base = -surf / 2 + 0.5;
+  const pb = base - post; // plate bottom
+  const pt = pb - sh; // plate top
+  const L = -sw / 2;
+  const R = sw / 2;
+  const tip = sh * 0.36;
+  const plate = `M${L + 2} ${pt}H${R - tip}L${R} ${pt + sh / 2}L${R - tip} ${pb}H${L + 2}Q${L} ${pb} ${L} ${pb - 2}V${pt + 2}Q${L} ${pt} ${L + 2} ${pt}Z`;
+  return (
+    <g>
+      {/* contact shadow falls to the right (light from the top-left) */}
+      <ellipse cx={2.4} cy={base + 0.8} rx={3.8} ry={1.3} fill={P.shadow} />
+      <rect x={-1.15} y={pb - 1} width={2.3} height={base - pb + 1} rx={0.6} fill={P.slateLight} />
+      <rect x={0.1} y={pb - 1} width={1.05} height={base - pb + 1} fill={P.slate} />
+      {/* the plate settles with a small wobble after the post springs up (follow-through) */}
+      <motion.g
+        style={{ originX: 0.5, originY: 1 }}
+        initial={play ? { rotate: -9 } : false}
+        animate={{ rotate: 0 }}
+        transition={{ type: 'spring', duration: 0.55, bounce: 0.45, delay: delay + 0.12 }}
+      >
+        <path d={plate} fill={P.pineDark} transform="translate(0.7 1.1)" />
+        <path d={plate} fill={`url(#${uid}-sign)`} />
+        <path d={`M${L + 2.4} ${pt + 0.9}H${R - tip - 0.4}`} stroke={P.pineLighter} strokeWidth={1} opacity={0.75} />
+        <rect x={L + 3.2} y={pt + sh / 2 - 0.75} width={sw * 0.42} height={1.5} rx={0.75} fill={P.trim} opacity={0.92} />
+      </motion.g>
+    </g>
+  );
+}
+
+function Marker({ m, g, uid, delay, play, active, highlighted, keysGlow = 0, keysKind, keysBuild = 'none', keysBuildDelay, slot, onActive, onHover }: { m: Placed; g: (typeof GEOM)[Size]; uid: string; delay: number; play: boolean; active: boolean; highlighted: boolean; keysGlow?: number; keysKind: 'dot' | 'house' | 'slot'; keysBuild?: IsoBuild; keysBuildDelay?: number; slot: ReturnType<typeof slotBox> | null; onActive: (k: string | null) => void; onHover: (k: string | null) => void }) {
   // The house's window lights for a beat when the date gets earlier.
   const [lit, setLit] = useState(false);
   useEffect(() => {
@@ -179,47 +268,64 @@ function Marker({ m, g, delay, play, active, highlighted, keysGlow = 0, keysHous
     else x.set(m.x);
   }, [m.x, x, reduce]);
   const isKeys = m.key === 'keys';
+  const houseW = g.keysR * 3.8;
+  // the focus ring and hit area follow what's drawn: the sign plate, the Keys disc, or the house over Keys
+  const plateCy = -g.surf / 2 - g.post - g.signH / 2;
+  const hit = isKeys && keysKind === 'slot' && slot ? { x: -slot.ax, y: -slot.ay, w: slot.sw, h: slot.sh } : null;
+  const handlers = {
+    tabIndex: 0,
+    role: 'button',
+    'aria-label': m.label,
+    'data-milestone': m.key,
+    className: 'cursor-pointer outline-none',
+    onPointerEnter: (e: React.PointerEvent) => (e.pointerType === 'mouse' ? onHover(m.key) : undefined),
+    onPointerLeave: (e: React.PointerEvent) => (e.pointerType === 'mouse' ? onHover(null) : undefined),
+    onFocus: () => onActive(m.key),
+    onBlur: () => onActive(null),
+    onClick: () => onActive(active ? null : m.key),
+  };
+  const sign = !isKeys;
   return (
     <motion.g style={{ x, y: g.trackY }}>
-      <motion.g style={{ scale: pulse }}>
-      <motion.g
-        initial={play ? { scale: 0.9, opacity: 0 } : false}
-        animate={{ scale: highlighted ? 1.15 : 1, opacity: 1 }}
-        transition={{ scale: play && !highlighted ? { duration: 0.2, ease: ease.out, delay } : spring.snappy, opacity: { duration: 0.2, ease: ease.out, delay: play ? delay : 0 } }}
-      >
-        <circle
-          r="22"
-          fill="transparent"
-          tabIndex={0}
-          role="button"
-          aria-label={m.label}
-          data-milestone={m.key}
-          className="cursor-pointer outline-none"
-          onPointerEnter={(e) => (e.pointerType === 'mouse' ? onHover(m.key) : undefined)}
-          onPointerLeave={(e) => (e.pointerType === 'mouse' ? onHover(null) : undefined)}
-          onFocus={() => onActive(m.key)}
-          onBlur={() => onActive(null)}
-          onClick={() => onActive(active ? null : m.key)}
-        />
-        {active && <circle r={(isKeys ? g.keysR : g.r) + 5} fill="none" stroke="var(--pine)" strokeWidth="2" pointerEvents="none" />}
-        {isKeys && keysHouse ? (
-          // the small isometric house from the intro, standing on the road
-          <g transform={`translate(${-(g.keysR * 3.8) / 2} ${-isoPx(g.keysR * 3.8, 0, 0).y})`} pointerEvents="none" data-testid="keys-house">
-            <IsoHouse size={g.keysR * 3.8} build={keysBuild} delay={keysBuildDelay ?? delay} lit={lit} strokeWidth={2.2} />
-          </g>
-        ) : isKeys ? (
-          <g pointerEvents="none">
-            <circle r={g.keysR} fill="var(--brass)" />
-            <KeyGlyph s={g.keysR / 9} />
-          </g>
+      {hit ? <rect x={hit.x} y={hit.y} width={hit.w} height={hit.h} fill="transparent" {...handlers} className="peer cursor-pointer outline-none" /> : <circle r="22" cy={sign ? plateCy * 0.6 : 0} fill="transparent" {...handlers} />}
+      {/* the house's ring shows for keyboard focus only (hovering a whole house shouldn't frame it) */}
+      {hit && <rect x={hit.x - 3} y={hit.y - 3} width={hit.w + 6} height={hit.h + 6} rx={14} fill="none" stroke="var(--pine)" strokeWidth="2" pointerEvents="none" className="opacity-0 peer-focus-visible:opacity-100" />}
+      {active &&
+        !hit &&
+        (sign ? (
+          <rect x={-g.signW / 2 - 4} y={plateCy - g.signH / 2 - 4} width={g.signW + 8} height={g.signH + 8} rx={5} fill="none" stroke="var(--pine)" strokeWidth="2" pointerEvents="none" />
         ) : (
-          <circle r={g.r} fill="var(--surface)" stroke="var(--pine)" strokeWidth={g.r > 5 ? 2.5 : 2} pointerEvents="none" />
-        )}
-        {isKeys && keysGlow > 0 && (
-          <motion.circle key={keysGlow} r={g.keysR + 2} fill="none" stroke="var(--brass)" strokeWidth="2" initial={{ opacity: 0.9, scale: 1 }} animate={{ opacity: 0, scale: 1.8 }} transition={{ duration: 0.6, ease: ease.out }} pointerEvents="none" />
-        )}
+          <circle r={g.keysR + 5} fill="none" stroke="var(--pine)" strokeWidth="2" pointerEvents="none" />
+        ))}
+      <motion.g style={{ scale: pulse, originX: 0.5, originY: sign ? 1 : 0.5 }} pointerEvents="none">
+        <motion.g
+          style={{ originX: 0.5, originY: sign ? 1 : 0.5 }}
+          initial={play ? (sign ? { scaleY: 0.1, opacity: 0 } : { scale: 0.9, opacity: 0 }) : false}
+          animate={sign ? { scaleY: 1, opacity: 1 } : { scale: 1, opacity: 1 }}
+          transition={{
+            // a signpost springs up out of the road with a little overshoot; the medallion pops
+            scaleY: { type: 'spring', duration: 0.5, bounce: 0.3, delay },
+            scale: { duration: 0.2, ease: ease.out, delay },
+            opacity: { duration: 0.12, ease: ease.out, delay: play ? delay : 0 },
+          }}
+        >
+          <motion.g style={{ originX: 0.5, originY: sign ? 1 : 0.5 }} initial={false} animate={{ scale: highlighted ? 1.15 : 1 }} transition={spring.snappy}>
+            {isKeys && keysKind === 'house' ? (
+              // the small isometric house from the intro, standing on the road
+              <g transform={`translate(${-houseW / 2} ${-isoPx(houseW, 0, 0).y})`} data-testid="keys-house">
+                <IsoHouse size={houseW} build={keysBuild} delay={keysBuildDelay ?? delay} lit={lit} />
+              </g>
+            ) : isKeys && keysKind === 'slot' ? null : isKeys ? (
+              <BrassDisc r={g.keysR} uid={uid} glyph />
+            ) : (
+              <Signpost g={g} uid={uid} play={play} delay={delay} />
+            )}
+          </motion.g>
+        </motion.g>
       </motion.g>
-      </motion.g>
+      {isKeys && keysKind !== 'slot' && keysGlow > 0 && (
+        <motion.circle key={keysGlow} r={g.keysR + 2} fill="none" stroke="var(--brass)" strokeWidth="2" initial={{ opacity: 0.9, scale: 1 }} animate={{ opacity: 0, scale: 1.8 }} transition={{ duration: 0.6, ease: ease.out }} pointerEvents="none" />
+      )}
     </motion.g>
   );
 }
@@ -240,7 +346,7 @@ type RoadProps = {
   /** CSS view-transition-name for shared-element transitions. */
   vtName?: string;
   className?: string;
-  /** Pine fill from Today to this month; glides with a spring (the landing demo). */
+  /** Pine paving from Today to this month; glides with a spring (the landing demo, the result). */
   progressTo?: number;
   /** Bump to flash the Keys marker (the date got earlier). */
   keysGlow?: number;
@@ -248,28 +354,47 @@ type RoadProps = {
   trackDrawn?: boolean;
   /** Override when the Keys marker appears (seconds): the landing opening's house becomes it on landing. */
   keysAt?: number;
-  /** Draw the Keys marker as the small isometric house (landing hero, result). */
-  keysVariant?: 'dot' | 'house';
-  /** With keysVariant 'house': build the house (walls up, roof drops, door goes brass) — 'quick' ≈ 600ms (result), 'short' ≈ 400ms (plan page). */
+  /**
+   * The Keys marker: 'dot' a brass medallion in the road; 'house' the small isometric house (landing hero);
+   * 'slot' the caller's `keysSlot` (the 3D house, a chosen home) standing at the end of the road.
+   */
+  keysVariant?: 'dot' | 'house' | 'slot';
+  /** With keysVariant 'house': build the house (walls up, roof drops, door goes brass) — 'quick' ≈ 600ms, 'short' ≈ 400ms. */
   keysBuild?: IsoBuild;
   keysBuildDelay?: number;
+  /** With keysVariant 'slot': what stands at the end of the road, and the slot's size class. */
+  keysSlot?: ReactNode;
+  slotKind?: SlotKind;
+  /** With keysVariant 'slot': the label over the slot (defaults to "Keys"). */
+  keysLabel?: string;
 };
 
 /**
- * The Road: Today → Keys with milestone markers placed proportionally by month. The track draws in;
- * each marker pops in as the line reaches it; markers follow lever changes with spring.gentle.
+ * The Road: Today → Keys with milestone signposts placed proportionally by month. An illustrated path: a
+ * stone slab with a lit top surface, a darker front face and a soft shadow; the stretch to the ready date is
+ * paved pine; each milestone is a signpost that springs up as the drawing road reaches it; Keys is a brass
+ * medallion, the small house, or a slot for the caller's object (the 3D house) where the road ends.
+ * Markers follow lever changes with spring.gentle; nothing in it moves on its own.
  */
-export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, entrance = 'session', entranceDelay = 0, drawDuration = dur.long, drawEase = 'out', size = 'md', highlight = [], vtName, className = '', progressTo, keysGlow = 0, trackDrawn = false, keysAt, keysVariant = 'dot', keysBuild = 'none', keysBuildDelay }: RoadProps) {
+export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, entrance = 'session', entranceDelay = 0, drawDuration = dur.long, drawEase = 'out', size = 'md', highlight = [], vtName, className = '', progressTo, keysGlow = 0, trackDrawn = false, keysAt, keysVariant = 'dot', keysBuild = 'none', keysBuildDelay, keysSlot, slotKind = 'house', keysLabel }: RoadProps) {
   const { t, lang } = useLang();
+  const uid = `rd${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+  const reduce = useReducedMotion();
   const g0 = GEOM[size];
-  // A house marker is taller than a dot: add room above the track for the house and its "Keys" label.
-  const houseExtra = keysVariant === 'house' ? Math.max(0, Math.ceil(g0.keysR * 3.8 * 0.98 + 8 + g0.font - g0.trackY)) : 0;
-  const g = houseExtra ? { ...g0, trackY: g0.trackY + houseExtra, h: g0.h + houseExtra } : g0;
   const wrapRef = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(MIN_W);
   const [overflows, setOverflows] = useState(false);
   // Nothing is drawn until the real width is known, so markers never slide from a fallback layout.
   const [measured, setMeasured] = useState(false);
+  const slot = keysVariant === 'slot' ? slotBox(slotKind, w) : null;
+  // A house marker is taller than a dot: add room above the track for the house and its label.
+  const houseExtra = keysVariant === 'house' ? Math.max(0, Math.ceil(g0.keysR * 3.8 * 0.98 + 8 + g0.font - g0.trackY)) : 0;
+  const slotTrackY = slot ? Math.max(g0.trackY, Math.ceil(slot.ay + 2 + g0.font * 0.75 - slot.labelGap)) : 0;
+  const g = houseExtra
+    ? { ...g0, trackY: g0.trackY + houseExtra, h: g0.h + houseExtra }
+    : slot
+      ? { ...g0, trackY: slotTrackY, h: Math.max(slotTrackY + g0.h - g0.trackY, slotTrackY + slot.sh - slot.ay + 4) }
+      : g0;
   // Entrance delays apply only during the first draw; later changes (sliders, family switch) respond at once.
   const [entranceOver, setEntranceOver] = useState(false);
   const [active, setActive] = useState<string | null>(null);
@@ -328,140 +453,252 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
   const keysMonth = result.milestones.find((m) => m.key === 'keys')?.month ?? 9;
   // Domain rounds up to 6 months so markers glide rather than rescale wildly.
   const maxMonth = maxMonthFor(keysMonth);
+  const reserve = slot?.reserve ?? 0;
+  const usable = w - PAD * 2 - reserve;
+  const span = w - PAD * 2; // the road path's full length
   const collectionAmount = result.blockers.find((b) => b.key === 'collections')?.text.match(/\$[\d,]+/)?.[0] ?? '';
   const ms: Milestone[] = result.milestones.map((m) => ({
     ...m,
     label: t(`road.labels.${m.key}`),
     action: m.key === 'credit' && m.month === 0 ? t('road.actions.creditGood') : t(`road.actions.${m.key}`, { amount: m.key === 'savings' ? money(result.downPaymentTarget, lang) : collectionAmount }),
   }));
-  const placed = useMemo(() => placeMarkers(ms, maxMonth, w), [ms, maxMonth, w]);
+  const placed = useMemo(() => placeMarkers(ms, maxMonth, w, reserve), [ms, maxMonth, w, reserve]);
   const joinText = (labels: string[]) =>
     labels.length === 1 ? labels[0] : labels.length === 2 ? `${labels[0]} + ${labels[1].charAt(0).toLowerCase()}${labels[1].slice(1)}` : `${labels[0]} + ${t('road.more', { n: labels.length - 1 })}`;
   const todayLabel = t('result.today');
   // Keys always keeps its own label: it's the brass marker the levers move.
   const keysX = placed.find((p) => p.key === 'keys')?.x ?? w;
   const houseHalf = keysVariant === 'house' ? (g.keysR * 3.8) / 2 + 6 : 0;
+  const ownKeysLabel = keysVariant === 'house' || keysVariant === 'slot';
+  const blocks = useMemo<{ above: Span; below: Span }>(() => {
+    if (houseHalf) return { above: [keysX - houseHalf, keysX + houseHalf], below: null };
+    // the slot covers the space above the road; the 3D house's plinth also dips below it right of Keys
+    if (slot) return { above: [keysX - slot.ax - 4, keysX - slot.ax + slot.sw], below: slotKind === 'house' ? [keysX - 4, keysX - slot.ax + slot.sw] : null };
+    return { above: null, below: null };
+  }, [houseHalf, slot?.ax, slot?.sw, slotKind, keysX]); // eslint-disable-line react-hooks/exhaustive-deps
   const clusters = useMemo(
-    // With the house marker, Keys is labelled above its roof (below), so it leaves the label lanes entirely.
-    () => layoutLabels(houseHalf ? placed.filter((p) => p.key !== 'keys') : placed, w, g.charW, todayLabel.length * g.charW, joinText, [...highlight, 'keys'], houseHalf ? [keysX - houseHalf, keysX + houseHalf] : null),
-    [placed, w, g.charW, todayLabel, lang, highlight.join(), houseHalf, keysX], // eslint-disable-line react-hooks/exhaustive-deps
+    // With a house at Keys, Keys is labelled above it, so it leaves the label lanes entirely.
+    () => layoutLabels(ownKeysLabel ? placed.filter((p) => p.key !== 'keys') : placed, w, g.charW, todayLabel.length * g.charW, joinText, [...highlight, 'keys'], blocks),
+    [placed, w, g.charW, todayLabel, lang, highlight.join(), ownKeysLabel, blocks], // eslint-disable-line react-hooks/exhaustive-deps
   );
-  const usable = w - PAD * 2;
-  const curX = PAD + (Math.min(elapsed, maxMonth) / maxMonth) * usable;
+  const xAt = (month: number) => PAD + (Math.min(Math.max(month, 0), maxMonth) / maxMonth) * usable;
+  const curX = xAt(elapsed);
   const activeM = placed.find((p) => p.key === active);
   const curve = CURVES[drawEase];
-  // A marker pops in when the drawing line reaches it.
-  const reachDelay = (x: number) => entranceDelay + drawDuration * curve.timeFor(Math.min(1, Math.max(0, (x - PAD) / usable)));
+  // The road ends at Keys when something stands there; otherwise it runs the full width.
+  const endX = slot ? keysX : w - PAD;
+  // A marker pops in when the drawing road reaches it.
+  const reachDelay = (x: number) => entranceDelay + drawDuration * curve.timeFor(Math.min(1, Math.max(0, (x - PAD) / Math.max(1, endX - PAD))));
+  const drawT = { duration: drawDuration, ease: drawEase === 'inOut' ? ease.inOut : ease.out, delay: entranceDelay };
+
+  // ---- road geometry as motion values: the draw-in, where the road ends, how far the pine paving reaches ----
+  const drawIn = play && !trackDrawn && !reduce;
+  const draw = useMotionValue(drawIn ? 0 : 1);
+  useEffect(() => {
+    if (!measured || !drawIn) return;
+    const c = animate(draw, 1, drawT);
+    return () => c.stop();
+  }, [measured]); // eslint-disable-line react-hooks/exhaustive-deps
+  const endFrac = Math.min(1, Math.max(0, (endX - PAD) / span));
+  // a new width (first measure, resize) places things at once; a new month glides
+  const lastW = useRef(0);
+  const resized = lastW.current !== w;
+  useEffect(() => {
+    lastW.current = w;
+  });
+  const end = useSpring(endFrac, spring.gentle);
+  useEffect(() => {
+    if (reduce || !entranceOver || resized) end.jump(endFrac);
+    else end.set(endFrac);
+  }, [endFrac, end, reduce, entranceOver]); // eslint-disable-line react-hooks/exhaustive-deps
+  const roadLen = useTransform(() => draw.get() * end.get());
+  const progFrac = progressTo === undefined ? 0 : (xAt(progressTo) - PAD) / span;
+  const prog = useMotionValue(play && !reduce ? 0 : progFrac);
+  const progStarted = useRef(false);
+  useEffect(() => {
+    if (!measured || progressTo === undefined) return;
+    // the first fill draws with the road; later changes glide with spring.gentle (keeping their velocity);
+    // a new width places it at once
+    const first = play && !progStarted.current;
+    progStarted.current = true;
+    if (reduce || (!first && resized)) {
+      prog.jump(progFrac);
+      return;
+    }
+    const c = animate(prog, progFrac, first && !entranceOver ? drawT : spring.gentle);
+    return () => c.stop();
+  }, [progFrac, measured]); // eslint-disable-line react-hooks/exhaustive-deps
+  const slotX = useSpring(keysX - (slot?.ax ?? 0), spring.gentle);
+  useEffect(() => {
+    const to = keysX - (slot?.ax ?? 0);
+    if (reduce || !measured || resized) slotX.jump(to);
+    else slotX.set(to);
+  }, [keysX, slot?.ax, slotX, reduce, measured]); // eslint-disable-line react-hooks/exhaustive-deps
+  const slotLabel = keysLabel ?? t('road.labels.keys');
+  const slotLabelW = slotLabel.length * g.charW;
+  const slotLabelX = useTransform(slotX, (sx) => Math.min(Math.max(sx + (slot?.sw ?? 0) / 2 - slotLabelW / 2, 2), w - 2 - slotLabelW));
+
+  const ty = g.trackY;
+  const d = (y: number) => `M${PAD} ${y}H${w - PAD}`;
+  const surfTop = ty - g.surf / 2;
+  const roadLayer = (y: number, stroke: string, width: number, len: typeof roadLen, extra: Record<string, unknown> = {}) => (
+    <motion.path d={d(y)} fill="none" stroke={stroke} strokeWidth={width} strokeLinecap="round" style={{ pathLength: len }} {...extra} />
+  );
+  // the highlight along the far edge stays inside the rounded ends
+  const edgeLight = (stroke: string, len: typeof roadLen, opacity: number) => (
+    <motion.path d={`M${PAD + g.surf / 2} ${surfTop + 1.2}H${w - PAD - g.surf / 2}`} fill="none" stroke={stroke} strokeWidth={1} style={{ pathLength: len }} opacity={opacity} />
+  );
 
   return (
     <div className={`relative ${className}`} style={vtName ? { viewTransitionName: vtName } : undefined}>
-      <div ref={wrapRef} className="relative -mx-5 overflow-x-auto px-5 [scrollbar-width:none] sm:mx-0 sm:px-0" tabIndex={-1}>
-        <svg width={w} height={g.h} viewBox={`0 0 ${w} ${g.h}`} role="group" aria-label={t('result.roadTitle')} className="block select-none overflow-visible">
-          {measured && (<>
-          <motion.line
-            x1={PAD}
-            x2={w - PAD}
-            y1={g.trackY}
-            y2={g.trackY}
-            stroke="var(--line)"
-            strokeWidth={g.track}
-            strokeLinecap="round"
-            initial={play && !trackDrawn ? { pathLength: 0 } : false}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: drawDuration, ease: drawEase === 'inOut' ? ease.inOut : ease.out, delay: entranceDelay }}
-          />
-          {progressTo !== undefined && (
-            // the pine fill is the full track with its drawn length animated (pathLength), not its x2
-            <motion.line
-              x1={PAD}
-              x2={w - PAD}
-              y1={g.trackY}
-              y2={g.trackY}
-              stroke="var(--pine)"
-              strokeWidth={g.track}
-              strokeLinecap="round"
-              initial={play ? { pathLength: 0, opacity: 0 } : false}
-              animate={{ pathLength: Math.min(progressTo, maxMonth) / maxMonth, opacity: 1 }}
-              transition={{ pathLength: play && !entranceOver ? { duration: drawDuration, ease: drawEase === 'inOut' ? ease.inOut : ease.out, delay: entranceDelay } : spring.gentle, opacity: { duration: 0.2, delay: play && !entranceOver ? entranceDelay : 0 } }}
-              data-testid="road-progress"
-            />
-          )}
-          {elapsed > 0 && <line x1={PAD} x2={curX} y1={g.trackY} y2={g.trackY} stroke="var(--pine)" strokeWidth={g.track} strokeLinecap="round" />}
-          <motion.text
-            x={PAD}
-            y={g.trackY - g.above}
-            textAnchor="start"
-            style={{ fill: 'var(--ink-2)', fontSize: g.font }}
-            initial={play ? { opacity: 0 } : false}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2, delay: play ? entranceDelay : 0 }}
-          >
-            {todayLabel}
-          </motion.text>
-          {placed.map((m) => (
-            <Marker key={m.key} m={m} g={g} onHover={onHover} delay={play && !entranceOver ? (m.key === 'keys' && keysAt !== undefined ? keysAt : reachDelay(m.x)) : 0} play={play} highlighted={highlight.includes(m.key)} keysGlow={keysGlow} keysHouse={keysVariant === 'house'} keysBuild={keysBuild} keysBuildDelay={keysBuildDelay} active={active === m.key} onActive={setActive} />
-          ))}
-          <AnimatePresence initial={play}>
-            {clusters.map((c) => {
-              const strong = c.keys.includes('keys') || c.keys.some((k) => highlight.includes(k));
-              return (
-                <motion.text
-                  key={c.id}
-                  y={c.side === 'above' ? g.trackY - g.above : g.trackY + g.below}
-                  textAnchor="start"
-                  style={{ fontSize: g.font, fontWeight: c.keys.includes('keys') ? 600 : 400, fill: strong ? 'var(--ink)' : 'var(--ink-2)' }}
-                  initial={{ opacity: 0, x: c.left }}
-                  animate={{ opacity: 1, x: c.left }}
-                  exit={{ opacity: 0, transition: { duration: 0.1 } }}
-                  transition={{ x: spring.gentle, opacity: { duration: 0.2, ease: ease.out, delay: play && !entranceOver ? (c.keys.includes('keys') && keysAt !== undefined ? keysAt + 0.05 : reachDelay(c.x) + 0.05) : 0 } }}
-                  pointerEvents="none"
-                  data-label={c.id}
-                >
-                  {c.text}
-                </motion.text>
-              );
-            })}
-          </AnimatePresence>
-          {houseHalf > 0 && (
-            <motion.text
-              y={g.trackY - g.keysR * 3.8 * 0.98 - 6}
-              textAnchor="middle"
-              style={{ fontSize: g.font, fontWeight: 600, fill: 'var(--ink)' }}
-              initial={play ? { opacity: 0, x: keysX } : { opacity: 1, x: keysX }}
-              animate={{ opacity: 1, x: keysX }}
-              transition={{ x: spring.gentle, opacity: { duration: 0.2, ease: ease.out, delay: play && !entranceOver ? (keysAt ?? reachDelay(keysX)) + 0.1 : 0 } }}
-              pointerEvents="none"
-              data-label="keys"
-            >
-              {t('road.labels.keys')}
-            </motion.text>
-          )}
-          <motion.circle cx={curX} cy={g.trackY} r={g.r - 1} fill="var(--brass)" initial={play ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: dur.short, delay: play ? entranceDelay : 0 }} />
-          </>)}
-        </svg>
-        <AnimatePresence>
-          {activeM && (
-            <motion.div
-              key="tip"
-              role="tooltip"
-              initial={{ opacity: 0, scale: 0.94 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.1 } }}
-              transition={{ duration: 0.16, ease: ease.out }}
-              className="pointer-events-none absolute z-10 w-[240px] rounded-[8px] bg-ink px-3 py-2 text-[13px] leading-[18px] text-white"
-              style={{
-                top: g.trackY + g.keysR + 8,
-                left: Math.min(Math.max(activeM.x - 120, 8), w - 248),
-                transformOrigin: `${activeM.x - Math.min(Math.max(activeM.x - 120, 8), w - 248)}px -8px`,
-              }}
-            >
-              <span className="tnum block font-medium">
-                {activeM.label} · {monthName(addMonths(today, activeM.month), lang, true)}
-              </span>
-              <span className="mt-1 block text-white/85">{activeM.action}</span>
+      {/* scrolls sideways only when narrower than the Road's minimum; otherwise the tooltip may hang below it */}
+      <div ref={wrapRef} className={`relative -mx-5 px-5 [scrollbar-width:none] sm:mx-0 sm:px-0 ${overflows ? 'overflow-x-auto' : ''}`} tabIndex={-1}>
+        <div className="relative" style={{ width: w, height: g.h }}>
+          {/* the object at the end of the road sits under the drawing, so the road's end and the signposts read in front of it */}
+          {measured && slot && (
+            <motion.div className="pointer-events-none absolute left-0" style={{ top: ty - slot.ay, width: slot.sw, height: slot.sh, x: slotX }} data-testid="keys-house">
+              {keysSlot}
             </motion.div>
           )}
-        </AnimatePresence>
+          <svg width={w} height={g.h} viewBox={`0 0 ${w} ${g.h}`} role="group" aria-label={t('result.roadTitle')} className="relative block select-none overflow-visible">
+            <defs>
+              <linearGradient id={`${uid}-surf`} gradientUnits="userSpaceOnUse" x1="0" y1={surfTop} x2="0" y2={surfTop + g.surf}>
+                <stop offset="0" stopColor={mix(P.stone, P.trim, 0.55)} />
+                <stop offset="1" stopColor={P.stone} />
+              </linearGradient>
+              <linearGradient id={`${uid}-pave`} gradientUnits="userSpaceOnUse" x1="0" y1={surfTop} x2="0" y2={surfTop + g.surf}>
+                <stop offset="0" stopColor={P.pineLight} />
+                <stop offset="1" stopColor={P.pine} />
+              </linearGradient>
+              <linearGradient id={`${uid}-shadow`} gradientUnits="userSpaceOnUse" x1="0" y1={ty + g.surf / 2 + g.edge - 2} x2="0" y2={ty + g.surf / 2 + g.edge + 5}>
+                <stop offset="0" stopColor={P.shadow} />
+                <stop offset="1" stopColor={P.shadow} stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id={`${uid}-sign`} x1="0" y1="0" x2="0.4" y2="1">
+                <stop offset="0" stopColor={P.pineLight} />
+                <stop offset="1" stopColor={P.pine} />
+              </linearGradient>
+              <linearGradient id={`${uid}-brass`} x1="0.2" y1="0" x2="0.8" y2="1">
+                <stop offset="0" stopColor={P.honey} />
+                <stop offset="1" stopColor={P.brass} />
+              </linearGradient>
+            </defs>
+            {measured && (<>
+            {/* the track's centre line (the landing opening's ground line lands on it) */}
+            <line x1={PAD} x2={w - PAD} y1={ty} y2={ty} stroke="none" />
+            {/* the road: soft shadow, front face, lit top surface, a highlight along its far edge */}
+            {roadLayer(ty + g.surf / 2 + g.edge + 1, `url(#${uid}-shadow)`, 7, roadLen, { transform: 'translate(2 0)' })}
+            {roadLayer(ty + g.edge, P.stoneShade, g.surf, roadLen)}
+            {roadLayer(ty, `url(#${uid}-surf)`, g.surf, roadLen)}
+            {edgeLight(P.trim, roadLen, 0.7)}
+            {/* months already behind the family (plan page) */}
+            {elapsed > 0 && (
+              <g>
+                <path d={`M${PAD} ${ty + g.edge}H${curX}`} stroke={P.pineDark} strokeWidth={g.surf} strokeLinecap="round" />
+                <path d={`M${PAD} ${ty}H${curX}`} stroke={`url(#${uid}-pave)`} strokeWidth={g.surf} strokeLinecap="round" />
+              </g>
+            )}
+            {progressTo !== undefined && (
+              // the pine paving is the full road with its drawn length animated (pathLength), never its width
+              <motion.g initial={play ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: 0.2, delay: play && !entranceOver ? entranceDelay : 0 }}>
+                {roadLayer(ty + g.edge, P.pineDark, g.surf, prog)}
+                {roadLayer(ty, `url(#${uid}-pave)`, g.surf, prog, { 'data-testid': 'road-progress' })}
+                {edgeLight(P.pineLighter, prog, 0.55)}
+              </motion.g>
+            )}
+            <motion.text
+              x={PAD}
+              y={ty - g.above}
+              textAnchor="start"
+              style={{ fill: 'var(--ink-2)', fontSize: g.font }}
+              initial={play ? { opacity: 0 } : false}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2, delay: play ? entranceDelay : 0 }}
+            >
+              {todayLabel}
+            </motion.text>
+            {/* "you are here": a brass puck set into the road */}
+            <motion.g style={{ x: curX, y: ty }} initial={play ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: dur.short, delay: play ? entranceDelay : 0 }}>
+              <BrassDisc r={g.r} uid={uid} />
+            </motion.g>
+            {placed.map((m) => (
+              <Marker key={m.key} m={m} g={g} uid={uid} onHover={onHover} delay={play && !entranceOver ? (m.key === 'keys' && keysAt !== undefined ? keysAt : reachDelay(m.x)) : 0} play={play} highlighted={highlight.includes(m.key)} keysGlow={keysGlow} keysKind={keysVariant} keysBuild={keysBuild} keysBuildDelay={keysBuildDelay} slot={slot} active={active === m.key} onActive={setActive} />
+            ))}
+            <AnimatePresence initial={play}>
+              {clusters.map((c) => {
+                const strong = c.keys.includes('keys') || c.keys.some((k) => highlight.includes(k));
+                return (
+                  <motion.text
+                    key={c.id}
+                    y={c.side === 'above' ? ty - g.above : ty + g.below}
+                    textAnchor="start"
+                    style={{ fontSize: g.font, fontWeight: c.keys.includes('keys') ? 600 : 400, fill: strong ? 'var(--ink)' : 'var(--ink-2)' }}
+                    initial={{ opacity: 0, x: c.left }}
+                    animate={{ opacity: 1, x: c.left }}
+                    exit={{ opacity: 0, transition: { duration: 0.1 } }}
+                    transition={{ x: spring.gentle, opacity: { duration: 0.2, ease: ease.out, delay: play && !entranceOver ? (c.keys.includes('keys') && keysAt !== undefined ? keysAt + 0.05 : reachDelay(c.x) + 0.05) : 0 } }}
+                    pointerEvents="none"
+                    data-label={c.id}
+                  >
+                    {c.text}
+                  </motion.text>
+                );
+              })}
+            </AnimatePresence>
+            {houseHalf > 0 && (
+              <motion.text
+                y={ty - g.keysR * 3.8 * 0.98 - 6}
+                textAnchor="middle"
+                style={{ fontSize: g.font, fontWeight: 600, fill: 'var(--ink)' }}
+                initial={play ? { opacity: 0, x: keysX } : { opacity: 1, x: keysX }}
+                animate={{ opacity: 1, x: keysX }}
+                transition={{ x: spring.gentle, opacity: { duration: 0.2, ease: ease.out, delay: play && !entranceOver ? (keysAt ?? reachDelay(keysX)) + 0.1 : 0 } }}
+                pointerEvents="none"
+                data-label="keys"
+              >
+                {t('road.labels.keys')}
+              </motion.text>
+            )}
+            {slot && (
+              <motion.text
+                y={ty - slot.ay + slot.labelGap}
+                textAnchor="start"
+                style={{ x: slotLabelX, fontSize: g.font, fontWeight: 600, fill: 'var(--ink)' }}
+                initial={play ? { opacity: 0 } : false}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2, ease: ease.out, delay: play && !entranceOver ? (keysAt ?? reachDelay(keysX)) + 0.1 : 0 }}
+                pointerEvents="none"
+                data-label="keys"
+              >
+                {slotLabel}
+              </motion.text>
+            )}
+            </>)}
+          </svg>
+          <AnimatePresence>
+            {activeM && (
+              <motion.div
+                key="tip"
+                role="tooltip"
+                initial={{ opacity: 0, scale: 0.94 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.1 } }}
+                transition={{ duration: 0.16, ease: ease.out }}
+                className="pointer-events-none absolute z-10 w-[240px] rounded-[8px] bg-ink px-3 py-2 text-[13px] leading-[18px] text-white"
+                style={{
+                  top: ty + g.keysR + 8,
+                  left: Math.min(Math.max(activeM.x - 120, 8), w - 248),
+                  transformOrigin: `${activeM.x - Math.min(Math.max(activeM.x - 120, 8), w - 248)}px -8px`,
+                }}
+              >
+                <span className="tnum block font-medium">
+                  {activeM.label} · {monthName(addMonths(today, activeM.month), lang, true)}
+                </span>
+                <span className="mt-1 block text-white/85">{activeM.action}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
       {overflows && <div className="pointer-events-none absolute inset-y-0 -right-5 w-10 bg-gradient-to-l from-[var(--surface)] to-transparent" aria-hidden />}
     </div>

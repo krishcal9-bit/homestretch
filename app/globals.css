@@ -325,3 +325,8 @@ html.landing-snap.landing-snap-off { scroll-snap-type: none; }
   .la-float, .la-float-shadow, .la-bar, .la-bob, .la-slew, .la-walk, .la-rise, .la-in, .la-show, .la-tree { animation: none; }
   .la-light { opacity: 1; animation: none; }
 }
+/* r5:result-art */
+/* "Ten years from now": the lines stay hidden until they draw (useLineDraw); their end labels arrive after. */
+[data-draw="pending"] .recharts-line-curve { opacity: 0; }
+[data-draw] .recharts-label-list { transition: opacity 240ms ease; }
+[data-draw="pending"] .recharts-label-list, [data-draw="drawing"] .recharts-label-list { opacity: 0; }

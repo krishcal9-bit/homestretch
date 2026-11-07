@@ -1,10 +1,14 @@
 'use client';
+import { useReducedMotion } from 'motion/react';
 import { useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Legend, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { addMonths, monthsUntil, simulateProgram, type Program } from '@/lib/engine';
 import { money, monthName } from '@/lib/format';
 import { dur } from '@/lib/motion';
+
+// Bars grow from the baseline on load and morph when a program is toggled: 300ms, ease-out (staff ≤ 300ms).
+const BAR_MS = dur.short * 1500;
 import { homeTitle } from '@/lib/staffLogic';
 import type { Home, Profile } from '@/lib/types';
 
@@ -22,6 +26,7 @@ function median(xs: number[]) {
 
 export function Insights({ homes, families }: { homes: Home[]; families: Fam[] }) {
   const [today] = useState(() => new Date());
+  const reduce = !!useReducedMotion();
   const [on, setOn] = useState({ matched: false, counseling: false, grant: false });
   const [vals, setVals] = useState({ matched: 100, counseling: 3, grant: 2000 });
   const program: Program = {
@@ -111,8 +116,8 @@ export function Insights({ homes, families }: { homes: Home[]; families: Fam[] }
                   label={{ value: homeTitle(h), position: 'top', fill: 'var(--ink-2)', fontSize: 11 }}
                 />
               ))}
-              <Bar dataKey="baseline" fill={anyOn ? BASE : PINE} radius={[4, 4, 0, 0]} animationDuration={dur.medium * 1000} isAnimationActive />
-              <Bar dataKey="projected" fill={PINE} radius={[4, 4, 0, 0]} animationDuration={dur.medium * 1000} isAnimationActive hide={!anyOn} />
+              <Bar dataKey="baseline" fill={anyOn ? BASE : PINE} radius={[4, 4, 0, 0]} animationDuration={BAR_MS} animationEasing="ease-out" isAnimationActive={!reduce} />
+              <Bar dataKey="projected" fill={PINE} radius={[4, 4, 0, 0]} animationDuration={BAR_MS} animationEasing="ease-out" isAnimationActive={!reduce} hide={!anyOn} />
             </BarChart>
           </ResponsiveContainer>
         </div>

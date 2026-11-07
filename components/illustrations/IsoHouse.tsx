@@ -1,6 +1,6 @@
 'use client';
 import { motion, useReducedMotion } from 'motion/react';
-import { useId } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { ease } from '@/lib/motion';
 
 /**
@@ -57,6 +57,13 @@ export function IsoHouse({
   const animate = build !== 'none' && !reduce;
   const k = build === 'none' ? 1 : SCALE[build];
   const at = (t: number) => delay + t * k;
+  // Once the build has finished, the window lights straight away (only the first light waits for the build).
+  const [built, setBuilt] = useState(!animate);
+  useEffect(() => {
+    if (!animate) return;
+    const id = setTimeout(() => setBuilt(true), (delay + 1.25 * k) * 1000);
+    return () => clearTimeout(id);
+  }, [animate, delay, k]);
   const draw = (t: number, d = 0.25) => (animate ? { initial: { pathLength: 0, opacity: 0 }, animate: { pathLength: 1, opacity: 1 }, transition: { pathLength: { duration: d * k, ease: ease.out, delay: at(t) }, opacity: { duration: 0.01, delay: at(t) } } } : {});
   const sw = { stroke, strokeWidth, fill: 'none', strokeLinejoin: 'round' as const, strokeLinecap: 'round' as const, vectorEffect: 'non-scaling-stroke' as const };
   const d = isoPaths.door;
@@ -108,7 +115,7 @@ export function IsoHouse({
       {/* windows draw; the window light turns on with a soft brass glow */}
       <motion.rect x={w.x} y={w.y} width={w.w} height={w.h} {...sw} {...draw(1.0, 0.15)} />
       <motion.path d={isoPaths.sideWin} {...sw} {...draw(1.05, 0.15)} />
-      <motion.g initial={animate ? { opacity: 0 } : false} animate={{ opacity: lit ? 1 : 0 }} transition={{ duration: lit ? 0.3 : 0.4, ease: ease.out, delay: lit && animate ? at(1.2) : 0 }}>
+      <motion.g initial={animate ? { opacity: 0 } : false} animate={{ opacity: lit ? 1 : 0 }} transition={{ duration: lit ? 0.3 : 0.4, ease: ease.out, delay: lit && animate && !built ? at(1.2) : 0 }}>
         <rect x={w.x - 2} y={w.y - 2} width={w.w + 4} height={w.h + 4} fill="var(--brass)" opacity={0.55} filter={`url(#g${glowId})`} />
         <rect x={w.x} y={w.y} width={w.w} height={w.h} fill="var(--brass)" />
       </motion.g>

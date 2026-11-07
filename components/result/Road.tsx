@@ -1,5 +1,5 @@
 'use client';
-import { AnimatePresence, motion, useReducedMotion, useSpring } from 'motion/react';
+import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useSpring } from 'motion/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { dur, ease, spring } from '@/lib/motion';
 import { useLang } from '@/lib/i18n';
@@ -48,10 +48,10 @@ const CURVES = { out: bezier(...ease.out), inOut: bezier(...ease.inOut) };
 type Placed = Milestone & { x: number };
 type Cluster = { id: string; keys: MilestoneKey[]; x: number; text: string; side: 'above' | 'below'; left: number; width: number };
 
-function placeMarkers(ms: Milestone[], maxMonth: number, w: number): Placed[] {
+function placeMarkers<T extends { month: number }>(ms: T[], maxMonth: number, w: number): (T & { x: number })[] {
   const usable = w - PAD * 2;
   const sorted = [...ms].sort((a, b) => a.month - b.month);
-  const placed: Placed[] = [];
+  const placed: (T & { x: number })[] = [];
   let lastX = -Infinity;
   for (const m of sorted) {
     let x = PAD + (Math.min(m.month, maxMonth) / maxMonth) * usable;
@@ -61,6 +61,26 @@ function placeMarkers(ms: Milestone[], maxMonth: number, w: number): Placed[] {
   }
   if (lastX > w - PAD) for (let i = placed.length - 1, edge = w - PAD; i >= 0; i--, edge -= MIN_MARKER_GAP) placed[i].x = Math.min(placed[i].x, edge);
   return placed;
+}
+
+const maxMonthFor = (keysMonth: number) => Math.max(12, Math.ceil((keysMonth + 1) / 6) * 6);
+export const ROAD_MIN_W = MIN_W;
+
+/** Where the Road puts the Keys marker (px from its left edge) at a given width. */
+export function keysXAt(result: ReadinessResult, width: number): number {
+  const w = Math.max(MIN_W, Math.round(width));
+  const keysMonth = result.milestones.find((m) => m.key === 'keys')?.month ?? 9;
+  return placeMarkers(result.milestones, maxMonthFor(keysMonth), w).find((m) => m.key === 'keys')?.x ?? w - PAD;
+}
+
+/**
+ * When the Road's drawing line reaches the Keys marker (seconds from mount) at a given width, from the
+ * Road's own placement. Lets a screen time other things (its date, the Keys house build) to the Road.
+ */
+export function keysReachAt(result: ReadinessResult, drawDuration: number, width: number, drawEase: 'out' | 'inOut' = 'out', entranceDelay = 0): number {
+  const w = Math.max(MIN_W, Math.round(width));
+  const x = keysXAt(result, width);
+  return entranceDelay + drawDuration * CURVES[drawEase].timeFor(Math.min(1, Math.max(0, (x - PAD) / (w - PAD * 2))));
 }
 
 /**
@@ -135,7 +155,7 @@ function KeyGlyph({ s = 1 }: { s?: number }) {
   );
 }
 
-function Marker({ m, g, delay, play, active, highlighted, keysGlow = 0, keysHouse = false, keysBuild = 'none', keysBuildDelay = 0, onActive, onHover }: { m: Placed; g: (typeof GEOM)[Size]; delay: number; play: boolean; active: boolean; highlighted: boolean; keysGlow?: number; keysHouse?: boolean; keysBuild?: IsoBuild; keysBuildDelay?: number; onActive: (k: string | null) => void; onHover: (k: string | null) => void }) {
+function Marker({ m, g, delay, play, active, highlighted, keysGlow = 0, keysHouse = false, keysBuild = 'none', keysBuildDelay, onActive, onHover }: { m: Placed; g: (typeof GEOM)[Size]; delay: number; play: boolean; active: boolean; highlighted: boolean; keysGlow?: number; keysHouse?: boolean; keysBuild?: IsoBuild; keysBuildDelay?: number; onActive: (k: string | null) => void; onHover: (k: string | null) => void }) {
   // The house's window lights for a beat when the date gets earlier.
   const [lit, setLit] = useState(false);
   useEffect(() => {
@@ -144,14 +164,15 @@ function Marker({ m, g, delay, play, active, highlighted, keysGlow = 0, keysHous
     const id = setTimeout(() => setLit(false), 1400);
     return () => clearTimeout(id);
   }, [keysGlow]);
-  // A tiny 1.1× pulse when this milestone becomes reachable earlier.
-  const prevMonth = useRef(m.month);
-  const [pulse, setPulse] = useState(0);
-  useEffect(() => {
-    if (m.month < prevMonth.current) setPulse((p) => p + 1);
-    prevMonth.current = m.month;
-  }, [m.month]);
+  // A tiny 1.1× pulse when this milestone becomes reachable earlier — animated in place, so the marker
+  // (and the Keys house inside it) is never remounted while a slider is dragged.
   const reduce = useReducedMotion();
+  const prevMonth = useRef(m.month);
+  const pulse = useMotionValue(1);
+  useEffect(() => {
+    if (m.month < prevMonth.current && !reduce) animate(pulse, [1, 1.1, 1], { duration: 0.28, ease: ease.out });
+    prevMonth.current = m.month;
+  }, [m.month, pulse, reduce]);
   const x = useSpring(m.x, spring.gentle);
   useEffect(() => {
     if (reduce) x.jump(m.x);
@@ -160,7 +181,7 @@ function Marker({ m, g, delay, play, active, highlighted, keysGlow = 0, keysHous
   const isKeys = m.key === 'keys';
   return (
     <motion.g style={{ x, y: g.trackY }}>
-      <motion.g key={pulse} initial={false} animate={pulse ? { scale: [1, 1.1, 1] } : undefined} transition={{ duration: 0.28, ease: ease.out }}>
+      <motion.g style={{ scale: pulse }}>
       <motion.g
         initial={play ? { scale: 0.9, opacity: 0 } : false}
         animate={{ scale: highlighted ? 1.15 : 1, opacity: 1 }}
@@ -184,7 +205,7 @@ function Marker({ m, g, delay, play, active, highlighted, keysGlow = 0, keysHous
         {isKeys && keysHouse ? (
           // the small isometric house from the intro, standing on the road
           <g transform={`translate(${-(g.keysR * 3.8) / 2} ${-isoPx(g.keysR * 3.8, 0, 0).y})`} pointerEvents="none" data-testid="keys-house">
-            <IsoHouse size={g.keysR * 3.8} build={keysBuild} delay={keysBuildDelay} lit={lit} strokeWidth={2.2} />
+            <IsoHouse size={g.keysR * 3.8} build={keysBuild} delay={keysBuildDelay ?? delay} lit={lit} strokeWidth={2.2} />
           </g>
         ) : isKeys ? (
           <g pointerEvents="none">
@@ -238,7 +259,7 @@ type RoadProps = {
  * The Road: Today → Keys with milestone markers placed proportionally by month. The track draws in;
  * each marker pops in as the line reaches it; markers follow lever changes with spring.gentle.
  */
-export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, entrance = 'session', entranceDelay = 0, drawDuration = dur.long, drawEase = 'out', size = 'md', highlight = [], vtName, className = '', progressTo, keysGlow = 0, trackDrawn = false, keysAt, keysVariant = 'dot', keysBuild = 'none', keysBuildDelay = 0 }: RoadProps) {
+export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, entrance = 'session', entranceDelay = 0, drawDuration = dur.long, drawEase = 'out', size = 'md', highlight = [], vtName, className = '', progressTo, keysGlow = 0, trackDrawn = false, keysAt, keysVariant = 'dot', keysBuild = 'none', keysBuildDelay }: RoadProps) {
   const { t, lang } = useLang();
   const g0 = GEOM[size];
   // A house marker is taller than a dot: add room above the track for the house and its "Keys" label.
@@ -306,7 +327,7 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
 
   const keysMonth = result.milestones.find((m) => m.key === 'keys')?.month ?? 9;
   // Domain rounds up to 6 months so markers glide rather than rescale wildly.
-  const maxMonth = Math.max(12, Math.ceil((keysMonth + 1) / 6) * 6);
+  const maxMonth = maxMonthFor(keysMonth);
   const collectionAmount = result.blockers.find((b) => b.key === 'collections')?.text.match(/\$[\d,]+/)?.[0] ?? '';
   const ms: Milestone[] = result.milestones.map((m) => ({
     ...m,
@@ -324,7 +345,7 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
     // With the house marker, Keys is labelled above its roof (below), so it leaves the label lanes entirely.
     () => layoutLabels(houseHalf ? placed.filter((p) => p.key !== 'keys') : placed, w, g.charW, todayLabel.length * g.charW, joinText, [...highlight, 'keys'], houseHalf ? [keysX - houseHalf, keysX + houseHalf] : null),
     [placed, w, g.charW, todayLabel, lang, highlight.join(), houseHalf, keysX], // eslint-disable-line react-hooks/exhaustive-deps
-  ); // eslint-disable-line react-hooks/exhaustive-deps
+  );
   const usable = w - PAD * 2;
   const curX = PAD + (Math.min(elapsed, maxMonth) / maxMonth) * usable;
   const activeM = placed.find((p) => p.key === active);

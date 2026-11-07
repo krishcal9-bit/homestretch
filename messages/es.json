@@ -347,8 +347,8 @@
     }
   },
   "landing": {
-    "headline": "Vea exactamente cuándo su familia puede recibir las llaves.",
-    "sub": "Responda unas preguntas y obtenga una fecha, los pasos que la acercan y la casa de Habitat que le corresponde.",
+    "headline": "Consiga las llaves. Conserve su hogar.",
+    "sub": "HomeStretch prepara a su familia para la hipoteca y luego ve venir los cambios en su pago con meses de anticipación para ayudarle a conservar su hogar.",
     "cta": "Encontrar mi fecha",
     "how": "Vea cómo funciona",
     "reyes": "Familia Reyes",
@@ -401,7 +401,12 @@
     "nav4": "100 casas",
     "arrowNext": "Siguiente sección",
     "arrowTop": "Volver al inicio",
-    "mapReady": "{n} listas"
+    "mapReady": "{n} listas",
+    "doorsLabel": "¿En qué parte del camino está?",
+    "doorReady": "Me preparo para una casa de Habitat",
+    "doorReadySub": "Vea cuándo puede recibir las llaves",
+    "doorKeep": "Tengo una casa de Habitat",
+    "doorKeepSub": "Vea su pago antes de que cambie"
   },
   "intakeArt": {
     "rentShare": "La renta es el {pct} de su ingreso",
@@ -419,7 +424,7 @@
     "more": "+{n} más"
   },
   "brand": {
-    "tagline": "Su camino hacia un hogar de Habitat."
+    "tagline": "Consiga las llaves. Conserve su hogar."
   },
   "landingArt": {
     "grossPay": "Pago bruto"

@@ -347,8 +347,8 @@
     }
   },
   "landing": {
-    "headline": "See exactly when your family can get the keys.",
-    "sub": "Answer a few questions and get a date, the steps that bring it closer, and the Habitat home it fits.",
+    "headline": "Get the keys. Keep the keys.",
+    "sub": "HomeStretch gets your family mortgage-ready, then sees payment changes coming months ahead and helps you keep your home.",
     "cta": "Find my date",
     "how": "See how it works",
     "reyes": "Reyes family",
@@ -401,7 +401,12 @@
     "nav4": "100 homes",
     "arrowNext": "Next section",
     "arrowTop": "Back to the top",
-    "mapReady": "{n} ready"
+    "mapReady": "{n} ready",
+    "doorsLabel": "Where are you on the way home?",
+    "doorReady": "I'm working toward a Habitat home",
+    "doorReadySub": "See when you can get the keys",
+    "doorKeep": "I own a Habitat home",
+    "doorKeepSub": "See your payment before it changes"
   },
   "intakeArt": {
     "rentShare": "Rent is {pct} of your income",
@@ -419,7 +424,7 @@
     "more": "+{n} more"
   },
   "brand": {
-    "tagline": "Your road to a Habitat home."
+    "tagline": "Get the keys. Keep the keys."
   },
   "landingArt": {
     "grossPay": "Gross pay"

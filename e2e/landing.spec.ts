@@ -34,15 +34,10 @@ test('Down arrow moves section by section; the last arrow returns to the top', a
   expect(await page.evaluate(() => Math.round(window.scrollY))).toBeLessThan(4);
 });
 
-test('dragging the sample slider shows how much sooner, and the ticker shows sample families', async ({ page }) => {
+test('the hero offers two doors: keeping a home and getting one', async ({ page }) => {
   await page.goto('/?nointro');
-  await expect(page.getByTestId('ticker')).toContainText('Sample families');
-  await page.waitForTimeout(1800);
-  const s = page.locator('#sample-extra');
-  const box = (await s.boundingBox())!;
-  await page.mouse.move(box.x + box.width * 0.375, box.y + box.height / 2);
-  await page.mouse.down();
-  for (let i = 1; i <= 15; i++) await page.mouse.move(box.x + box.width * (0.375 + (0.6 * i) / 15), box.y + box.height / 2);
-  await page.mouse.up();
-  await expect(page.getByTestId('delta-pill')).toContainText('sooner');
+  await expect(page.getByTestId('door-keep')).toHaveAttribute('href', '/keep');
+  await expect(page.getByTestId('find-my-date')).toHaveAttribute('href', '/start');
+  await page.getByTestId('find-my-date').click();
+  await page.waitForURL('**/start');
 });

@@ -1,6 +1,6 @@
 'use client';
 import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react';
-import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { dur, ease, spring } from '@/lib/motion';
 import { useLang } from '@/lib/i18n';
 import { addMonths } from '@/lib/engine';
@@ -128,7 +128,7 @@ export function keysReachAt(result: ReadinessResult, drawDuration: number, width
  * below the track; if a label would still collide with its same-side neighbour (or with "Today", or with
  * the space a house at Keys occupies), it flips side or merges with its neighbour, until nothing overlaps.
  */
-function layoutLabels(placed: Placed[], w: number, charW: number, todayW: number, joinText: (labels: string[]) => string, pinned: MilestoneKey[] = [], blocks: { above: Span; below: Span } = { above: null, below: null }): Cluster[] {
+function layoutLabels(placed: Placed[], w: number, charW: number, todayW: number, joinText: (labels: string[]) => string, pinned: MilestoneKey[] = [], blocks: { above: Span; below: Span } = { above: null, below: null }, plate?: { width: (text: string) => number; todayRight: number }): Cluster[] {
   const blocked = (c: { left: number; width: number; keys: MilestoneKey[] }, side: 'above' | 'below', left = c.left) => {
     const b = blocks[side];
     return !!b && !c.keys.includes('keys') && left < b[1] && left + c.width > b[0];
@@ -136,6 +136,8 @@ function layoutLabels(placed: Placed[], w: number, charW: number, todayW: number
   /** A label that runs into the house may slide left of it instead (still past its neighbour). */
   const placeOn = (c: Cluster, side: 'above' | 'below', after: number): number | null => {
     if (c.left >= after + 8 && !blocked(c, side)) return c.left;
+    // a plate may also slide right of its neighbour (its notch still points at its markers)
+    if (plate && Number.isFinite(after) && !blocked(c, side, after + 8) && after + 8 + c.width <= w - 2) return after + 8;
     const b = blocks[side];
     if (!b || !blocked(c, side)) return null;
     const left = b[0] - 4 - c.width;
@@ -153,14 +155,15 @@ function layoutLabels(placed: Placed[], w: number, charW: number, todayW: number
   const build = (gs: Placed[][]): Cluster[] =>
     gs.map((g, i) => {
       const text = joinText(g.map((m) => m.label));
-      const width = text.length * charW + 4;
+      const width = plate ? plate.width(text) : text.length * charW + 4;
       const x = (g[0].x + g[g.length - 1].x) / 2;
       const left = Math.min(Math.max(x - width / 2, 2), w - 2 - width);
       return { id: g.map((m) => m.key).join('+'), keys: g.map((m) => m.key), x, text, side: i % 2 === 0 ? 'below' : 'above', left, width };
     });
   for (let guard = 0; guard < 12; guard++) {
     const cs = build(groups);
-    const lastRight: Record<'above' | 'below', number> = { above: PAD + todayW + 8, below: -Infinity };
+    // "Today" sits above the road (or, as a plate, in the plates' row below it)
+    const lastRight: Record<'above' | 'below', number> = plate ? { above: -Infinity, below: plate.todayRight } : { above: PAD + todayW + 8, below: -Infinity };
     let conflict = -1;
     for (let i = 0; i < cs.length; i++) {
       const c = cs[i];
@@ -387,7 +390,47 @@ type RoadProps = {
   labelHalo?: string;
   /** With keysVariant 'slot': draw no label over the slot (the object speaks for itself). */
   noSlotLabel?: boolean;
+  /** Hero only: labels as plates in a row below the road (see LabelPlates; the landing street also sets it by context). */
+  labelPlates?: LabelPlates;
 };
+
+/**
+ * Hero only (the landing street): every label is a plate (surface, 8px radius, ink, 13px, tabular numbers)
+ * in one row below the road, its centre `y` px below the track, a small notch pointing up at its marker.
+ * The street sets this through RoadStreetContext (components/landing/scenes/HeroScene.tsx) or the
+ * `labelPlates` prop; without either, the Road draws exactly as on the result and plan pages.
+ */
+export type LabelPlates = { y: number; /** px the plates may run past the Road's right edge (the street goes on) */ room?: number };
+export const RoadStreetContext = createContext<LabelPlates | null>(null);
+const PLATE = { h: 24, r: 8, padX: 10, font: 13, notch: 5 };
+
+/** A label's width at 13px (measured once the font is in; an estimate until then). */
+let measureCtx: CanvasRenderingContext2D | null | undefined;
+function plateTextWidth(text: string, weight: number) {
+  if (measureCtx === undefined) measureCtx = typeof document !== 'undefined' ? document.createElement('canvas').getContext('2d') : null;
+  if (!measureCtx) return text.length * 6.9;
+  measureCtx.font = `${weight} ${PLATE.font}px 'Public Sans', ui-sans-serif, system-ui, sans-serif`;
+  // tabular numbers are a touch wider than proportional ones: round up
+  return Math.ceil(measureCtx.measureText(text).width + 1);
+}
+
+/** A plate: a rounded rectangle with a notch on its top edge at `nx` (both from the plate's left). */
+function platePath(w: number, h: number, nx: number) {
+  const { r, notch: n } = PLATE;
+  const x = Math.min(Math.max(nx, r + n), w - r - n);
+  return `M${r} 0H${x - n}L${x} ${-n}L${x + n} 0H${w - r}A${r} ${r} 0 0 1 ${w} ${r}V${h - r}A${r} ${r} 0 0 1 ${w - r} ${h}H${r}A${r} ${r} 0 0 1 0 ${h - r}V${r}A${r} ${r} 0 0 1 ${r} 0Z`;
+}
+
+function Plate({ w, top, notchX, text, weight }: { w: number; top: number; notchX: number; text: string; weight: number }) {
+  return (
+    <g transform={`translate(0 ${top})`}>
+      <path d={platePath(w, PLATE.h, notchX)} fill="var(--surface)" stroke="var(--line-strong)" strokeWidth={1} />
+      <text x={w / 2} y={PLATE.h / 2 + 4.5} textAnchor="middle" style={{ fontSize: PLATE.font, fontWeight: weight, fill: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>
+        {text}
+      </text>
+    </g>
+  );
+}
 
 /** Where the track runs inside the Road's box (px from its top), for placing a Road on a drawn street. */
 export function roadTrackY(size: 'md' | 'lg', kind: SlotKind, roadWidth: number, slotWidth?: number) {
@@ -403,8 +446,19 @@ export function roadTrackY(size: 'md' | 'lg', kind: SlotKind, roadWidth: number,
  * medallion, the small house, or a slot for the caller's object (the 3D house) where the road ends.
  * Markers follow lever changes with spring.gentle; nothing in it moves on its own.
  */
-export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, entrance = 'session', entranceDelay = 0, drawDuration = dur.long, drawEase = 'out', size = 'md', highlight = [], vtName, className = '', progressTo, keysGlow = 0, trackDrawn = false, keysAt, keysVariant = 'dot', keysBuild = 'none', keysBuildDelay, keysSlot, slotKind = 'house', keysLabel, pinKeys = false, hold = false, slotWidth, labelsAbove = false, labelHalo, noSlotLabel = false }: RoadProps) {
+export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, entrance = 'session', entranceDelay = 0, drawDuration = dur.long, drawEase = 'out', size = 'md', highlight = [], vtName, className = '', progressTo, keysGlow = 0, trackDrawn = false, keysAt, keysVariant = 'dot', keysBuild = 'none', keysBuildDelay, keysSlot, slotKind = 'house', keysLabel, pinKeys = false, hold = false, slotWidth, labelsAbove = false, labelHalo, noSlotLabel = false, labelPlates }: RoadProps) {
   const { t, lang } = useLang();
+  const plates = useContext(RoadStreetContext) ?? labelPlates ?? null;
+  // plates are sized from the real font: measure again once it has loaded
+  const [fontsIn, setFontsIn] = useState(0);
+  useEffect(() => {
+    if (!plates || typeof document === 'undefined' || !document.fonts) return;
+    let live = true;
+    document.fonts.ready.then(() => live && setFontsIn((n) => n + 1));
+    return () => {
+      live = false;
+    };
+  }, [!!plates]); // eslint-disable-line react-hooks/exhaustive-deps
   const uid = `rd${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const reduce = useReducedMotion();
   const g0 = GEOM[size];
@@ -499,18 +553,33 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
   const houseHalf = keysVariant === 'house' ? (g.keysR * 3.8) / 2 + 6 : 0;
   const ownKeysLabel = keysVariant === 'house' || keysVariant === 'slot';
   const blocks = useMemo<{ above: Span; below: Span }>(() => {
+    // plates: one row below the road, clear of the house (it stands above the road)
+    if (plates) return { above: [-1e6, 1e6], below: null };
     if (houseHalf) return { above: [keysX - houseHalf, keysX + houseHalf], below: null };
     // the slot covers the space above the road; the 3D house's plinth also dips below it right of Keys
     const all: Span = labelsAbove ? [-1e6, 1e6] : null;
     if (slot) return { above: [keysX - slot.ax - 4, keysX - slot.ax + slot.sw], below: all ?? (slotKind !== 'home' ? [keysX - 4, keysX - slot.ax + slot.sw] : null) };
     return { above: null, below: all };
-  }, [houseHalf, slot?.ax, slot?.sw, slotKind, keysX, labelsAbove]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [houseHalf, slot?.ax, slot?.sw, slotKind, keysX, labelsAbove, !!plates]); // eslint-disable-line react-hooks/exhaustive-deps
   // labels drawn on an illustration get a halo of the ground they sit on
   const halo = labelHalo ? { stroke: labelHalo, strokeWidth: 4, paintOrder: 'stroke' as const, strokeLinejoin: 'round' as const } : null;
+  // plates: each label's plate width, and Today's plate (its notch on the "you are here" puck)
+  const plateW = (text: string, weight = 500) => plateTextWidth(text, weight) + PLATE.padX * 2;
+  const todayPlate = plates ? { left: Math.max(2, PAD - 14), w: plateW(todayLabel) } : null;
   const clusters = useMemo(
     // With a house at Keys, Keys is labelled above it, so it leaves the label lanes entirely.
-    () => layoutLabels(ownKeysLabel ? placed.filter((p) => p.key !== 'keys') : placed, w, g.charW, todayLabel.length * g.charW, joinText, [...highlight, 'keys'], blocks),
-    [placed, w, g.charW, todayLabel, lang, highlight.join(), ownKeysLabel, blocks], // eslint-disable-line react-hooks/exhaustive-deps
+    () =>
+      layoutLabels(
+        ownKeysLabel ? placed.filter((p) => p.key !== 'keys') : placed,
+        w + (plates?.room ?? 0),
+        g.charW,
+        todayLabel.length * g.charW,
+        joinText,
+        [...highlight, 'keys'],
+        blocks,
+        todayPlate ? { width: (text) => plateW(text), todayRight: todayPlate.left + todayPlate.w } : undefined,
+      ),
+    [placed, w, g.charW, todayLabel, lang, highlight.join(), ownKeysLabel, blocks, fontsIn, !!plates, plates?.room], // eslint-disable-line react-hooks/exhaustive-deps
   );
   const xAt = (month: number) => PAD + (Math.min(Math.max(month, 0), maxMonth) / maxMonth) * usable;
   const curX = xAt(elapsed);
@@ -639,17 +708,29 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
                 {edgeLight(P.pineLighter, prog, 0.55)}
               </motion.g>
             )}
-            <motion.text
-              x={PAD}
-              y={ty - g.above}
-              textAnchor="start"
-              style={{ fill: 'var(--ink-2)', fontSize: g.font, ...halo }}
-              initial={play ? { opacity: 0 } : false}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.2, delay: play ? entranceDelay : 0 }}
-            >
-              {todayLabel}
-            </motion.text>
+            {todayPlate && plates ? (
+              <motion.g
+                transform={`translate(${todayPlate.left} 0)`}
+                initial={play ? { opacity: 0 } : false}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2, delay: play ? entranceDelay : 0 }}
+                data-label="today"
+              >
+                <Plate w={todayPlate.w} top={ty + plates.y - PLATE.h / 2} notchX={PAD - todayPlate.left} text={todayLabel} weight={500} />
+              </motion.g>
+            ) : (
+              <motion.text
+                x={PAD}
+                y={ty - g.above}
+                textAnchor="start"
+                style={{ fill: 'var(--ink-2)', fontSize: g.font, ...halo }}
+                initial={play ? { opacity: 0 } : false}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2, delay: play ? entranceDelay : 0 }}
+              >
+                {todayLabel}
+              </motion.text>
+            )}
             {/* "you are here": a brass puck set into the road */}
             <motion.g style={{ x: curX, y: ty }} initial={play ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: dur.short, delay: play ? entranceDelay : 0 }}>
               <BrassDisc r={g.r} uid={uid} />
@@ -660,6 +741,21 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
             <AnimatePresence initial={play}>
               {clusters.map((c) => {
                 const strong = c.keys.includes('keys') || c.keys.some((k) => highlight.includes(k));
+                if (plates) {
+                  return (
+                    <motion.g
+                      key={c.id}
+                      initial={{ opacity: 0, x: c.left }}
+                      animate={{ opacity: 1, x: c.left }}
+                      exit={{ opacity: 0, transition: { duration: 0.1 } }}
+                      transition={{ x: spring.gentle, opacity: { duration: 0.2, ease: ease.out, delay: play && !entranceOver ? reachDelay(c.x) + 0.05 : 0 } }}
+                      pointerEvents="none"
+                      data-label={c.id}
+                    >
+                      <Plate w={c.width} top={ty + plates.y - PLATE.h / 2} notchX={c.x - c.left} text={c.text} weight={strong ? 600 : 500} />
+                    </motion.g>
+                  );
+                }
                 return (
                   <motion.text
                     key={c.id}

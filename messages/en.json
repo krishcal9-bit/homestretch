@@ -409,7 +409,7 @@
     "doorKeepSub": "See your payment before it changes",
     "shockTitle": "See the shock before it hits.",
     "shockBody": "Insurance and property taxes go up. HomeStretch shows the family their new payment months before it changes, and how to be ready for it.",
-    "shockSpike": "March: +$94/month · insurance renewal",
+    "shockSpike": "March: +${n}/month · insurance renewal",
     "shockRoom": "Breathing room",
     "fixTitle": "Fix it before it breaks.",
     "fixBody": "A water heater lasts about twelve years. Setting a little aside each month turns a $1,500 emergency into a repair the family planned for.",

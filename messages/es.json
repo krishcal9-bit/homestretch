@@ -409,7 +409,7 @@
     "doorKeepSub": "Vea su pago antes de que cambie",
     "shockTitle": "Vea el golpe antes de que llegue.",
     "shockBody": "El seguro y los impuestos a la propiedad suben. HomeStretch le muestra a la familia su nuevo pago meses antes de que cambie, y cómo estar lista.",
-    "shockSpike": "Marzo: +$94/mes · renovación del seguro",
+    "shockSpike": "Marzo: +${n} al mes · renovación del seguro",
     "shockRoom": "Margen para respirar",
     "fixTitle": "Arréglelo antes de que se rompa.",
     "fixBody": "Un calentador de agua dura unos doce años. Apartar un poco cada mes convierte una emergencia de $1,500 en una reparación que la familia ya planeó.",

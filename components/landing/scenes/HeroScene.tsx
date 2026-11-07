@@ -102,10 +102,12 @@ function SkyArt() {
   return (
     <div className="absolute inset-0 [container-type:size]">
       {/* day: the bright haze of an afternoon sky where the ready date sits, so the brass keeps its contrast */}
-      <div
-        className="il-day absolute left-1/2 top-[54%] h-[36%] w-[120%] -translate-x-1/2 -translate-y-1/2 lg:left-[68%] lg:top-[30%] lg:h-[44%] lg:w-[64%]"
-        style={{ background: `radial-gradient(closest-side, ${P.trim} 0%, ${P.trim} 55%, transparent 100%)`, opacity: 0.92 }}
-      />
+      <div className="il-day absolute inset-0">
+        <div
+          className="absolute left-1/2 top-[54%] h-[36%] w-[120%] -translate-x-1/2 -translate-y-1/2 lg:left-[68%] lg:top-[30%] lg:h-[44%] lg:w-[64%]"
+          style={{ background: `radial-gradient(closest-side, ${P.trim} 0%, ${P.trim} 55%, transparent 100%)`, opacity: 0.92 }}
+        />
+      </div>
       {stars.map(([x, y, r], i) => (
         <span key={i} className="sc-light absolute block rounded-full" style={{ ...nightStyle(0.15 + i * 0.04), left: `${x}cqw`, top: `${y}cqh`, width: r * 2, height: r * 2, background: P.trim }} />
       ))}

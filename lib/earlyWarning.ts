@@ -263,8 +263,10 @@ export function fillOutreach(text: string, x: OutreachFacts, lang: Lang = x.lang
 export const wordCount = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
 
 /** A model draft is usable when it names the family and stays under 120 words (body and translation). */
+const fold = (v: string) => v.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+/** A usable draft names the family (accents aside: "Ramírez" is "Ramirez") and stays short; a missing translation is filled by the caller. */
 export function draftOk(d: HomeownerOutreachDraft, x: OutreachFacts) {
-  return d.body.includes(x.surname) && wordCount(d.body) <= 120 && (x.lang !== 'es' || (!!d.translation && wordCount(d.translation) <= 130));
+  return fold(d.body).includes(fold(x.surname)) && wordCount(d.body) <= 120 && (!d.translation || wordCount(d.translation) <= 130);
 }
 
 /* ------------------------------------------------------------------ */

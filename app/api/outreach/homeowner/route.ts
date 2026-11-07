@@ -45,6 +45,9 @@ export async function POST(req: Request) {
   if (!draftOk(draft, facts)) {
     draft = fallback();
     used = 'fallback';
+  } else if (lang === 'es' && !draft.translation) {
+    // staff read the English; when Claude leaves it out, the template's translation stands in
+    draft = { ...draft, translation: fallback().translation };
   }
   return NextResponse.json({ ...draft, lang, source: used });
 }

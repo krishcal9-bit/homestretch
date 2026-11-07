@@ -423,5 +423,241 @@
   },
   "landingArt": {
     "grossPay": "Pago bruto"
+  },
+  "keep": {
+    "nav": {
+      "label": "Secciones de Mantener",
+      "forecast": "Pronóstico",
+      "home": "Su casa",
+      "relief": "Ayudas",
+      "checkin": "Revisión"
+    },
+    "demoNote": "Está viendo una familia de ejemplo: la familia Ramirez de Santa Ana, asegurada con el California FAIR Plan.",
+    "editHome": "Editar mi casa",
+    "startOver": "Empezar de nuevo",
+    "privacy": "Sus números se quedan en este dispositivo.",
+    "field": {
+      "mortgage": "Pago mensual de la hipoteca",
+      "escrow": "Escrow cada mes",
+      "insurer": "Compañía de seguro",
+      "premium": "Prima anual del seguro",
+      "fairPlan": "FAIR Plan",
+      "renewalMonth": "La póliza se renueva en",
+      "propertyTax": "Impuesto anual a la propiedad",
+      "hoa": "Cuota mensual de la HOA",
+      "homeType": "Tipo de vivienda",
+      "yearBuilt": "Año de construcción",
+      "zip": "Código postal",
+      "householdSize": "Personas en su hogar",
+      "income": "Ingreso anual del hogar, antes de impuestos",
+      "takeHome": "Pago neto cada mes",
+      "savings": "Ahorros"
+    },
+    "homeType": {
+      "single": "Casa independiente",
+      "townhome": "Casa adosada",
+      "condo": "Condominio"
+    },
+    "setup": {
+      "title": "Registre su casa",
+      "lede": "Unos dos minutos. Con estos números vemos los cambios en su pago antes de que lleguen.",
+      "sampleTitle": "Pruébelo con una familia de ejemplo",
+      "sampleDetail": "La familia Ramirez, Santa Ana, con el California FAIR Plan",
+      "sampleButton": "Ver la familia de ejemplo",
+      "stepOf": "Paso {n} de {total}",
+      "step": {
+        "payment": "Su pago",
+        "home": "Su casa",
+        "money": "Su dinero"
+      },
+      "stepLede": {
+        "payment": "Lo que compone su pago mensual. Un aviso de su aseguradora, prestamista, condado o HOA puede llenar estos datos.",
+        "home": "Las casas más viejas necesitan apartar más para reparaciones.",
+        "money": "Para ver cuánto margen le queda cada mes."
+      },
+      "help": {
+        "mortgage": "Solo la parte del préstamo, sin impuestos ni seguro.",
+        "escrow": "La parte de su pago para impuestos y seguro. Déjelo en blanco y lo calculamos.",
+        "premium": "Está en su página de declaraciones o en el aviso de renovación.",
+        "propertyTax": "Las dos cuotas juntas, según su factura de impuestos.",
+        "hoa": "Opcional. Déjelo en blanco si no tiene HOA.",
+        "takeHome": "Lo que llega a su cuenta de banco cada mes después de impuestos.",
+        "income": "Opcional. Lo usamos para ver si califica para descuentos en servicios públicos.",
+        "savings": "Opcional. Dinero que podría usar para una reparación o una factura más alta."
+      },
+      "insurerPlaceholder": "Por ejemplo, California FAIR Plan",
+      "fairPlan": "Esta póliza es del California FAIR Plan",
+      "fairPlanHelp": "El FAIR Plan subió sus tarifas un 29.1% a partir del 15 de octubre de 2026. Lo usamos para su próxima renovación.",
+      "fromDoc": "De su documento",
+      "edit": "Editar",
+      "editField": "Editar {field}",
+      "required": "Agregue este dato para ver su pronóstico.",
+      "zipError": "Escriba un código postal de 5 dígitos.",
+      "yearError": "Escriba un año entre 1900 y {year}.",
+      "fewer": "Menos personas",
+      "more": "Más personas",
+      "back": "Atrás",
+      "continue": "Continuar",
+      "finish": "Ver mi pronóstico",
+      "privacy": "Sus números se quedan en este dispositivo. No se envía nada a Habitat a menos que usted mande un mensaje."
+    },
+    "doc": {
+      "title": "¿Tiene un aviso de su aseguradora, prestamista, condado o HOA?",
+      "body": "Suba un aviso de renovación, página de declaraciones, estado de escrow, factura de impuestos o aviso de la HOA. Sirve una foto o un PDF. Llenamos lo que podamos leer.",
+      "upload": "Subir un documento",
+      "sample": "Usar el aviso de ejemplo",
+      "reading": "Leyendo su documento",
+      "privacy": "Su archivo se lee una sola vez para llenar este formulario y no se guarda.",
+      "done": "Llenado con su {doc}: {fields}. Revíselos abajo.",
+      "explaining": "Viendo qué significa para su pago",
+      "error": "Algo salió mal al leer ese archivo. Escriba los números en su lugar.",
+      "type": {
+        "insurance_renewal": "aviso de renovación del seguro",
+        "insurance_declarations": "página de declaraciones del seguro",
+        "escrow_analysis": "estado de escrow",
+        "property_tax": "factura de impuestos a la propiedad",
+        "hoa_notice": "aviso de la HOA",
+        "unknown": "documento"
+      }
+    },
+    "explain": {
+      "insuranceUp": "Su seguro sube {annualChange} al año, de {premiumOld} a {premiumNew}.",
+      "insuranceWhenMonthly": "Por eso su pago sube unos {monthlyChange} al mes en {month}.",
+      "insuranceWhen": "Por eso su pago cambia en {month}.",
+      "insuranceSame": "Su seguro se renueva en {premiumNew} al año.",
+      "escrowUp": "La parte de su pago para impuestos y seguro sube de {escrowOld} a {escrowNew} al mes.",
+      "escrowDown": "La parte de su pago para impuestos y seguro baja de {escrowOld} a {escrowNew} al mes.",
+      "tax": "Su impuesto a la propiedad es de {propertyTax} al año. Son unos {taxMonthly} de su pago cada mes.",
+      "hoaUp": "Su cuota de la HOA sube de {hoaOld} a {hoaNew} al mes.",
+      "hoa": "Su cuota de la HOA es de {hoaNew} al mes.",
+      "generic": "Llenamos lo que pudimos leer. Revise los números abajo."
+    },
+    "headline": {
+      "rise": "Es probable que su pago suba {amount} al mes en {month}.",
+      "riseSub": "Así puede prepararse.",
+      "covered": "Con {amount} al mes apartados, {month} no le va a pesar.",
+      "coveredSub": "Su alcancía cubre el aumento.",
+      "tight": "Sus gastos se mantienen, pero el dinero está justo cada mes.",
+      "tightSub": "Aquí puede encontrar margen.",
+      "solid": "Está en terreno firme por los próximos 24 meses.",
+      "solidSub": "Seguiremos pendientes de su seguro, impuestos y HOA."
+    },
+    "cause": {
+      "insurance": "renovación del seguro",
+      "tax": "impuesto a la propiedad",
+      "supplemental": "factura de impuesto suplementario",
+      "hoa": "cuota de la HOA"
+    },
+    "zone": {
+      "safe": "Con margen",
+      "tight": "Justo",
+      "short": "Falta"
+    },
+    "chart": {
+      "title": "Su costo mensual de vivienda, próximos 24 meses",
+      "legendPay": "Lo que paga",
+      "legendWithout": "Sin apartar",
+      "breathing": "Margen",
+      "readout": "{month}: paga {pay} · margen {room}",
+      "marker": "{month}: +{amount}/mes, {cause}",
+      "flagRise": "+{amount}/mes",
+      "flagCovered": "Cubierto",
+      "noShocks": "sin cambios grandes por delante",
+      "aria": "Su costo mensual de vivienda por los próximos 24 meses, empezando en {now}. Cambios por delante: {shocks}.",
+      "tableCaption": "Su costo de vivienda y margen por mes",
+      "colMonth": "Mes",
+      "colPay": "Paga",
+      "note": "Hipoteca, escrow (impuestos y seguro), HOA y un ahorro para reparaciones. El margen es su pago neto menos la vivienda y los gastos básicos."
+    },
+    "slider": {
+      "label": "Apartar cada mes",
+      "value": "{amount} al mes",
+      "tick": "{amount} recomendado",
+      "recommend": "Aparte {amount} al mes desde ahora y {month} no le va a pesar.",
+      "use": "Apartar {amount}",
+      "using": "Apartando {amount}",
+      "applied": "Apartando {amount} al mes",
+      "jar": "Para {month} tendrá {amount} ahorrados.",
+      "noRise": "Por ahora no hay un aumento que preparar. Apartar un poco igual ayuda con las reparaciones."
+    },
+    "stats": {
+      "now": "Este mes",
+      "after": "Después de {month}",
+      "later": "En 2 años",
+      "lowest": "Margen más bajo"
+    },
+    "shield": {
+      "title": "Escudo contra aumentos",
+      "lede": "{month}: +{amount}/mes por su {cause}. Estas son las acciones que más ayudan, en orden.",
+      "pick": "Qué cambio planear",
+      "loading": "Buscando acciones",
+      "effect": "+{amount}/mes de margen",
+      "effort": {
+        "low": "Poco esfuerzo",
+        "medium": "Algo de esfuerzo",
+        "high": "Más esfuerzo"
+      },
+      "newTab": "(se abre en otra pestaña)",
+      "apply": "Aplicar a mi pronóstico",
+      "appliedUndo": "Aplicado. Deshacer",
+      "markFiled": "Marcar como solicitado",
+      "filedUndo": "Solicitado. Deshacer",
+      "showUpgrades": "Ver mejoras que califican",
+      "hideUpgrades": "Ocultar mejoras",
+      "upgradesTitle": "Mejoras que pueden darle un descuento por incendios forestales",
+      "upgrade": {
+        "roof": "Un techo resistente al fuego Clase A",
+        "vents": "Ventilas resistentes a brasas (malla metálica de 1/8 de pulgada)",
+        "zone0": "Una zona de 5 pies sin material combustible alrededor de la casa: grava o adoquines, sin corteza ni plantas",
+        "eaves": "Aleros cerrados",
+        "base": "6 pulgadas de material no combustible en la base de las paredes exteriores",
+        "windows": "Ventanas de doble panel o de vidrio templado"
+      },
+      "setAsideCta": "Apartar {amount} al mes",
+      "goalCreated": "Meta de ahorro creada: {amount} al mes",
+      "goalSet": "Meta de ahorro: {amount} al mes",
+      "write": "Escribir a Habitat",
+      "messageLabel": "Su mensaje para servicios al propietario de Habitat",
+      "send": "Enviar a Habitat",
+      "sent": "Enviado",
+      "sentNote": "Enviado. Servicios al propietario le responderá.",
+      "setAside": {
+        "title": "Aparte {amount} al mes, desde ahora",
+        "detail": "Ponga {amount} al mes en una alcancía desde ahora. En {month} cubre el aumento de {rise}, así lo que paga no salta."
+      },
+      "insurance": {
+        "title": "Pregunte por un deducible más alto",
+        "titleFair": "Compare seguros y pregunte por descuentos por incendios",
+        "detail": "Un deducible más alto (por ejemplo $2,500 en vez de $1,000) puede bajar una prima de {premium} unos {saves} al año. Las reglas Safer from Wildfires de California también dan descuentos por mejoras como las de abajo."
+      },
+      "claim": {
+        "title": "Reclame lo que le corresponde",
+        "exemption": "Solicite la Exención para Propietarios de California: le quita {value} al valor tasado de su casa, unos {saves} menos al año de impuesto a la propiedad.",
+        "care": "Puede calificar para CARE, que descuenta del 30 al 35% de la electricidad y 20% del gas: unos {saves} al mes.",
+        "fera": "Puede calificar para FERA, que descuenta 18% de la electricidad: unos {saves} al mes."
+      },
+      "habitat": {
+        "title": "Hable con Habitat a tiempo",
+        "detail": "Servicios al propietario puede ayudarle a planear antes de {month}. Escribir pronto le da más opciones."
+      },
+      "habitatWho": "le escribe un propietario de Habitat",
+      "habitatWhoFamily": "le escribe la familia {family}",
+      "habitatMessage": "Hola, {who}. En {month} nuestro pago mensual va a subir unos {amount} ({cause}). Nos gustaría hablar de nuestras opciones antes de esa fecha. Gracias."
+    },
+    "docField": {
+      "mortgage": "pago de la hipoteca",
+      "escrow": "escrow",
+      "insurer": "compañía de seguro",
+      "fairPlan": "FAIR Plan",
+      "premium": "prima anual",
+      "renewalMonth": "mes de renovación",
+      "propertyTax": "impuesto a la propiedad",
+      "hoa": "cuota de la HOA"
+    },
+    "resource": {
+      "wildfire": "Safer from Wildfires (Departamento de Seguros de California)",
+      "exemption": "Exención para Propietarios (Tasador del Condado de Orange)",
+      "care": "Descuentos CARE y FERA"
+    }
   }
 }

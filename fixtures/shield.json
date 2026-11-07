@@ -1,0 +1,33 @@
+{
+  "moves": [
+    {
+      "key": "setAside",
+      "title": "Start a {setAside} monthly cushion today",
+      "detail": "Move {setAside} a month into savings starting now. When {month} comes, that money covers the {rise} rise, so your payment feels the same.",
+      "monthlyEffect": 0,
+      "effort": "low"
+    },
+    {
+      "key": "insurance",
+      "title": "Shop your insurance and ask about wildfire discounts",
+      "detail": "Call your agent before renewal. A higher deductible can take about {saves} a year off a {premium} premium, and California's Safer from Wildfires rules reward upgrades like a Class A roof and ember-resistant vents.",
+      "monthlyEffect": 0,
+      "effort": "medium"
+    },
+    {
+      "key": "claim",
+      "title": "Claim the savings you're owed",
+      "detail": "{claimDetail}",
+      "monthlyEffect": 0,
+      "effort": "low"
+    },
+    {
+      "key": "habitat",
+      "title": "Let Habitat know now",
+      "detail": "Homeowner services can help you plan before {month}. Reaching out early gives you the most options.",
+      "monthlyEffect": 0,
+      "effort": "low",
+      "message": "{habitatMessage}"
+    }
+  ]
+}

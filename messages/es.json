@@ -299,7 +299,11 @@
     "filled": "Llenamos {n} respuestas. Revíselas abajo.",
     "nothing": "No entendimos ninguna respuesta. Intente de nuevo o escríbalas.",
     "error": "No pudimos entender eso ahora. Intente escribirlo.",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "blocked": "El micrófono está bloqueado para este sitio. Permítelo en la configuración del navegador o escribe lo que dirías.",
+    "unavailable": "La voz no está disponible en este navegador. Escribe lo que dirías.",
+    "noMic": "No encontramos un micrófono. Escribe lo que dirías.",
+    "noSpeech": "No escuchamos nada. Toca el micrófono e inténtalo otra vez, o escríbelo."
   },
   "handoff": {
     "title": "Enviar mi plan a un consejero",

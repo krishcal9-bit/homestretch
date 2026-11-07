@@ -299,7 +299,11 @@
     "filled": "Filled in {n} answers. Check them below.",
     "nothing": "We didn't catch any answers. Try again, or type them.",
     "error": "We couldn't understand that just now. Try typing it.",
-    "close": "Close"
+    "close": "Close",
+    "blocked": "The microphone is blocked for this site. Allow it in your browser's settings, or type what you'd say.",
+    "unavailable": "Voice isn't available in this browser. Type what you'd say instead.",
+    "noMic": "We couldn't find a microphone. Type what you'd say instead.",
+    "noSpeech": "We didn't hear anything. Tap the mic and try again, or type it."
   },
   "handoff": {
     "title": "Send my plan to a counselor",

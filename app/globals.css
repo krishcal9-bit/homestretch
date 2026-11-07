@@ -311,3 +311,9 @@ html.landing-snap.landing-snap-off { scroll-snap-type: none; }
 [data-draw="pending"] .recharts-line-curve { opacity: 0; }
 [data-draw] .recharts-label-list { transition: opacity 240ms ease; }
 [data-draw="pending"] .recharts-label-list, [data-draw="drawing"] .recharts-label-list { opacity: 0; }
+
+/* r6:voice — the mic's listening ring (transform + opacity only) */
+.voice-ring { border: 2px solid var(--pine); animation: voice-ring 1.6s cubic-bezier(0.23, 1, 0.32, 1) infinite; }
+@keyframes voice-ring { from { transform: scale(1); opacity: 0.55; } to { transform: scale(1.45); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .voice-ring { animation: none; opacity: 0; } }
+/* /r6:voice */

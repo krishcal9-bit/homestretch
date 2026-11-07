@@ -198,7 +198,6 @@ function OdometerDate({ iso, phase, lang }: { iso: string; phase: Phase; lang: '
  */
 function HeroDemo({ phase, intro, onEarlier }: { phase: Phase; intro: boolean | null; onEarlier: () => void }) {
   const { t, lang } = useLang();
-  const reduce = useReducedMotion();
   const [family, setFamily] = useState<'reyes' | 'nguyen'>('reyes');
   const [extra, setExtra] = useState<Record<string, number>>({ reyes: FAMILIES.reyes.levers.extraDebt, nguyen: FAMILIES.nguyen.levers.extraDebt });
   const profile = FAMILIES[family];

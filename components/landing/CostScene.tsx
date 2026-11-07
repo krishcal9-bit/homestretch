@@ -54,6 +54,12 @@ export function CostScene({ index }: { index: number }) {
   const ref = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const near = useInView(ref, { margin: '50% 0px 50% 0px' });
+  // the canvas mounts the first time the section comes near and then stays (WebGL teardown is a long task);
+  // off screen it simply stops drawing (frameloop 'never')
+  const [seen, setSeen] = useState(false);
+  useEffect(() => {
+    if (near) setSeen(true);
+  }, [near]);
   const play = useSectionPlay(index);
   const [gl, setGl] = useState<boolean | null>(null);
   useEffect(() => setGl(hasWebGL()), []);
@@ -87,6 +93,9 @@ export function CostScene({ index }: { index: number }) {
   const endO = useTransform(p, [0.88, 0.96], [0, 1]);
   // while the roof glows, the other parts step back so the one that moves leads
   const restO = useTransform(p, [0.56, 0.62, 0.8, 0.86], [1, 0, 0, 1]);
+  // every label clears before "Back together" comes in (never two texts over each other)
+  const outO = useTransform(p, [0.8, 0.86], [1, 0]);
+  const otherO = useTransform(() => Math.min(restO.get(), outO.get()));
   const labelO = (part: CostPart) => (part === 'utilities' || part === 'repairs' ? shown.tools : shown.main);
 
   const partLabel: Record<CostPart, string> = {
@@ -116,7 +125,7 @@ export function CostScene({ index }: { index: number }) {
           }}
         />
         <div className="absolute inset-0" aria-hidden>
-          {gl && near && <CostHouse p={p} refs={refs} night={night} active={near} reduce={reduce} />}
+          {gl && seen && <CostHouse p={p} refs={refs} night={night} active={near} reduce={reduce} />}
           {gl === false && (
             <div className="absolute inset-x-[10%] bottom-[8%] top-[18%]">
               <Image src={HOUSE_STILL} alt="" fill sizes="80vw" className="still-day object-contain" />
@@ -127,7 +136,7 @@ export function CostScene({ index }: { index: number }) {
         {/* leader lines */}
         <svg className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
           {COST_PARTS.map((k, i) => (
-            <motion.g key={k} style={{ opacity: k === 'insurance' ? 1 : restO }}>
+            <motion.g key={k} style={{ opacity: k === 'insurance' ? outO : otherO }}>
               <g
                 style={{
                   opacity: labelO(k) ? 1 : 0,
@@ -142,7 +151,7 @@ export function CostScene({ index }: { index: number }) {
         </svg>
         {/* the labels: what each part is, what it costs a month */}
         {COST_PARTS.map((k, i) => (
-          <motion.div key={k} className="pointer-events-none absolute inset-0" style={{ opacity: k === 'insurance' ? 1 : restO }}>
+          <motion.div key={k} className="pointer-events-none absolute inset-0" style={{ opacity: k === 'insurance' ? outO : otherO }}>
             <div
               ref={(el) => void (labels.current[i] = el)}
               className={`absolute left-0 top-0 rounded-[8px] border bg-surface px-3 py-2 sm:px-4 sm:py-3 ${k === 'insurance' ? 'border-l-2 border-line border-l-signal-amber' : 'border-line'}`}

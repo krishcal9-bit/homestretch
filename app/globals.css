@@ -105,6 +105,7 @@ p, li { text-wrap: pretty; }
   --color-on-band: var(--on-band);
   --color-knob: var(--knob);
   --font-sans: 'Public Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, serif;
   --radius-control: 8px;
   --radius-panel: 14px;
 }
@@ -494,3 +495,47 @@ html[data-theme='dark'] .ks-play .ks-horizon { animation-name: ks-rise-night; }
 @keyframes ks-lift { to { opacity: 0; } }
 @keyframes ks-rise { 0% { opacity: 0; transform: translateY(30%); } 30% { opacity: 1; transform: none; } 100% { opacity: 0.2; transform: none; } }
 @keyframes ks-rise-night { 0% { opacity: 0; transform: translateY(30%); } 30% { opacity: 0.75; transform: none; } 100% { opacity: 0.12; transform: none; } }
+
+/* Lenis (landing smooth scrolling) */
+html.lenis, html.lenis body { height: auto; }
+.lenis:not(.lenis-autoToggle).lenis-stopped { overflow: clip; }
+.lenis [data-lenis-prevent] { overscroll-behavior: contain; }
+.lenis.lenis-smooth iframe { pointer-events: none; }
+
+/* landing display type: Fraunces 600, tight leading, tabular figures where numbers carry the story */
+.t-display { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.02em; line-height: 1.02; text-wrap: balance; font-feature-settings: 'lnum'; }
+
+/* door panels (landing hero): the door opens a little on hover (fine pointers), on focus and on press */
+.door-leaf { transform: rotateY(0deg); transition: transform 420ms cubic-bezier(0.23, 1, 0.32, 1); backface-visibility: hidden; }
+.door-light { transition: opacity 420ms ease; }
+@media (hover: hover) and (pointer: fine) {
+  .door-panel:hover .door-leaf { transform: rotateY(-30deg); }
+  .door-panel:hover .door-light { opacity: 0.9; }
+  .door-panel.border-line-strong:hover { background: var(--pine-soft); }
+  .door-panel.bg-pine:hover { background: var(--pine-hover); }
+}
+.door-panel:active .door-leaf, .door-panel:focus-visible .door-leaf { transform: rotateY(-36deg); }
+.door-panel:active .door-light, .door-panel:focus-visible .door-light { opacity: 0.9; }
+.door-panel { transition: background-color 160ms ease; }
+
+/* magnetic CTA: the label slides up and a copy rises in on hover */
+.mag-label { transition: transform 280ms cubic-bezier(0.23, 1, 0.32, 1); }
+.mag-label-in { transform: translateY(105%); }
+@media (hover: hover) and (pointer: fine) {
+  .magnetic a:hover .mag-label { transform: translateY(-105%); }
+  .magnetic a:hover .mag-label-in { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .door-leaf, .mag-label { transition: none; }
+  .door-panel:hover .door-leaf, .door-panel:active .door-leaf { transform: none; }
+  .magnetic a:hover .mag-label { transform: none; }
+  .magnetic a:hover .mag-label-in { transform: translateY(105%); }
+}
+
+/* film grain over the landing (3%): a static noise tile, one composited layer */
+.grain { position: fixed; inset: 0; z-index: 65; pointer-events: none; opacity: 0.03; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1.2 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+html[data-theme='dark'] .grain { opacity: 0.045; filter: invert(1); }
+
+/* calm zone behind section text over a busy scene */
+.text-scrim { position: relative; isolation: isolate; }
+.text-scrim::before { content: ''; position: absolute; inset: -56px -72px; z-index: -1; pointer-events: none; background: radial-gradient(closest-side, color-mix(in srgb, var(--paper) 82%, transparent), color-mix(in srgb, var(--paper) 0%, transparent)); }

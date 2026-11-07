@@ -3,7 +3,7 @@ import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
 import { motion, useReducedMotion } from 'motion/react';
 import { useLang } from '@/lib/i18n';
 import { computeReadiness } from '@/lib/engine';
-import { ease, spring } from '@/lib/motion';
+import { ease } from '@/lib/motion';
 import { useVTRouter } from '@/lib/vt';
 import { SEED_HOMES } from '@/lib/seedData';
 import { Road } from '@/components/result/Road';
@@ -14,6 +14,8 @@ import { brand } from '@/lib/brand';
 import { HeroScene, streetLayout, type StreetLayout } from './scenes/HeroScene';
 import { P } from '@/lib/illustrationPalette';
 import { SectionArrow, SectionDots, SectionNavProvider, useSectionPlay } from './SectionNav';
+import { DoorPanel, MagneticButton, SplitHeading } from './Type';
+import { CostScene } from './CostScene';
 import { HomeScene } from './scenes/HomeScene';
 import { RepairScene } from './scenes/RepairScene';
 import { NeighborhoodScene } from './scenes/NeighborhoodScene';
@@ -110,7 +112,7 @@ function Headline({ text, phase }: { text: string; phase: Phase }) {
     }
     setLines(out.map((l) => l.join(' ')));
   }, [lines, text]);
-  const cls = 'text-[40px] font-semibold leading-[44px] tracking-[-0.02em] text-ink sm:text-[52px] sm:leading-[56px] xl:mr-[-32px] xl:text-[64px] xl:leading-[68px]';
+  const cls = 't-display text-[44px] text-ink sm:text-[60px] lg:text-[76px] xl:text-[88px]';
   if (!lines || phase === 'pending')
     return (
       <h1 ref={ref} className={cls} style={{ visibility: 'hidden', textWrap: 'wrap' }} data-intro>
@@ -131,7 +133,7 @@ function Headline({ text, phase }: { text: string; phase: Phase }) {
   return (
     <h1 className={cls} aria-label={text} style={{ textWrap: 'wrap' }}>
       {lines.map((line, i) => (
-        <span key={`${line}-${i}`} className="block overflow-hidden" aria-hidden>
+        <span key={`${line}-${i}`} className="-mb-[0.1em] block overflow-hidden pb-[0.1em]" aria-hidden>
           <motion.span
             className="block whitespace-nowrap"
             initial={play ? { y: '100%' } : phase === 'reduced' ? { opacity: 0 } : false}
@@ -220,20 +222,7 @@ function useHeroDemo() {
   return { family, switchFamily, extra, onSlide, result, litWindows, sunStep, delta, deltaText, keysGlow, dragged };
 }
 
-/** A door glyph: the panel swings open when the door (button) is hovered. */
-function DoorGlyph() {
-  return (
-    <svg viewBox="0 0 30 42" className="h-[42px] w-[30px] shrink-0 overflow-visible" aria-hidden>
-      <rect x="1" y="1" width="28" height="40" rx="2" fill="none" stroke="currentColor" strokeWidth="2" opacity="0.55" />
-      <g className="origin-[4px_21px] transition-transform duration-[250ms] ease-[cubic-bezier(0.23,1,0.32,1)] [transform:perspective(80px)_rotateY(0deg)] group-hover:[transform:perspective(80px)_rotateY(-58deg)]">
-        <rect x="4" y="4" width="22" height="37" rx="1" fill="currentColor" opacity="0.22" />
-        <circle cx="21.5" cy="23" r="1.6" fill="currentColor" />
-      </g>
-    </svg>
-  );
-}
-
-/** The two doors: getting the keys (Ready) and keeping them (Keep). In the sky, over the family's house. */
+/** The two doors: keeping the keys (Keep) and getting them (Ready). Door-shaped panels over the family's street. */
 function HeroDoors({ phase }: { phase: Phase }) {
   const { t } = useLang();
   const router = useVTRouter();
@@ -245,31 +234,29 @@ function HeroDoors({ phase }: { phase: Phase }) {
   ];
   return (
     <nav aria-label={t('landing.doorsLabel')} className="w-full" data-intro style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
-      <p className="mb-3 text-[15px] text-ink-2">{t('landing.doorsLabel')}</p>
-      <div className="flex flex-col gap-3">
+      <p className="mb-3 text-[15px] text-ink-2 lg:text-[16px]">{t('landing.doorsLabel')}</p>
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
         {doors.map((d, i) => (
-          <motion.a
+          <motion.div
             key={`${d.key}-${phase === 'pending'}`}
-            href={d.href}
-            onClick={(e) => {
-              if (e.metaKey || e.ctrlKey || e.shiftKey) return;
-              e.preventDefault();
-              router.push(d.href, d.kind);
-            }}
             initial={play ? { opacity: 0, y: 12 } : phase === 'reduced' ? { opacity: 0 } : false}
             animate={{ opacity: 1, y: 0 }}
             transition={play ? { duration: 0.45, ease: ease.out, delay: t0 + (phase === 'opening' ? 0.3 : SEQ.sub) + i * 0.08 } : { duration: 0.15 }}
-            whileTap={{ scale: 0.98 }}
-            className={`group flex min-h-[84px] items-center gap-4 rounded-[14px] border px-5 py-4 transition-colors duration-[120ms] ${d.primary ? 'border-pine bg-pine text-on-pine hover:bg-pine-hover' : 'border-line bg-surface text-ink hover:bg-pine-soft'}`}
-            style={i === 1 ? { viewTransitionName: 'cta' } : undefined}
-            data-testid={d.testId}
           >
-            <DoorGlyph />
-            <span className="min-w-0">
-              <span className="block text-[18px] font-semibold leading-[24px]">{d.title}</span>
-              <span className={`mt-0.5 block text-[15px] leading-[22px] ${d.primary ? 'opacity-85' : 'text-ink-2'}`}>{d.sub}</span>
-            </span>
-          </motion.a>
+            <DoorPanel
+              href={d.href}
+              title={d.title}
+              sub={d.sub}
+              primary={d.primary}
+              testId={d.testId}
+              style={i === 1 ? { viewTransitionName: 'cta' } : undefined}
+              onNavigate={(e) => {
+                if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+                e.preventDefault();
+                router.push(d.href, d.kind);
+              }}
+            />
+          </motion.div>
         ))}
       </div>
     </nav>
@@ -345,17 +332,17 @@ function Hero({ phase, intro }: { phase: Phase; intro: boolean | null }) {
     <section ref={sectionRef} id="hero" data-testid="hero" className="snap-section relative min-h-[calc(100svh-64px)] [--street-h:clamp(300px,46svh,400px)]">
       <HeroScene layout={layout} road={road} />
       {/* the sky: headline on the left, the ready date and slider over the family's house */}
-      <div className="relative z-[1] mx-auto grid max-w-[1280px] grid-cols-1 content-center items-center gap-x-10 gap-y-5 px-5 pb-4 pt-4 lg:grid-cols-12 lg:gap-y-0 lg:px-8 lg:pb-6 lg:pt-6 xl:gap-x-14" style={{ minHeight: 'calc(100svh - 64px - var(--street-h))' }}>
-        <div className="lg:col-span-5">
+      <div className="relative z-[1] mx-auto grid max-w-[1440px] grid-cols-1 content-center items-center gap-x-8 gap-y-5 px-5 pb-4 pt-4 sm:px-8 lg:grid-cols-12 lg:gap-y-0 lg:px-20 lg:pb-6 lg:pt-6" style={{ minHeight: 'calc(100svh - 64px - var(--street-h))' }}>
+        <div className="lg:col-span-7">
           <motion.p key={`partner-${phase === 'pending'}`} {...fadeUp} transition={play ? { duration: 0.3, ease: ease.out, delay: t0 } : fadeUp.transition} className="mb-3 text-[15px] text-ink-2 lg:mb-4">
             {t('app.partner')}
           </motion.p>
           <Headline text={t('landing.headline')} phase={phase} />
-          <motion.p key={`sub-${phase === 'pending'}`} {...fadeUp} className="mt-4 hidden max-w-[44ch] text-[18px] leading-[28px] text-ink-2 sm:block lg:mt-5" data-intro style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
+          <motion.p key={`sub-${phase === 'pending'}`} {...fadeUp} className="mt-4 hidden max-w-[44ch] text-[18px] leading-[28px] text-ink-2 sm:block lg:mt-6 lg:text-[20px] lg:leading-[30px]" data-intro style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
             {t('landing.sub')}
           </motion.p>
         </div>
-        <div ref={controlsRef} className="mx-auto w-full max-w-[480px] lg:col-span-7">
+        <div ref={controlsRef} className="mx-auto w-full max-w-[520px] lg:col-span-5">
           <HeroDoors phase={phase} />
         </div>
       </div>
@@ -366,17 +353,22 @@ function Hero({ phase, intro }: { phase: Phase; intro: boolean | null }) {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/** Section headline: rises from a mask every time its section becomes active. */
-function MaskHeading({ children, reduce }: { children: React.ReactNode; reduce: boolean }) {
+/** Section body copy: fades up with the headline's second line (in place before the first visit). */
+function Body({ play, children, className = '' }: { play: number; children: React.ReactNode; className?: string }) {
+  const reduce = !!useReducedMotion();
   return (
-    <h2 className="overflow-hidden pb-[0.06em] text-[32px] font-semibold leading-[38px] tracking-[-0.02em] text-ink lg:text-[44px] lg:leading-[48px]">
-      <motion.span className="block" initial={reduce ? { opacity: 0 } : { y: '100%' }} animate={{ y: '0%', opacity: 1 }} transition={{ duration: reduce ? 0.15 : SEQ.line, ease: ease.out }}>
-        {children}
-      </motion.span>
-    </h2>
+    <motion.p
+      key={play}
+      initial={play === 0 ? false : reduce ? { opacity: 0 } : { opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: reduce ? 0.15 : 0.45, ease: ease.out, delay: reduce ? 0 : 0.22 }}
+      className={`mt-6 max-w-[40ch] text-[18px] leading-[28px] text-ink-2 lg:text-[20px] lg:leading-[31px] ${className}`}
+    >
+      {children}
+    </motion.p>
   );
 }
+const H2 = 'text-[42px] text-ink sm:text-[56px] lg:text-[72px] xl:text-[84px]';
 
 /**
  * A full-viewport section that IS one illustrated place: its scene (components/landing/scenes) fills the
@@ -388,36 +380,27 @@ function MaskHeading({ children, reduce }: { children: React.ReactNode; reduce: 
  * the screen), so the centrepiece replays on each visit. The text reveals on activation, which SectionNav
  * only grants once the camera has landed.
  */
-function SceneSection({ id, index, layout = 'split', bob = false, text, scene, minGraphic = 0 }: { id: string; index: number; layout?: 'split' | 'sky'; bob?: boolean; text: (reduce: boolean) => React.ReactNode; scene: (play: number, reduce: boolean) => React.ReactNode; minGraphic?: number }) {
+function SceneSection({ id, index, layout = 'split', bob = false, text, scene, minGraphic = 0, label }: { id: string; index: number; layout?: 'split' | 'sky'; bob?: boolean; text: (play: number) => React.ReactNode; scene: (play: number, reduce: boolean) => React.ReactNode; minGraphic?: number; label: string }) {
   const { t } = useLang();
   const reduce = !!useReducedMotion();
   const ref = useRef<HTMLElement>(null);
-  const n = useSectionPlay(index, ref); // replays its animation each time the section becomes active
-  // Elements are memoized by activation count, so another section's activation never re-renders this one's text.
-  const textEl = useMemo(() => (n > 0 ? text(reduce) : <div className="invisible">{text(true)}</div>), [n, reduce, text]);
-  // The scene's centrepiece replays one frame after the text, so the two commits land in separate frames.
-  const [gn, setGn] = useState(n);
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setGn(n));
-    return () => cancelAnimationFrame(id);
-  }, [n]);
-  const sceneEl = useMemo(() => scene(gn, reduce), [gn, reduce, scene]);
+  // up by one the moment the section becomes the target (the press, not the landing): the reveal runs during the
+  // move; before the first visit everything is drawn in place, so a section is never blank
+  const n = useSectionPlay(index, ref);
+  const textEl = useMemo(() => text(n), [n, text]);
+  const sceneEl = useMemo(() => scene(n, reduce), [n, reduce, scene]);
   return (
-    <section ref={ref} id={id} data-testid={id} className={`snap-section relative flex min-h-[calc(100svh-64px)] overflow-hidden ${layout === 'sky' ? 'items-start' : 'items-center'}`} aria-label={t(`landing.nav${index}`)}>
+    <section ref={ref} id={id} data-testid={id} className={`snap-section relative flex min-h-[calc(100svh-64px)] overflow-hidden ${layout === 'sky' ? 'items-start' : 'items-center'}`} aria-label={label}>
       {sceneEl}
       {layout === 'sky' ? (
-        <div className="relative z-[1] mx-auto w-full max-w-[1280px] px-5 pb-[max(300px,44svh)] pt-10 lg:px-8 lg:pb-24 lg:pt-12">
-          <div className="max-w-[520px]" key={`t${n}`}>
-            {textEl}
-          </div>
+        <div className="relative z-[1] mx-auto w-full max-w-[1440px] px-5 pb-[max(300px,44svh)] pt-10 sm:px-8 lg:px-20 lg:pb-24 lg:pt-14">
+          <div className="text-scrim max-w-[640px]">{textEl}</div>
         </div>
       ) : (
-        <div className="relative z-[1] mx-auto grid w-full max-w-[1280px] grid-cols-1 items-center gap-10 px-5 pb-24 pt-12 lg:grid-cols-12 lg:gap-12 lg:px-8 lg:pb-20 lg:pt-8">
-          <div className="relative z-[2] lg:col-span-5" key={`t${n}`}>
-            {textEl}
-          </div>
+        <div className="relative z-[1] mx-auto grid w-full max-w-[1440px] grid-cols-1 items-center gap-10 px-5 pb-24 pt-12 sm:px-8 lg:grid-cols-12 lg:gap-8 lg:px-20 lg:pb-20 lg:pt-8">
+          <div className="text-scrim relative z-[2] lg:col-span-6 xl:col-span-5">{textEl}</div>
           {/* room for the scene's centrepiece under the text on phones (on desktop it stands to the right) */}
-          <div className="min-h-[var(--mg)] lg:col-span-7 lg:min-h-0" style={{ ['--mg' as string]: `${minGraphic}px` }} aria-hidden />
+          <div className="min-h-[var(--mg)] lg:col-span-6 lg:min-h-0 xl:col-span-7" style={{ ['--mg' as string]: `${minGraphic}px` }} aria-hidden />
         </div>
       )}
       <SectionArrow index={index} label={t('landing.arrowNext')} topLabel={t('landing.arrowTop')} bob={bob} />
@@ -427,49 +410,47 @@ function SceneSection({ id, index, layout = 'split', bob = false, text, scene, m
 
 function SceneIntake() {
   const { t } = useLang();
-  return (
-    <SceneSection
-      id="scene-intake"
-      index={1}
-      minGraphic={460}
-      text={(reduce) => (
-        <>
-          <MaskHeading reduce={reduce}>{t('landing.shockTitle')}</MaskHeading>
-          <motion.p initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: ease.out, delay: 0.15 }} className="mt-5 max-w-[40ch] text-[18px] leading-[28px] text-ink-2">
-            {t('landing.shockBody')}
-          </motion.p>
-        </>
-      )}
-      scene={homeScene}
-    />
+  const text = useCallback(
+    (play: number) => (
+      <>
+        <SplitHeading text={t('landing.shockTitle')} play={play} animate={play > 0} className={H2} />
+        <Body play={play}>{t('landing.shockBody')}</Body>
+        {/* the anchor: the number the section is about, with its source */}
+        <motion.div
+          key={`stat-${play}`}
+          initial={play === 0 ? false : { opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: ease.out, delay: 0.32 }}
+          className="mt-8 flex items-end gap-5 lg:mt-10"
+        >
+          <span className="t-display text-[88px] leading-[0.9] text-ink tabular-nums lg:text-[128px]">{t('landing.shockStat')}</span>
+          <span className="mb-2 max-w-[22ch] border-l-2 border-signal-amber pl-3 text-[15px] leading-[21px] text-ink-2 lg:mb-3">{t('landing.shockStatSource')}</span>
+        </motion.div>
+      </>
+    ),
+    [t],
   );
+  return <SceneSection id="scene-intake" index={2} minGraphic={420} label={t('landing.nav1')} text={text} scene={homeScene} />;
 }
 const homeScene = (play: number, reduce: boolean) => <HomeScene play={play} reduce={reduce} />;
 const repairScene = (play: number, reduce: boolean) => <RepairScene play={play} reduce={reduce} />;
 
-/** Section 3: fix it before it breaks (the text in the sky above the house). */
+/** Fix it before it breaks (the text in the sky above the house). */
 function SceneRoad() {
   const { t } = useLang();
-  return (
-    <SceneSection
-      id="scene-road"
-      index={2}
-      layout="sky"
-      bob
-      text={(reduce) => (
-        <>
-          <MaskHeading reduce={reduce}>{t('landing.fixTitle')}</MaskHeading>
-          <motion.p initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: ease.out, delay: 0.15 }} className="mt-5 max-w-[40ch] text-[18px] leading-[28px] text-ink-2">
-            {t('landing.fixBody')}
-          </motion.p>
-        </>
-      )}
-      scene={repairScene}
-    />
+  const text = useCallback(
+    (play: number) => (
+      <>
+        <SplitHeading text={t('landing.fixTitle')} play={play} animate={play > 0} className={H2} />
+        <Body play={play}>{t('landing.fixBody')}</Body>
+      </>
+    ),
+    [t],
   );
+  return <SceneSection id="scene-road" index={3} layout="sky" bob label={t('landing.nav2')} text={text} scene={repairScene} />;
 }
 
-/** Section 4: Habitat sees it first (its early-warning view of a block of homeowners). */
+/** Habitat sees it first (its early-warning view of a block of homeowners). */
 function SceneHomes() {
   const { t } = useLang();
   const lots = useMemo(() => {
@@ -478,22 +459,16 @@ function SceneHomes() {
     return SEED_HOMES.slice(0, 6).map((h, i) => ({ id: h.id, label: `${h.city} · ${h.bedrooms}BR`, ready: 0, stage: 'finished' as const, ...status[i] }));
   }, []);
   const scene = useCallback((play: number, reduce: boolean) => <NeighborhoodScene play={play} reduce={reduce} lots={lots} />, [lots]);
-  return (
-    <SceneSection
-      id="scene-homes"
-      index={3}
-      minGraphic={300}
-      text={(reduce) => (
-        <>
-          <MaskHeading reduce={reduce}>{t('landing.watchTitle')}</MaskHeading>
-          <motion.p initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: ease.out, delay: 0.15 }} className="mt-5 max-w-[40ch] text-[18px] leading-[28px] text-ink-2">
-            {t('landing.watchBody')}
-          </motion.p>
-        </>
-      )}
-      scene={scene}
-    />
+  const text = useCallback(
+    (play: number) => (
+      <>
+        <SplitHeading text={t('landing.watchTitle')} play={play} animate={play > 0} className={H2} />
+        <Body play={play}>{t('landing.watchBody')}</Body>
+      </>
+    ),
+    [t],
   );
+  return <SceneSection id="scene-homes" index={4} minGraphic={300} label={t('landing.nav3')} text={text} scene={scene} />;
 }
 
 /**
@@ -505,17 +480,17 @@ function Closing() {
   const { t } = useLang();
   const reduce = !!useReducedMotion();
   const ref = useRef<HTMLElement>(null);
-  const n = useSectionPlay(4, ref);
+  const n = useSectionPlay(5, ref);
   return (
     <section ref={ref} id="closing" data-testid="closing" className="snap-section relative flex min-h-[calc(100svh-64px)] flex-col text-on-band" aria-label={t('landing.nav4')}>
       <div className="relative flex flex-1 flex-col">
         <ClosingScene play={n} reduce={reduce} />
-        <div className="relative z-[1] mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-5 pb-[34svh] pt-10 lg:px-8 lg:pb-[30svh] lg:pt-12" key={n}>
-          {n > 0 && <ClosingBody reduce={reduce} />}
+        <div className="relative z-[1] mx-auto flex w-full max-w-[1440px] flex-1 flex-col px-5 pb-[34svh] pt-10 sm:px-8 lg:px-20 lg:pb-[30svh] lg:pt-14">
+          <ClosingBody play={n} />
         </div>
         {/* the up arrow sits in the band, above the footer */}
         <div className="relative z-[1] h-[76px]">
-          <SectionArrow index={4} label={t('landing.arrowNext')} topLabel={t('landing.arrowTop')} tone="dark" />
+          <SectionArrow index={5} label={t('landing.arrowNext')} topLabel={t('landing.arrowTop')} tone="dark" />
         </div>
       </div>
       <Footer />
@@ -523,39 +498,29 @@ function Closing() {
   );
 }
 
-/** The closing's animated content; memoized so it only renders when the section (re)activates. */
-const ClosingBody = memo(function ClosingBody({ reduce }: { reduce: boolean }) {
+/** The closing's headline and the main call to action (magnetic). Drawn in place before the first visit. */
+const ClosingBody = memo(function ClosingBody({ play }: { play: number }) {
   const { t } = useLang();
   const router = useVTRouter();
   return (
-          <>
-            <motion.h2
-              initial={reduce ? false : { opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, ease: ease.out, delay: reduce ? 0 : 1.2 }}
-              className="max-w-[16ch] text-[44px] font-semibold leading-[48px] tracking-[-0.02em] lg:text-[72px] lg:leading-[76px]"
-            >
-              {t('landing.closingTitle')}
-            </motion.h2>
-            <motion.div initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: ease.out, delay: reduce ? 0 : 1.45 }}>
-              <motion.a
-                href="/start"
-                onClick={(e) => {
-                  if (e.metaKey || e.ctrlKey || e.shiftKey) return;
-                  e.preventDefault();
-                  router.push('/start', 'start');
-                }}
-                whileTap={{ scale: 0.97 }}
-                transition={spring.snappy}
-                className="mt-8 inline-flex min-h-[56px] items-center rounded-[8px] bg-on-band px-8 text-[20px] font-medium text-band transition-colors duration-[120ms] hover:bg-on-band/85 focus-visible:outline-on-band"
-              >
-                {t('landing.cta')}
-              </motion.a>
-            </motion.div>
-          </>
+    <>
+      <SplitHeading text={t('landing.closingTitle')} play={play} animate={play > 0} delay={0.15} className="max-w-[14ch] text-[44px] text-on-band sm:text-[64px] lg:text-[88px] xl:text-[96px]" />
+      <motion.div key={`cta-${play}`} initial={play === 0 ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: ease.out, delay: 0.45 }} className="mt-10">
+        <MagneticButton
+          href="/start"
+          onNavigate={(e) => {
+            if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+            e.preventDefault();
+            router.push('/start', 'start');
+          }}
+          className="min-h-[60px] items-center rounded-[8px] bg-on-band px-9 text-[20px] font-medium text-band transition-colors duration-[120ms] hover:bg-on-band/90 focus-visible:outline-on-band"
+        >
+          <span className="flex h-[60px] items-center">{t('landing.cta')}</span>
+        </MagneticButton>
+      </motion.div>
+    </>
   );
 });
-
 
 function Footer() {
   const { t } = useLang();
@@ -589,7 +554,8 @@ function Footer() {
   );
 }
 
-const SECTIONS = ['hero', 'scene-intake', 'scene-road', 'scene-homes', 'closing'];
+const SECTIONS = ['hero', 'scene-cost', 'scene-intake', 'scene-road', 'scene-homes', 'closing'];
+const NAV_LABELS = ['landing.nav0', 'landing.navCost', 'landing.nav1', 'landing.nav2', 'landing.nav3', 'landing.nav4'];
 // Memoized so the intro ending (a Landing state change) doesn't re-render every section mid-animation.
 const HeroM = memo(Hero);
 const SceneIntakeM = memo(SceneIntake);
@@ -636,11 +602,13 @@ export function Landing() {
       {phase === 'opening' && introMounted && <Intro live={intro} onHandoff={onHandoff} onDone={onIntroDone} onSkip={onIntroSkip} />}
       {/* a skip remounts the hero straight into its final state */}
       <HeroM key={phase === 'static' ? 'static' : 'live'} phase={heroPhase} intro={phase === 'pending' ? null : phase === 'opening'} />
+      <CostScene index={1} />
       <SceneIntakeM />
       <SceneRoadM />
       <SceneHomesM />
       <ClosingM />
-      <SectionDots labels={SECTIONS.map((_, i) => t(`landing.nav${i}`))} />
+      <SectionDots labels={NAV_LABELS.map((k) => t(k))} />
+      <div className="grain" aria-hidden />
     </SectionNavProvider>
   );
 }

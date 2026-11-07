@@ -679,7 +679,22 @@
     "statusWatch": "Vigilar",
     "statusAct": "Actuar ya",
     "watchOutreach": "Redactar mensaje",
-    "closingTitle": "Obtenga las llaves. Conserve las llaves."
+    "closingTitle": "Obtenga las llaves. Conserve las llaves.",
+    "navCost": "Lo que cuesta",
+    "shockStat": "+29 %",
+    "shockStatSource": "California FAIR Plan, oct. 2026",
+    "costTitle": "Lo que de verdad cuesta mantener una casa.",
+    "costBody": "La hipoteca no cambia. Todo lo que hay alrededor, sí.",
+    "costMortgage": "Hipoteca",
+    "costTax": "Impuesto predial",
+    "costInsurance": "Seguro",
+    "costUtilities": "Servicios",
+    "costRepairs": "Reparaciones",
+    "costPer": "/mes",
+    "costMoves": "Esta es la parte que cambia.",
+    "costMovesSub": "El seguro del FAIR Plan se renueva un 29 % más caro: unos $69 más al mes, sin aviso en la factura.",
+    "costEnd": "Todo junto, es un solo pago.",
+    "costEndSub": "Unos {total} al mes. Keystone vigila las partes que cambian, meses antes de que cambien."
   },
   "intakeArt": {
     "rentShare": "La renta es el {pct} de su ingreso",

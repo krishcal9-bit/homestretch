@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import '@fontsource/public-sans/400.css';
+import { frauncesDisplay } from '@/components/brand/fraunces';
 import '@fontsource/public-sans/500.css';
 import '@fontsource/public-sans/600.css';
 import { cookies } from 'next/headers';
@@ -29,7 +30,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const c = await cookies();
   const lang: Lang = c.get('hs_lang')?.value === 'es' ? 'es' : 'en';
   return (
-    <html lang={lang} suppressHydrationWarning>
+    <html lang={lang} suppressHydrationWarning className={frauncesDisplay.variable}>
       <head>
         {/* Theme before first paint: the stored choice or the system setting goes on <html data-theme>, so the
             wrong theme never flashes. suppressHydrationWarning on <html> covers the attributes it adds. */}

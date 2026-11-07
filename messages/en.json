@@ -679,7 +679,22 @@
     "statusWatch": "Watch",
     "statusAct": "Act now",
     "watchOutreach": "Draft outreach",
-    "closingTitle": "Get the keys. Keep the keys."
+    "closingTitle": "Get the keys. Keep the keys.",
+    "navCost": "What it costs",
+    "shockStat": "+29%",
+    "shockStatSource": "California FAIR Plan, Oct 2026",
+    "costTitle": "What it really costs to keep a home.",
+    "costBody": "The mortgage stays put. Everything built around it moves.",
+    "costMortgage": "Mortgage",
+    "costTax": "Property tax",
+    "costInsurance": "Insurance",
+    "costUtilities": "Utilities",
+    "costRepairs": "Repairs",
+    "costPer": "/mo",
+    "costMoves": "This is the part that moves.",
+    "costMovesSub": "Insurance on the FAIR Plan renews 29% higher: about $69 more a month, with no warning on the bill.",
+    "costEnd": "Back together, it's one payment.",
+    "costEndSub": "About {total} a month. Keystone watches the parts that move, months before they do."
   },
   "intakeArt": {
     "rentShare": "Rent is {pct} of your income",

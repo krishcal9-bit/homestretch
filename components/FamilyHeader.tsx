@@ -40,7 +40,7 @@ export function StaffLink({ className = '' }: { className?: string }) {
 }
 
 /**
- * 64px sticky header. On the landing page it is wide and transparent at the top, gaining a surface
+ * 64px header: sticky in the app, fixed on the landing. On the landing page it is wide and transparent at the top, gaining a surface
  * background and hairline after 24px of scroll. Inside the app it is the narrow, solid version.
  */
 export function FamilyHeader({ variant = 'app', wide = false }: { variant?: 'landing' | 'app'; /** app pages with a desktop layout (Keep) */ wide?: boolean }) {
@@ -59,7 +59,8 @@ export function FamilyHeader({ variant = 'app', wide = false }: { variant?: 'lan
   const b = useBrand();
   const onStage = b.stage === 'title' || b.fly;
   return (
-    <header className={`vt-header sticky top-0 ${onStage ? 'z-[75]' : 'z-30'}`}>
+    // the landing header is fixed: it never moves with a section (the landing's <main> leaves 64px for it)
+    <header className={`vt-header top-0 ${landing ? 'fixed inset-x-0' : 'sticky'} ${onStage ? 'z-[75]' : 'z-30'}`}>
       <div
         aria-hidden
         className={`absolute inset-0 border-b transition-opacity duration-200 ${landing ? 'border-line bg-surface' : 'border-line bg-paper'}`}

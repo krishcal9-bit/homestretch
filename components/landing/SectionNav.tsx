@@ -1,5 +1,5 @@
 'use client';
-import { createContext, startTransition, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { motion } from 'motion/react';
 
 /**
@@ -8,7 +8,8 @@ import { motion } from 'motion/react';
  *    (a camera move: each scene's layers travel at their own speed, the skies crossfade).
  *  - Presses during a move are ignored; keys are never hijacked while focus is in an input, slider,
  *    radio group or (for Space) a button.
- *  - Wheel/trackpad/touch scroll normally; CSS scroll-snap settles on sections.
+ *  - Wheel/trackpad scroll smoothly (Lenis); touch scrolls natively. A pinned section (data-stages) takes one
+ *    press per stage.
  *  - Tracks the active section and how many times each has been activated (to replay its animation).
  *  - Tracks the target: where the camera is headed. It changes the moment a move starts (arrow, dot, key)
  *    or, while scrolling freely, when a section crosses the middle of the viewport. The landing's sky
@@ -39,114 +40,171 @@ const HEADER = 64;
 /** One section change, start to land. */
 export const MOVE_MS = 800;
 
+type Lenis = import('lenis').default;
+let lenisRef: Lenis | null = null;
+/** The landing's smooth scroller (null with reduced motion, before it loads, or off the landing). */
+export const getLenis = () => lenisRef;
+
+/** Document y where a section rests under the fixed header. */
+const restOf = (el: HTMLElement) => el.getBoundingClientRect().top + window.scrollY - HEADER;
+
+/**
+ * Every place a press of Down can land, in document order: each section's resting position, plus, for a pinned
+ * section (`data-stages="N"` on the section, its inner content sticky), N − 1 more evenly spaced stops through its
+ * pinned scroll, so a pinned scene advances one stage per press before the page moves on.
+ */
+function readStops(ids: string[]) {
+  const out: { y: number; section: number }[] = [];
+  ids.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const top = i === 0 ? 0 : restOf(el);
+    out.push({ y: top, section: i });
+    const n = Number(el.dataset.stages ?? 0);
+    if (n > 1) {
+      const run = el.offsetHeight - (window.innerHeight - HEADER);
+      for (let k = 1; k < n; k++) out.push({ y: top + (run * k) / (n - 1), section: i });
+    }
+  });
+  return out;
+}
+
 export function SectionNavProvider({ ids, children, enabled = true }: { ids: string[]; children: ReactNode; enabled?: boolean }) {
   const [active, setActive] = useState(0);
   const [target, setTargetState] = useState(0);
   const targetRef = useRef(0);
+  const activeRef = useRef(0);
+  // play counts: a section's count goes up the moment it becomes the target (the press, not the landing), so its
+  // reveal runs during the move and the section is never blank when it arrives
+  const [activations, setActivations] = useState<number[]>(() => ids.map((_, i) => (i === 0 ? 1 : 0)));
   const setTarget = useCallback((i: number) => {
     if (targetRef.current === i) return;
     targetRef.current = i;
     setTargetState(i);
+    setActivations((a) => a.map((n, k) => (k === i ? n + 1 : n)));
   }, []);
-  const [activations, setActivations] = useState<number[]>(() => ids.map((_, i) => (i === 0 ? 1 : 0)));
   const moving = useRef(false);
-  const activeRef = useRef(0);
-  // During a programmatic move, a section's activation (which mounts its illustration) waits for the scroll to settle.
-  const pending = useRef<number | null>(null);
-  const activate = useCallback((i: number) => {
-    activeRef.current = i;
-    setActive(i);
-    // mounting a section's illustration is the heaviest render on the page: let React slice it across frames
-    startTransition(() => setActivations((a) => a.map((n, k) => (k === i ? n + 1 : n))));
+  const enabledRef = useRef(enabled);
+  enabledRef.current = enabled;
+
+  // Smooth scrolling (Lenis) on the landing; native scrolling with reduced motion.
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let alive = true;
+    let raf = 0;
+    import('lenis').then(({ default: Lenis }) => {
+      if (!alive) return;
+      const l = new Lenis({ lerp: 0.12, wheelMultiplier: 0.9, smoothWheel: true });
+      lenisRef = l;
+      if (!enabledRef.current) l.stop();
+      const loop = (t: number) => {
+        l.raf(t);
+        raf = requestAnimationFrame(loop);
+      };
+      raf = requestAnimationFrame(loop);
+    });
+    return () => {
+      alive = false;
+      cancelAnimationFrame(raf);
+      lenisRef?.destroy();
+      lenisRef = null;
+    };
   }, []);
 
-  // Scroll snapping only on the landing page.
+  // the intro owns the screen until it ends: no smooth scrolling under it
   useEffect(() => {
-    const html = document.documentElement;
-    html.classList.add('landing-snap');
-    return () => html.classList.remove('landing-snap');
-  }, []);
+    const l = lenisRef;
+    if (!l) return;
+    if (enabled) l.start();
+    else l.stop();
+  }, [enabled]);
 
-  // Track the active section (the one covering most of the viewport).
-  useEffect(() => {
-    const els = ids.map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
-    const ratios = new Map<string, number>();
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) ratios.set(e.target.id, e.intersectionRatio);
-        let best = activeRef.current;
-        let bestR = -1;
-        ids.forEach((id, i) => {
-          const r = ratios.get(id) ?? 0;
-          if (r > bestR) {
-            bestR = r;
-            best = i;
-          }
-        });
-        if (bestR >= 0.45 && best !== activeRef.current) {
-          if (moving.current) pending.current = best;
-          else activate(best);
-        }
-      },
-      { threshold: [0, 0.25, 0.45, 0.6, 0.8, 1], rootMargin: `-${HEADER}px 0px 0px 0px` },
-    );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  }, [ids, activate]);
-
-  // Free scrolling (wheel, trackpad, touch, scrollbar): the target is the section under the viewport's middle.
+  // Where the camera is: the section whose resting position is above the viewport's middle (scroll position,
+  // read once per frame; no observers, so a move never waits on one).
   useEffect(() => {
     let raf = 0;
     const read = () => {
       raf = 0;
-      if (moving.current) return;
-      const mid = HEADER + (window.innerHeight - HEADER) / 2;
+      const mid = window.scrollY + (window.innerHeight - HEADER) / 2;
       let best = 0;
       ids.forEach((id, i) => {
         const el = document.getElementById(id);
-        if (el && el.getBoundingClientRect().top <= mid) best = i;
+        if (el && (i === 0 ? 0 : restOf(el)) <= mid) best = i;
       });
-      setTarget(best);
+      if (best !== activeRef.current) {
+        activeRef.current = best;
+        setActive(best);
+      }
+      if (!moving.current) setTarget(best);
     };
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(read);
     };
     read();
     window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
     return () => {
       window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
       cancelAnimationFrame(raf);
     };
   }, [ids, setTarget]);
+
+  /** One camera move to a document y (section `sec` is the target from the first frame). */
+  const moveTo = useCallback(
+    (y: number, sec: number) => {
+      if (moving.current) return;
+      setTarget(sec);
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const l = lenisRef;
+      if (reduce || !l) {
+        if (reduce) return window.scrollTo(0, y);
+        // Lenis not loaded yet: a plain eased scroll
+        moving.current = true;
+        const from = window.scrollY;
+        const t0 = performance.now();
+        const step = (now: number) => {
+          const p = Math.min(1, (now - t0) / MOVE_MS);
+          window.scrollTo(0, from + (y - from) * bez(p));
+          if (p < 1) requestAnimationFrame(step);
+          else moving.current = false;
+        };
+        return void requestAnimationFrame(step);
+      }
+      moving.current = true;
+      l.scrollTo(y, {
+        duration: MOVE_MS / 1000,
+        easing: bez,
+        lock: true,
+        force: true,
+        onComplete: () => {
+          moving.current = false;
+        },
+      });
+      // never stay locked if a move is interrupted
+      window.setTimeout(() => (moving.current = false), MOVE_MS + 150);
+    },
+    [setTarget],
+  );
 
   const goTo = useCallback(
     (i: number) => {
       const idx = Math.max(0, Math.min(ids.length - 1, i));
       const el = document.getElementById(ids[idx]);
-      if (!el || moving.current) return;
-      setTarget(idx); // the camera heads there now: the sky starts its crossfade with the move
-      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const from = window.scrollY;
-      const to = idx === 0 ? 0 : el.getBoundingClientRect().top + window.scrollY - HEADER;
-      if (reduce) return window.scrollTo(0, to);
-      moving.current = true;
-      const html = document.documentElement;
-      html.classList.add('landing-snap-off'); // snapping would fight the programmatic scroll
-      const t0 = performance.now();
-      const step = (now: number) => {
-        const p = Math.min(1, (now - t0) / MOVE_MS);
-        window.scrollTo(0, from + (to - from) * bez(p));
-        if (p < 1) requestAnimationFrame(step);
-        else {
-          html.classList.remove('landing-snap-off');
-          moving.current = false;
-          if (pending.current !== null && pending.current !== activeRef.current) activate(pending.current);
-          pending.current = null;
-        }
-      };
-      requestAnimationFrame(step);
+      if (!el) return;
+      moveTo(idx === 0 ? 0 : restOf(el), idx);
     },
-    [ids, activate, setTarget],
+    [ids, moveTo],
+  );
+  /** Down / Up: the next stop (a pinned scene's next stage, else the next section). */
+  const step = useCallback(
+    (dir: 1 | -1) => {
+      const stops = readStops(ids);
+      const y = window.scrollY;
+      const s = dir > 0 ? stops.find((p) => p.y > y + 4) : [...stops].reverse().find((p) => p.y < y - 4);
+      if (s) moveTo(s.y, s.section);
+    },
+    [ids, moveTo],
   );
   const next = useCallback(() => goTo(activeRef.current + 1 >= ids.length ? 0 : activeRef.current + 1), [goTo, ids.length]);
 
@@ -161,17 +219,17 @@ export function SectionNavProvider({ ids, children, enabled = true }: { ids: str
       if (role === 'slider' || role === 'radio' || role === 'tab' || role === 'listbox' || role === 'menu' || role === 'switch') return;
       const isButton = tag === 'BUTTON' || tag === 'A' || role === 'button';
       const k = e.key;
-      let dir = 0;
+      let dir: 0 | 1 | -1 = 0;
       if (k === 'ArrowDown' || k === 'PageDown' || k === 'j' || k === 'J' || (k === ' ' && !isButton && !e.shiftKey)) dir = 1;
       else if (k === 'ArrowUp' || k === 'PageUp' || k === 'k' || k === 'K' || (k === ' ' && !isButton && e.shiftKey)) dir = -1;
       if (!dir) return;
       e.preventDefault();
       if (moving.current) return; // ignore extra presses while a move is in progress
-      goTo(activeRef.current + dir);
+      step(dir);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [enabled, goTo]);
+  }, [enabled, step]);
 
   const value = useMemo(() => ({ ids, active, activations, goTo, next }), [ids, active, activations, goTo, next]);
   return (
@@ -182,32 +240,13 @@ export function SectionNavProvider({ ids, children, enabled = true }: { ids: str
 }
 
 /**
- * A section's play count: increments each time it becomes active (keys its content so it replays),
- * and drops to 0 once the section has left the viewport entirely, so a return slides in clean and
- * animates in again instead of popping from finished to blank.
+ * A section's play count: 0 until it first becomes the target, then up by one each time it does (key content on
+ * it to replay). It never drops back: a section's content is always there, its reveal simply runs again.
  */
-export function useSectionPlay(index: number, ref: RefObject<HTMLElement | null>) {
+export function useSectionPlay(index: number, ref?: RefObject<HTMLElement | null>) {
+  void ref;
   const { activations } = useSectionNav();
-  const n = activations[index] ?? 0;
-  const nRef = useRef(n);
-  useEffect(() => {
-    nRef.current = n;
-  }, [n]);
-  const [clearedAt, setClearedAt] = useState(-1);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    // ignore the strip under the sticky header (and a few px of edge contact) when deciding "fully out of view"
-    const io = new IntersectionObserver(
-      ([e]) => {
-        if (!e.isIntersecting) setClearedAt(nRef.current);
-      },
-      { rootMargin: `-${HEADER + 8}px 0px -8px 0px` },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [ref]);
-  return clearedAt === n ? 0 : n;
+  return activations[index] ?? 0;
 }
 
 /** Round arrow at the bottom center of a section: next section, or back to the top on the last one. */

@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <>
       <FamilyHeader variant="landing" />
-      <main id="main">
+      <main id="main" className="pt-16">
         <Landing />
       </main>
     </>

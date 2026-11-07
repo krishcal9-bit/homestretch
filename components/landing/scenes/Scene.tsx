@@ -92,46 +92,45 @@ export function useRestOffset(ref: RefObject<HTMLElement | null>) {
   return { d, unit };
 }
 
+/**
+ * Scenes name their section by its original position (hero 0, shock 1, repair 2, homes 3, closing 4); the
+ * landing has since gained sections between them, so look the real index up by id.
+ */
+const SCENE_IDS = ['hero', 'scene-intake', 'scene-road', 'scene-homes', 'closing'];
+function useRealIndex(index: number) {
+  const { ids } = useSectionNav();
+  const i = ids.indexOf(SCENE_IDS[index] ?? '');
+  return i < 0 ? index : i;
+}
+
 /** True while the camera has settled on section `index` (ambient motion runs only then). */
 export function useSceneLive(index: number) {
+  const real = useRealIndex(index);
   const target = useSectionTarget();
   const { active } = useSectionNav();
-  return target === index && active === index;
+  return target === real && active === real;
 }
 
 /**
- * True while section `index` is where the camera rests, next to it, or where it is headed. Scenes farther
- * away skip rendering entirely (content-visibility: hidden): fewer layers to composite on every frame of a
- * move. Neighbours are switched at rest, so a move never pays for painting a scene; the hero (where "back
- * to the top" lands from anywhere) is always ready.
+ * True while section `index` is where the camera is, where it is headed, or within two sections of either.
+ * Scenes farther away skip rendering (content-visibility: hidden). Neighbours are always rendered, so a press of
+ * Down never waits on painting the next scene; the hero (where "back to the top" lands) is always ready.
  */
 export function useSceneShown(index: number) {
+  const real = useRealIndex(index);
   const target = useSectionTarget();
   const { active } = useSectionNav();
-  return index === 0 || Math.abs(active - index) <= 1 || target === index;
+  return real === 0 || Math.abs(active - real) <= 2 || Math.abs(target - real) <= 1;
 }
 
 /**
- * The scene's centrepiece clock: 0 until the section first becomes active (draw the resting, "before"
- * state), then 1, 2, … on each activation (key the centrepiece on it so it replays: the car drives, the
- * phone fills, the badges count). It drops back to 0 once the section has left the screen entirely, so a
- * return replays from the start. It changes one frame after the section's text, so the two never share a
- * frame. Activation happens once the camera has landed (SectionNav), so the section's text reveals after
- * the scene arrives.
+ * The scene's centrepiece clock: 0 until the section first becomes the navigation target (draw the resting
+ * state), then 1, 2, … each time it does (key the centrepiece on it so it replays). It goes up the moment a move
+ * starts, so the replay runs while the camera travels; it never drops back to 0, so nothing is ever blank.
  */
 export function useScenePlay(index: number) {
-  const { ids } = useSectionNav();
-  const ref = useRef<HTMLElement | null>(null);
-  useEffect(() => {
-    ref.current = document.getElementById(ids[index]);
-  }, [ids, index]);
-  const n = useSectionPlay(index, ref);
-  const [play, setPlay] = useState(n);
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setPlay(n));
-    return () => cancelAnimationFrame(id);
-  }, [n]);
-  return play;
+  const real = useRealIndex(index);
+  return useSectionPlay(real);
 }
 
 /**
@@ -210,25 +209,27 @@ export function useDepthOffset(relative: number) {
 }
 
 /**
- * Mounts a scene's art once the camera is on its section or next to it (or a few seconds after load, when
- * the page is idle), so the first paint only carries the hero. A neighbour mounts at rest, never mid-move.
+ * Mounts a scene's art: the hero and its neighbour at once, every other scene as soon as the page is idle after
+ * the first paint (and immediately if the camera heads toward it first). Scenes stay mounted from then on.
  */
 export function useSceneMount(index: number) {
+  const real = useRealIndex(index);
   const { active } = useSectionNav();
-  const [mounted, setMounted] = useState(index === 0);
+  const target = useSectionTarget();
+  const [mounted, setMounted] = useState(real <= 1);
   useEffect(() => {
     if (mounted) return;
-    if (Math.abs(active - index) <= 1) return setMounted(true);
+    if (Math.abs(active - real) <= 2 || Math.abs(target - real) <= 2) return setMounted(true);
     type Idle = Window & { requestIdleCallback?: (f: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
     const w = window as Idle;
     let idle = 0;
     const t = window.setTimeout(() => {
-      idle = w.requestIdleCallback ? w.requestIdleCallback(() => setMounted(true), { timeout: 4000 }) : window.setTimeout(() => setMounted(true), 0);
-    }, 5200 + index * 400);
+      idle = w.requestIdleCallback ? w.requestIdleCallback(() => setMounted(true), { timeout: 2500 }) : window.setTimeout(() => setMounted(true), 0);
+    }, 1200 + real * 250);
     return () => {
       clearTimeout(t);
       w.cancelIdleCallback?.(idle);
     };
-  }, [active, index, mounted]);
+  }, [active, target, real, mounted]);
   return mounted;
 }

@@ -67,7 +67,7 @@ Volume order kept: landing > result and plan > intake > staff. Only one thing mo
 
 | Where | Before | After | Why |
 |---|---|---|---|
-| Landing first visit | Hero animated in; no opening moment | ~2.4s opening on blank paper: a pine line draws across the middle, rises into a one-stroke house, the door fills brass, "Homestretch" fades in; then the camera pulls back — the line scales into the real Road track and the house shrinks onto the Keys marker (spring, bounce 0) while the headline rises (70ms stagger), the date odometers, and the pine fill passes each marker. Once per session; click or any key skips straight to the final hero; reduced motion: 150ms fade | One subject-specific signature moment |
+| Landing first visit | Hero animated in; no opening moment | ~2.4s opening on blank paper: a pine line draws across the middle, rises into a one-stroke house, the door fills brass, "Keystone" fades in; then the camera pulls back — the line scales into the real Road track and the house shrinks onto the Keys marker (spring, bounce 0) while the headline rises (70ms stagger), the date odometers, and the pine fill passes each marker. Once per session; click or any key skips straight to the final hero; reduced motion: 150ms fade | One subject-specific signature moment |
 | Opening first paint (found on video) | Header and partner line flashed before the overlay mounted | Inline pre-paint veil in `--paper` on first-session visits to `/` only (not reduced motion, not without JS) | "Starts as plain paper" |
 | Opening handoff (found on video) | The house faded at the Keys spot, then Keys popped last | The Keys marker and its label appear the moment the house lands | The house becomes Keys |
 | Hero horizon | Empty bottom of the first viewport | A street of 16 line-drawn houses on a ground line, drawn in left to right (40ms stagger); one window glows at a time; ≤8px parallax opposite the cursor on fine pointers | The horizon the Road heads toward |
@@ -123,7 +123,7 @@ Volume order kept: landing > result and plan > intake > staff. One ambient anima
 | Insights chart (1024) | Home labels overlapped | Labels take the lowest lane that clears their neighbour | Readable |
 | Staff at 390 | Console is a 1024px canvas | Kept: the spec makes the console desktop-only; phones can pan | Spec §2.B |
 
-## Round 5 — rendered, dimensional objects; the world behind every page; the HomeStretch title card (Part 5 pass)
+## Round 5 — rendered, dimensional objects; the world behind every page; the Keystone title card (Part 5 pass)
 
 Measured on a quiet machine:
 - **4× CPU throttle:**

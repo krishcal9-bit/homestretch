@@ -1,4 +1,4 @@
-// Generates components/brand/wordmarkGlyphs.ts: "HomeStretch" in Public Sans 600 (header) and 700 (title card) as SVG outlines
+// Generates components/brand/wordmarkGlyphs.ts: "Keystone" in Public Sans 600 and 700 as SVG outlines (the wordmark uses 700)
 // (em = 100 units, baseline y = 0, tracking -0.03em, font kerning applied). Run: node scripts/build-wordmark.mjs
 import opentype from 'opentype.js';
 import fs from 'fs';
@@ -7,7 +7,7 @@ function build(file) {
   const EM = 100;
   const scale = EM / font.unitsPerEm;
   const TRACK = -0.03 * EM;
-  const text = 'HomeStretch';
+  const text = 'Keystone';
   let x = 0;
   const letters = [];
   const glyphs = font.stringToGlyphs(text);

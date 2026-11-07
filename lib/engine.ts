@@ -1,4 +1,4 @@
-// Homestretch readiness engine. Pure, deterministic TypeScript, no LLM (BUILD_SPEC §3).
+// Keystone readiness engine. Pure, deterministic TypeScript, no LLM (BUILD_SPEC §3).
 // Claude explains and plans around these numbers; it never produces them.
 import { tierFor } from './incomeTiers';
 import type { Blocker, Debt, DebtKind, Milestone, MilestoneKey, Profile, ReadinessResult } from './types';

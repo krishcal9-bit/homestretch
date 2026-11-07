@@ -13,7 +13,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ code: st
   try {
     const pdf = await renderPlanPdf({ ...rec, url: `${url.origin}/plan/${rec.code}` });
     return new Response(new Uint8Array(pdf), {
-      headers: { 'content-type': 'application/pdf', 'content-disposition': `attachment; filename="homestretch-plan-${rec.code}-${rec.lang}.pdf"` },
+      headers: { 'content-type': 'application/pdf', 'content-disposition': `attachment; filename="keystone-plan-${rec.code}-${rec.lang}.pdf"` },
     });
   } catch {
     return apiError('pdf_failed', 'We could not make the PDF right now.', 500);

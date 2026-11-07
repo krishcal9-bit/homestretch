@@ -11,8 +11,8 @@ import { PALETTE_CSS } from '@/lib/illustrationPalette';
 
 
 export const metadata: Metadata = {
-  title: 'HomeStretch · Habitat OC',
-  description: 'How far is your family from keys, and exactly what closes the gap.',
+  title: 'Keystone · Homeownership that holds.',
+  description: 'Homeownership that holds. Keystone helps Habitat families get mortgage-ready, then keep their home as insurance and taxes rise.',
 };
 
 export const viewport: Viewport = {

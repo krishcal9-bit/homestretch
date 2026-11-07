@@ -14,7 +14,7 @@ import { INTRO, INTRO_STILL, INTRO_WAIT_MS } from './introTimeline';
 export { INTRO } from './introTimeline';
 
 /**
- * The landing intro overlay: the 3D house film, then the HomeStretch title card, then the hand-off to the
+ * The landing intro overlay: the 3D house film, then the Keystone title card, then the hand-off to the
  * hero (the wordmark flies into the header, the house lands on the hero's slot). Any click, wheel, touch or
  * key skips straight to the final hero. The hero is rendered underneath the whole time.
  * The film's canvas is the hero's own house canvas (components/three/HeroHouse.tsx): it hangs on this
@@ -133,7 +133,7 @@ export function Intro({ live = true, onStart, onHandoff, onDone, onSkip }: { liv
   if (!vp) return <div className="fixed inset-0 z-[70]" style={{ background: P.skyBottom }} aria-hidden />;
 
   // big: ~85% of a phone's width, ~68% of a desktop's (cap height ≈ 105px at 1440)
-  const titleW = vp.w < 640 ? Math.round(vp.w * 0.85) : Math.round(Math.min(1120, Math.max(560, vp.w * 0.68)));
+  const titleW = vp.w < 640 ? Math.round(vp.w * 0.85) : Math.round(Math.min(1080, Math.max(520, vp.w * 0.6)));
   const dim = beat === 'title';
   // the sky stays gone once the hand-off starts (the title landing in the header must not bring it back)
   const exiting = beat === 'exit' || beat === 'landed';

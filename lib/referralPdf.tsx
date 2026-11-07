@@ -51,10 +51,10 @@ const s = StyleSheet.create({
 
 function Packet({ p }: { p: ReferralPacket }) {
   return (
-    <Document title={`${p.title} · ${p.familyName}`} author="HomeStretch" language={p.lang}>
+    <Document title={`${p.title} · ${p.familyName}`} author="Keystone" language={p.lang}>
       <Page size="LETTER" style={s.page}>
         <View style={s.top}>
-          <Text style={s.brand}>HomeStretch · Habitat for Humanity of Orange County</Text>
+          <Text style={s.brand}>Keystone · Habitat for Humanity of Orange County</Text>
           <Text style={s.muted}>
             {p.generated}
             {p.code ? `  ·  ${p.code}` : ''}

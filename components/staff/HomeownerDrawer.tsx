@@ -228,10 +228,10 @@ function Outreach({ row }: { row: HomeownerRow }) {
     }
   };
   const approve = () => {
-    // Sample send: nothing leaves HomeStretch. Logged for the demo.
+    // Sample send: nothing leaves Keystone. Logged for the demo.
     console.info('[outreach:sample-send]', { to: `${row.surname} family`, id: row.id, lang: draft?.lang, subject: draft?.subject, body });
     setApproved(true);
-    toast(`Approved. Sample send to the ${row.surname} family logged; nothing left HomeStretch.`);
+    toast(`Approved. Sample send to the ${row.surname} family logged; nothing left Keystone.`);
   };
 
   return (

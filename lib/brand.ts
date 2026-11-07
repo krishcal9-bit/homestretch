@@ -2,7 +2,7 @@
 import { useSyncExternalStore } from 'react';
 
 /**
- * Where the HomeStretch wordmark lives right now. During the landing intro's title card it is on stage
+ * Where the Keystone wordmark lives right now. During the landing intro's title card it is on stage
  * ('title') and the header holds an invisible slot ([data-brand-slot]) of the exact final size; the title
  * flies onto that slot and then the header's own wordmark appears there ('header'). `fly` keeps the header
  * above the intro overlay while that happens; a skip sets 'header' directly with no flight.

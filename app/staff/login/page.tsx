@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { LoginForm } from '@/components/staff/LoginForm';
 
-export const metadata: Metadata = { title: 'Staff sign in · HomeStretch' };
+export const metadata: Metadata = { title: 'Staff sign in · Keystone' };
 
 export default function StaffLogin() {
   return (

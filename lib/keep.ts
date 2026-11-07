@@ -1,4 +1,4 @@
-// KEEP mode types: what a Habitat homeowner tells HomeStretch about their home and money.
+// KEEP mode types: what a Habitat homeowner tells Keystone about their home and money.
 // The forecast engine (lib/forecast.ts) turns this into numbers; Claude only explains and plans around them.
 
 export type HomeType = 'single' | 'townhome' | 'condo';

@@ -6,7 +6,7 @@ const enc = new TextEncoder();
 
 export async function staffToken(password: string): Promise<string> {
   const key = await crypto.subtle.importKey('raw', enc.encode(password), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode('homestretch-staff-v1'));
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode('keystone-staff-v1'));
   return Array.from(new Uint8Array(sig), (b) => b.toString(16).padStart(2, '0')).join('');
 }
 

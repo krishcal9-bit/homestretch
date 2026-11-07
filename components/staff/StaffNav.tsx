@@ -29,7 +29,7 @@ export function StaffNav() {
     <motion.header className="border-b border-line" initial={arrive ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: dur.short, ease: ease.out }}>
       <div className="relative isolate flex h-14 max-w-[1280px] items-center gap-6 px-8">
         <HeaderSkyline />
-        <Link href="/staff" className="-ml-1 rounded px-1" aria-label="HomeStretch staff, early warning">
+        <Link href="/staff" className="-ml-1 rounded px-1" aria-label="Keystone staff, early warning">
           <Wordmark />
         </Link>
         <nav aria-label="Staff" className="flex items-center gap-0.5">

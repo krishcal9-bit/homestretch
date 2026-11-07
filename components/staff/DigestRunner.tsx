@@ -202,7 +202,7 @@ export function DigestRunner() {
                         setApproved((a) => ({ ...a, [it.id]: true }));
                         setEditing((e) => ({ ...e, [it.id]: false }));
                         console.info('[digest:sample-send]', { id: it.id, to: it.household, es: text(it, 'es') || undefined, en: text(it, 'en') });
-                        toast(`Approved. Sample send to the ${it.surname} family logged; nothing left HomeStretch.`);
+                        toast(`Approved. Sample send to the ${it.surname} family logged; nothing left Keystone.`);
                       }}
                       data-testid="digest-approve"
                     >

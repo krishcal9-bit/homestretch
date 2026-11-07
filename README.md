@@ -1,4 +1,4 @@
-# HomeStretch: get the keys, keep the keys
+# Keystone: get the keys, keep the keys
 
 Built at the Claude Impact Lab (UC Irvine × SoCal Affordable Housing) for Habitat for Humanity of Orange County and the UCI Merage Center for Real Estate. Live: https://homestretch-umber.vercel.app
 
@@ -91,14 +91,14 @@ TURSO_DATABASE_URL=libsql://YOUR-DB.turso.io TURSO_AUTH_TOKEN=YOUR-TOKEN npm run
 
 ## Demo script (3 minutes)
 
-1. Load the site and let the intro play: the house builds, the key turns, "HomeStretch" fills the screen and flies to the header; the house lands on its street.
+1. Load the site and let the intro play: the house builds, the key turns, "Keystone" fills the screen and flies to the header; the house lands on its street.
 2. *"Getting families into homes is half the job. In California, insurance is up 84% since 2020 and the FAIR Plan just went up 29%. That shows up in a family's mortgage payment with almost no warning."* Press Down through the scenes (the shock on the kitchen wall, the water heater, Habitat seeing it first), then back to the top.
 3. **I own a Habitat home** → **Try the sample family**: the Ramirez family, Santa Ana, on the FAIR Plan. (Or go through setup and tap **Use the sample notice** to drop their insurance renewal: the fields fill, tagged "From your document", and it reads: *"Your insurance is going up $412 a year… your payment goes up about $69 a month in March."*)
 4. **Payment Forecast**: the line draws, the March spike drops in, breathing room turns red. Drag **Set aside each month**: the spike flattens; at the recommended $48 the marker says **Covered** and the red month is gone. *"$48 a month starting now, and March doesn't hurt."*
 5. **Shock Shield**: apply the higher deductible and the Homeowners' Exemption and watch the rise shrink; **Talk to Habitat early** shows the message, in Spanish for a Spanish-speaking family.
 6. Open `/staff` (password: `STAFF_PASSWORD`). **Early warning**: homeowners heading toward stress before anyone missed a payment (the count is computed live; 15 of 40 on Nov 7 2026). Open an Act now household and **Draft outreach** in Spanish.
 7. **Stress test**: insurance at 29% puts homeowners at risk; turn on a $150/month matched repair fund and the count drops, with the yearly payments protected (e.g. 15 → 7, about $15,600 a year that keeps funding the next homes).
-8. Close: *"Habitat builds the homes. HomeStretch helps families get the keys, and keep them."*
+8. Close: *"Habitat builds the homes. Keystone helps families get the keys, and keep them."*
 
 ## What Habitat OC would need to adopt this
 

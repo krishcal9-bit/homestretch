@@ -1,6 +1,6 @@
-# Homestretch — Claude Code build prompt
+# Keystone — Claude Code build prompt
 
-You are building **Homestretch**, a hackathon web app for Habitat for Humanity of Orange County (Habitat OC), for the Claude Impact Lab hackathon at UC Irvine. The hackathon's brief: help Habitat OC reach 100 affordable homes for low-income families. Judges score five criteria equally: does it work, ease of implementation for the partner, impact on the partner's operations, creativity, teamwork. Build accordingly: every feature must demo live, run on a laptop, and be something a 10-person nonprofit could adopt next month.
+You are building **Keystone**, a hackathon web app for Habitat for Humanity of Orange County (Habitat OC), for the Claude Impact Lab hackathon at UC Irvine. The hackathon's brief: help Habitat OC reach 100 affordable homes for low-income families. Judges score five criteria equally: does it work, ease of implementation for the partner, impact on the partner's operations, creativity, teamwork. Build accordingly: every feature must demo live, run on a laptop, and be something a 10-person nonprofit could adopt next month.
 
 ## 0. Repository and Git workflow
 
@@ -44,7 +44,7 @@ Habitat's operational pain, which the staff dashboard must solve:
 2. Staff verify income by hand from pay stubs and bank statements.
 3. Habitat has a build pipeline (homes finishing on known dates) but no view of **how many families will be mortgage-ready when each home is done**.
 
-Homestretch answers: "How far is this family from keys, what exactly closes the gap, and which upcoming home can they realistically get?"
+Keystone answers: "How far is this family from keys, what exactly closes the gap, and which upcoming home can they realistically get?"
 
 ---
 
@@ -364,6 +364,6 @@ One command that: resets the DB, reseeds, runs §9.1, runs §9.2 with mocks, the
 5. Open Underwriter's eye; show one flag; tap "Write my explanation letter"; show the letter.
 6. Open `/staff`. Pipeline: "Ready in ≤ 6 months: 5 families." Homes: "Costa Mesa 3BR, March 2027: 4 families projected ready." Match → Draft outreach.
 7. Insights: toggle "Matched savings $100/month" and read the headline: "12 more families ready by December 2027, for $48,000."
-8. Click "Run Monday check-in"; let three families stream in. Close on: "Habitat finishes 100 homes; Homestretch makes sure 100 families are ready to buy them, and never loses one on the way."
+8. Click "Run Monday check-in"; let three families stream in. Close on: "Habitat finishes 100 homes; Keystone makes sure 100 families are ready to buy them, and never loses one on the way."
 
 Begin with step 1 of the build order and continue through step 13 without pausing.

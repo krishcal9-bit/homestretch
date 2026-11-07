@@ -5,7 +5,7 @@ import { ease } from '@/lib/motion';
 import { P, alpha } from '@/lib/illustrationPalette';
 
 /**
- * The 2D house: Homestretch's recurring object wherever the 3D canvas isn't used (the Road's Keys marker,
+ * The 2D house: Keystone's recurring object wherever the 3D canvas isn't used (the Road's Keys marker,
  * staff Homes, small cards, scene illustrations). A shaded, dimensional drawing in an oblique projection:
  * the front gable face catches the light (top-left), the side wall and roof plane turn away into shade,
  * a soft shadow falls to the right. Every part is its own group so it can build in with overlap.

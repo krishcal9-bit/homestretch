@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "HomeStretch",
+    "name": "Keystone",
     "partner": "Habitat for Humanity of Orange County",
     "language": "Language",
     "back": "Back",
@@ -339,7 +339,7 @@
     "road": "Your road",
     "plan": "Your 90-day plan",
     "code": "Plan code {code}",
-    "footer": "Made with HomeStretch for Habitat for Humanity of Orange County. Open your plan any time at {url}",
+    "footer": "Made with Keystone for Habitat for Humanity of Orange County. Open your plan any time at {url}",
     "owner": {
       "you": "You",
       "habitat": "Habitat OC",
@@ -477,14 +477,14 @@
     "threadLabel": "Check-in messages",
     "last": "Last check-in {date}",
     "byText": "By text message",
-    "typing": "HomeStretch is typing",
+    "typing": "Keystone is typing",
     "reply": "Your answer",
     "send": "Send",
     "saved": "Check-in saved. Your forecast is up to date.",
     "again": "Check in again",
     "toHome": "Open Home health",
     "bot": {
-      "hello": "Hi, it's HomeStretch with your monthly check-in. Three quick questions.",
+      "hello": "Hi, it's Keystone with your monthly check-in. Three quick questions.",
       "bills": "Any new bills for the house this month?",
       "whichBill": "Which one changed?",
       "amount": {
@@ -556,7 +556,7 @@
     "downloadHelp": "One page: your forecast, repairs and relief. A PDF to print or share.",
     "error": "We couldn't make the PDF. Try again.",
     "title": "My home plan",
-    "made": "Made {date} with HomeStretch",
+    "made": "Made {date} with Keystone",
     "today": "Your home costs today",
     "peak": "Highest in the next 24 months",
     "setAside": "You set aside each month",
@@ -587,7 +587,7 @@
     "reliefTitle": "Relief",
     "claimed": "Claimed",
     "worth": "Worth about {amount} a year",
-    "footer": "Estimates from HomeStretch's forecast for Habitat for Humanity of Orange County homeowners. Made on your device; Habitat sees it only if you share it."
+    "footer": "Estimates from Keystone's forecast for Habitat for Humanity of Orange County homeowners. Made on your device; Habitat sees it only if you share it."
   },
   "firstYear": {
     "title": "Your first year of owning",
@@ -605,7 +605,7 @@
   },
   "landing": {
     "headline": "Get the keys. Keep the keys.",
-    "sub": "HomeStretch gets your family mortgage-ready, then sees payment changes coming months ahead and helps you keep your home.",
+    "sub": "Keystone gets your family mortgage-ready, then sees payment changes coming months ahead and helps you keep your home.",
     "cta": "Find my date",
     "how": "See how it works",
     "reyes": "Reyes family",
@@ -637,7 +637,7 @@
     "colHome": "Home",
     "colDone": "Done",
     "colReady": "Families ready",
-    "closing": "Habitat finishes 100 homes. HomeStretch helps 100 families be ready to buy them.",
+    "closing": "Habitat finishes 100 homes. Keystone helps 100 families be ready to buy them.",
     "footerPartner": "Built for Habitat for Humanity of Orange County.",
     "sooner": "{n} months sooner",
     "sooner1": "1 month sooner",
@@ -650,7 +650,7 @@
     "tSaved": "{city} family of {n} · down payment saved",
     "tMatched": "{city} family of {n} · matched to a {br}-bedroom",
     "closingA": "Habitat finishes {n} homes.",
-    "closingB": "HomeStretch helps {n} families be ready to buy them.",
+    "closingB": "Keystone helps {n} families be ready to buy them.",
     "nav0": "Overview",
     "nav1": "See the shock",
     "nav2": "Fix it early",
@@ -665,7 +665,7 @@
     "doorKeep": "I own a Habitat home",
     "doorKeepSub": "See your payment before it changes",
     "shockTitle": "See the shock before it hits.",
-    "shockBody": "Insurance and property taxes go up. HomeStretch shows the family their new payment months before it changes, and how to be ready for it.",
+    "shockBody": "Insurance and property taxes go up. Keystone shows the family their new payment months before it changes, and how to be ready for it.",
     "shockSpike": "March: +${n}/month · insurance renewal",
     "shockRoom": "Breathing room",
     "fixTitle": "Fix it before it breaks.",
@@ -697,7 +697,7 @@
     "more": "+{n} more"
   },
   "brand": {
-    "tagline": "Get the keys. Keep the keys."
+    "tagline": "Homeownership that holds."
   },
   "landingArt": {
     "grossPay": "Gross pay"

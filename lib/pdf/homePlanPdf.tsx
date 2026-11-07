@@ -52,7 +52,7 @@ export async function renderHomePlanPdf(o: { profile: KeepProfile; movesDone: st
   return renderToBuffer(
     <Document title={t('title')} language={lang}>
       <Page size="LETTER" style={s.page}>
-        <Text style={{ fontSize: 11, fontWeight: 600, color: C.pine }}>HomeStretch · Habitat for Humanity of Orange County</Text>
+        <Text style={{ fontSize: 11, fontWeight: 600, color: C.pine }}>Keystone · Habitat for Humanity of Orange County</Text>
         <Text style={{ fontSize: 22, fontWeight: 600, marginTop: 14, lineHeight: 1.25 }}>{t('title')}</Text>
         <Text style={[s.small, { marginTop: 2 }]}>{t('made', { date: new Intl.DateTimeFormat(lang === 'es' ? 'es-US' : 'en-US', { dateStyle: 'long' }).format(now) })}</Text>
 

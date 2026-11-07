@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-/* Homestretch design tokens (BUILD_SPEC §4). Light and dark (round 6), no shadows, one brass accent.
+/* Keystone design tokens (BUILD_SPEC §4). Light and dark (round 6), no shadows, one brass accent.
    <html data-theme> is set before first paint (lib/themeScript.ts); every component reads these only. */
 :root {
   --paper: #f6f7f5;

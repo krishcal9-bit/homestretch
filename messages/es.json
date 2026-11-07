@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "HomeStretch",
+    "name": "Keystone",
     "partner": "Habitat for Humanity del Condado de Orange",
     "language": "Idioma",
     "back": "Atrás",
@@ -339,7 +339,7 @@
     "road": "Su camino",
     "plan": "Su plan de 90 días",
     "code": "Código del plan {code}",
-    "footer": "Hecho con HomeStretch para Habitat for Humanity del Condado de Orange. Abra su plan cuando quiera en {url}",
+    "footer": "Hecho con Keystone para Habitat for Humanity del Condado de Orange. Abra su plan cuando quiera en {url}",
     "owner": {
       "you": "Usted",
       "habitat": "Habitat OC",
@@ -477,14 +477,14 @@
     "threadLabel": "Mensajes de la revisión",
     "last": "Última revisión: {date}",
     "byText": "Por mensaje de texto",
-    "typing": "HomeStretch está escribiendo",
+    "typing": "Keystone está escribiendo",
     "reply": "Su respuesta",
     "send": "Enviar",
     "saved": "Revisión guardada. Su pronóstico está al día.",
     "again": "Revisar otra vez",
     "toHome": "Abrir Salud de la casa",
     "bot": {
-      "hello": "Hola, es HomeStretch con su revisión mensual. Tres preguntas rápidas.",
+      "hello": "Hola, es Keystone con su revisión mensual. Tres preguntas rápidas.",
       "bills": "¿Tiene cuentas nuevas de la casa este mes?",
       "whichBill": "¿Cuál cambió?",
       "amount": {
@@ -556,7 +556,7 @@
     "downloadHelp": "Una página: su pronóstico, reparaciones y ayudas. Un PDF para imprimir o compartir.",
     "error": "No pudimos crear el PDF. Inténtelo de nuevo.",
     "title": "Mi plan de la casa",
-    "made": "Hecho el {date} con HomeStretch",
+    "made": "Hecho el {date} con Keystone",
     "today": "Su casa cuesta hoy",
     "peak": "Lo más alto en 24 meses",
     "setAside": "Aparta cada mes",
@@ -587,7 +587,7 @@
     "reliefTitle": "Ayudas",
     "claimed": "Pedida",
     "worth": "Vale unos {amount} al año",
-    "footer": "Cálculos del pronóstico de HomeStretch para propietarios de Habitat for Humanity del Condado de Orange. Hecho en su dispositivo; Habitat solo lo ve si usted lo comparte."
+    "footer": "Cálculos del pronóstico de Keystone para propietarios de Habitat for Humanity del Condado de Orange. Hecho en su dispositivo; Habitat solo lo ve si usted lo comparte."
   },
   "firstYear": {
     "title": "Su primer año como dueño",
@@ -605,7 +605,7 @@
   },
   "landing": {
     "headline": "Consiga las llaves. Conserve su hogar.",
-    "sub": "HomeStretch prepara a su familia para la hipoteca y luego ve venir los cambios en su pago con meses de anticipación para ayudarle a conservar su hogar.",
+    "sub": "Keystone prepara a su familia para la hipoteca y luego ve venir los cambios en su pago con meses de anticipación para ayudarle a conservar su hogar.",
     "cta": "Encontrar mi fecha",
     "how": "Vea cómo funciona",
     "reyes": "Familia Reyes",
@@ -637,7 +637,7 @@
     "colHome": "Casa",
     "colDone": "Lista",
     "colReady": "Familias listas",
-    "closing": "Habitat termina 100 casas. HomeStretch ayuda a que 100 familias estén listas para comprarlas.",
+    "closing": "Habitat termina 100 casas. Keystone ayuda a que 100 familias estén listas para comprarlas.",
     "footerPartner": "Hecho para Habitat for Humanity del Condado de Orange.",
     "sooner": "{n} meses antes",
     "sooner1": "1 mes antes",
@@ -650,7 +650,7 @@
     "tSaved": "Familia de {n} en {city} · enganche ahorrado",
     "tMatched": "Familia de {n} en {city} · asignada a una casa de {br} recámaras",
     "closingA": "Habitat termina {n} casas.",
-    "closingB": "HomeStretch ayuda a que {n} familias estén listas para comprarlas.",
+    "closingB": "Keystone ayuda a que {n} familias estén listas para comprarlas.",
     "nav0": "Inicio",
     "nav1": "Vea el golpe",
     "nav2": "Arréglelo a tiempo",
@@ -665,7 +665,7 @@
     "doorKeep": "Tengo una casa de Habitat",
     "doorKeepSub": "Vea su pago antes de que cambie",
     "shockTitle": "Vea el golpe antes de que llegue.",
-    "shockBody": "El seguro y los impuestos a la propiedad suben. HomeStretch le muestra a la familia su nuevo pago meses antes de que cambie, y cómo estar lista.",
+    "shockBody": "El seguro y los impuestos a la propiedad suben. Keystone le muestra a la familia su nuevo pago meses antes de que cambie, y cómo estar lista.",
     "shockSpike": "Marzo: +${n} al mes · renovación del seguro",
     "shockRoom": "Margen para respirar",
     "fixTitle": "Arréglelo antes de que se rompa.",
@@ -697,7 +697,7 @@
     "more": "+{n} más"
   },
   "brand": {
-    "tagline": "Consiga las llaves. Conserve su hogar."
+    "tagline": "Una casa propia que perdura."
   },
   "landingArt": {
     "grossPay": "Pago bruto"

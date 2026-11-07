@@ -8,7 +8,7 @@ import { ThemeToggle } from './ThemeToggle';
 import { Wordmark as BrandWordmark } from './brand/Wordmark';
 import { useBrand } from '@/lib/brand';
 
-/** The HomeStretch wordmark (static): footer, staff console, login. */
+/** The Keystone wordmark (static): footer, staff console, login. */
 export function Wordmark({ height = 24 }: { height?: number }) {
   return <BrandWordmark height={height} />;
 }
@@ -16,7 +16,7 @@ export function Wordmark({ height = 24 }: { height?: number }) {
 /** The header wordmark (28px). On the landing page it is the slot the title card flies onto. */
 function HeaderWordmark({ height = 28 }: { height?: number }) {
   const b = useBrand();
-  return <BrandWordmark height={height} svgClassName="h-[24px] w-auto sm:h-[28px]" slot className={b.stage === 'title' ? 'invisible' : undefined} />;
+  return <BrandWordmark height={height} svgClassName="h-[26px] w-auto sm:h-[31px]" slot className={b.stage === 'title' ? 'invisible' : undefined} />;
 }
 
 /** Quiet "Staff sign in" link; navigates with the crisp staff fade. */
@@ -69,7 +69,7 @@ export function FamilyHeader({ variant = 'app', wide = false }: { variant?: 'lan
         {t('app.skipToContent')}
       </a>
       <div className={`relative mx-auto flex h-16 items-center justify-between px-5 ${landing ? 'max-w-[1280px] lg:px-8' : wide ? 'max-w-[1120px] lg:px-8' : 'max-w-[560px]'}`}>
-        <Link href="/" className="-ml-1 flex items-center rounded px-1" aria-label="HomeStretch">
+        <Link href="/" className="-ml-1 flex items-center rounded px-1" aria-label="Keystone">
           <HeaderWordmark />
         </Link>
         <div className="flex items-center gap-3 transition-opacity duration-300 sm:gap-4" style={{ opacity: b.stage === 'title' ? 0 : 1, pointerEvents: b.stage === 'title' ? 'none' : undefined, transitionTimingFunction: 'cubic-bezier(0.23,1,0.32,1)', transitionDuration: b.stage === 'title' ? '0ms' : '300ms', transitionDelay: b.fly ? '250ms' : '0ms' }}>

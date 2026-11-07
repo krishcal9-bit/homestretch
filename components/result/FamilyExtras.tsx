@@ -166,7 +166,7 @@ export const FamilyExtras = memo(function FamilyExtras({ profile }: ResultExtras
                   </Button>
                   <a
                     href={`/api/pdf/plan/${code}?lang=${lang}`}
-                    download={`homestretch-plan-${code}-${lang}.pdf`}
+                    download={`keystone-plan-${code}-${lang}.pdf`}
                     data-testid="download-pdf"
                     className="press inline-flex min-h-[44px] items-center gap-2 rounded-[8px] border border-line bg-surface px-4 text-[15px] font-medium text-ink hover:bg-paper"
                   >
@@ -181,7 +181,7 @@ export const FamilyExtras = memo(function FamilyExtras({ profile }: ResultExtras
                       onSubmit={(e) => {
                         e.preventDefault();
                         // Mock send: no SMS provider in the demo.
-                        console.log(`[sms:mock] to ${phone}: Your Homestretch plan: ${link}`);
+                        console.log(`[sms:mock] to ${phone}: Your Keystone plan: ${link}`);
                         toast(t('plan.texted'));
                         setPhoneOpen(false);
                       }}
@@ -211,7 +211,7 @@ export const FamilyExtras = memo(function FamilyExtras({ profile }: ResultExtras
               <p className="text-[15px] leading-[22px] text-ink-2">{t('share.help')}</p>
               <a
                 href={`/api/card/${code}?lang=${lang}`}
-                download={`homestretch-${code}-${lang}.png`}
+                download={`keystone-${code}-${lang}.png`}
                 className="press mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-[8px] border border-line bg-surface px-4 text-[15px] font-medium text-ink hover:bg-paper"
               >
                 <Download size={18} strokeWidth={1.75} aria-hidden />

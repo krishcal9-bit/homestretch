@@ -35,7 +35,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ code: st
             <path d="M3 9.5 10 3l7 6.5V17H3z" fill="none" stroke="#1E5C47" strokeWidth="1.75" strokeLinejoin="round" />
             <path d="M3 14h14" stroke="#1E5C47" strokeWidth="1.75" />
           </svg>
-          HomeStretch
+          Keystone
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', marginTop: 360 }}>
           <div style={{ fontSize: 96, fontWeight: 600, lineHeight: 1.08, letterSpacing: -1, color: '#182420' }}>{headline}</div>
@@ -79,7 +79,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ code: st
         { name: 'Public Sans', data: font(400), weight: 400, style: 'normal' },
         { name: 'Public Sans', data: font(600), weight: 600, style: 'normal' },
       ],
-      headers: { 'content-disposition': `inline; filename="homestretch-${rec.code}-${lang}.png"`, 'cache-control': 'no-store' },
+      headers: { 'content-disposition': `inline; filename="keystone-${rec.code}-${lang}.png"`, 'cache-control': 'no-store' },
     },
   );
 }

@@ -45,9 +45,9 @@ Ambiguities resolved during the build, with the choice made.
   - **The intro uses its own full-screen canvas, and the hero keeps its own slot canvas.** At the end, the intro camera is re-projected with a view offset so the house lands exactly on the hero slot, pixel for pixel. The hero canvas compiles under the overlay, renders one frame, then holds. The intro's WebGL teardown is deferred until the page is idle, because tearing down a context is a long task.
   - **The intro is anchored to the first 3D frame, not to page load.** The hero waits for the intro's hand-off signal and then plays its own sequence. If three.js hasn't drawn within 1.2s, the still version of the film plays on a shorter clock.
   - **Title card timing.** The owner asked for about 4.2s in total including the title, so the 3D build timeline runs at ×1.35: the door opens at about 1.9s. The title runs 1.95–3.75s and the hand-off 3.75–4.25s.
-  - **The wordmark is outlines.** `scripts/build-wordmark.mjs` converts "HomeStretch" in Public Sans 600 at -0.03em into SVG paths using opentype.js. Each letter can then rise on its own from a mask and stays crisp at any scale. Blur-to-sharp is a crossfade between a pre-blurred copy and the sharp copy (opacity only).
+  - **The wordmark is outlines.** `scripts/build-wordmark.mjs` converts "Keystone" in Public Sans 600 at -0.03em into SVG paths using opentype.js. Each letter can then rise on its own from a mask and stays crisp at any scale. Blur-to-sharp is a crossfade between a pre-blurred copy and the sharp copy (opacity only).
   - **The wordmark's flight is a single Motion `layoutId` element.** The title copy unmounts in the same render as the header copy mounts, with no `AnimatePresence`. With a crossfade, the exiting copy flew back to the centre once the header dropped its `layoutId`.
-  - **Brand name is "HomeStretch"** in titles, the footer, the closing band, referral packets and PDFs.
+  - **Brand name is "Keystone"** in titles, the footer, the closing band, referral packets and PDFs.
   - **The hero loses the line street.** The 3D house is the hero's visual now, and its chimney smoke is the one ambient loop. The slider warms the sun toward golden hour and lights windows as the date gets earlier.
 - **Round 5 add-ons (owner, Nov 7): environments and a bigger title.**
   - **One fixed landing world.** The sky and horizon sit fixed behind every section rather than repeating per section, so it reads as one continuous place while sections slide over it. The horizon is richest at the edges and low in the middle, so content stays calm.
@@ -106,7 +106,7 @@ Ambiguities resolved during the build, with the choice made.
   - **The header's staff link hides below 640px** to make room for the switch. The staff console needs ≥1024px anyway, and the landing footer keeps the link.
   - **PDFs and the share card stay light**: they are drawn with their own hex and never read CSS variables.
 
-## HomeStretch: get the keys, keep the keys (Keep mode)
+## Keystone: get the keys, keep the keys (Keep mode)
 - **Engine (lib/forecast.ts)**: escrow is re-analyzed at each insurance renewal (new premium/12 + the shortage —
   the premium jump, tax growth not yet collected, any supplemental bill — spread over 12 months); property tax +2%
   each July (CA fiscal year); HOA +5% each January; maintenance set-aside from the home's systems (sinking fund to

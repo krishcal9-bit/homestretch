@@ -1,4 +1,4 @@
-# Homestretch: rules for every session (full spec: BUILD_SPEC.md)
+# Keystone: rules for every session (full spec: BUILD_SPEC.md)
 
 ## Engine (lib/engine.ts): deterministic, pure TS, no LLM
 - Claude only explains and plans around engine numbers; it never produces them.

@@ -15,6 +15,7 @@ import type { Lang } from '@/lib/types';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { Button } from '@/components/ui/Button';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
+import { ArchMark } from '@/components/brand/Wordmark';
 import { KeepGate, KeepHead } from './KeepFrame';
 
 type Update = (u: Partial<KeepState> | ((s: KeepState) => KeepState)) => void;
@@ -225,11 +226,11 @@ function Conversation({ state, update }: { state: KeepState; update: Update }) {
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,560px)_minmax(0,1fr)] lg:gap-12">
       <section aria-label={t('keepCheckin.threadLabel')} className="panel flex min-h-[520px] flex-col !p-0" data-testid="checkin-thread">
         <header className="flex items-center gap-3 border-b border-line px-5 py-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-pine text-[13px] font-semibold text-on-pine" aria-hidden>
-            HS
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-pine-soft" aria-hidden>
+            <ArchMark size={22} />
           </span>
           <div className="min-w-0">
-            <p className="text-[15px] font-medium text-ink">HomeStretch</p>
+            <p className="text-[15px] font-medium text-ink">Keystone</p>
             <p className="t-helper text-ink-2">{last && stage === 'start' ? t('keepCheckin.last', { date: new Date(last.date).toLocaleDateString(lang === 'es' ? 'es-US' : 'en-US', { month: 'long', day: 'numeric' }) }) : t('keepCheckin.byText')}</p>
           </div>
         </header>

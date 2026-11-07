@@ -3,7 +3,7 @@ import { FamilyHeader } from '@/components/FamilyHeader';
 import { KeepTabs } from '@/components/keep/KeepTabs';
 
 export const metadata: Metadata = {
-  title: 'Keep · HomeStretch',
+  title: 'Keep · Keystone',
   description: 'See payment changes coming and get ready for them.',
 };
 

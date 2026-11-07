@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { PX as P } from '@/lib/illustrationPalette';
 
 /**
- * The Homestretch house: a stylized two-story craftsman with a front porch gable, built from primitives.
+ * The Keystone house: a stylized two-story craftsman with a front porch gable, built from primitives.
  * Every part is its own group so it can build in with overlap (plinth rises, walls extrude one by one,
  * roof panels drop and settle, chimney pops, windows and door slot in, trees grow and sway).
  * Units: about half a metre. The lawn top is y = 0; the front of the house faces +z.

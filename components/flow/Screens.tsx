@@ -12,11 +12,11 @@ import { spring, exit as exitT, reveal } from '@/lib/motion';
 import type { CreditBand } from '@/lib/types';
 import { useMemo, type ReactNode } from 'react';
 import { HouseholdArt } from '@/components/illustrations/intake/HouseholdArt';
-import { OCOutline } from '@/components/illustrations/intake/OCOutline';
-import { CoinStack } from '@/components/illustrations/intake/CoinStack';
-import { RentShare } from '@/components/illustrations/intake/RentShare';
-import { FloorPlan } from '@/components/illustrations/intake/FloorPlan';
-import { DebtScale } from '@/components/illustrations/intake/DebtScale';
+import { OCMap } from '@/components/illustrations/intake/OCMap';
+import { CoinJar } from '@/components/illustrations/intake/CoinJar';
+import { RentGauge, RentShare, rentShare } from '@/components/illustrations/intake/RentMeter';
+import { Dollhouse } from '@/components/illustrations/intake/Dollhouse';
+import { BalanceScale } from '@/components/illustrations/intake/BalanceScale';
 import { CreditGauge } from '@/components/illustrations/intake/CreditGauge';
 
 export type ScreenProps = {
@@ -116,7 +116,7 @@ export function HouseholdScreen({ draft, update, titleAction, flash }: ScreenPro
   const ocBlock = useMemo(
     () => (
       <div className={ocFlash ? 'just-filled rounded-[8px]' : ''} key={`oc-${ocFlash}`}>
-        <YesNo id="inOC" label={t('flow.household.inOC')} value={inOC} onChange={(v) => update({ inOC: v })} art={<OCOutline value={inOC} />} />
+        <YesNo id="inOC" label={t('flow.household.inOC')} value={inOC} onChange={(v) => update({ inOC: v })} art={<OCMap value={inOC} />} />
         <InlineNote show={inOC === false} text={t('flow.inlineReq')} />
       </div>
     ),
@@ -136,7 +136,7 @@ export function HouseholdScreen({ draft, update, titleAction, flash }: ScreenPro
       <ScreenTitle action={titleAction}>{t('flow.household.title')}</ScreenTitle>
       <div className="flex flex-col gap-8">
         <Field id="householdSize" label={t('flow.household.size')} help={t('flow.household.sizeHelp')}>
-          {/* the family in front of the house stands beside the stepper, rising into the label's empty right side */}
+          {/* the family on the front path of their house, beside the stepper, rising into the label's empty right side */}
           <div className="relative">
             <Stepper
               id="householdSize"
@@ -167,12 +167,12 @@ export function IncomeScreen({ draft, update, showErrors, titleAction, flash, ex
       <ScreenTitle action={titleAction}>{t('flow.income.title')}</ScreenTitle>
       <div className="flex flex-col gap-4">
         <Field id="gross" label={t('flow.income.gross')} help={t('flow.income.grossHelp')} error={err}>
-          {/* coins stack up beside the field as income grows (rising into the label's empty right side) */}
+          {/* a jar beside the field fills with coins and bills as income grows (rising into the label's empty right side) */}
           <div className="flex items-end gap-3">
             <div className="min-w-0 flex-1">
               <CurrencyInput id="gross" value={draft.grossMonthlyIncome} flash={flash.grossMonthlyIncome} invalid={!!err} describedBy="gross-help gross-error" onChange={(v) => update({ grossMonthlyIncome: v, incomeSource: undefined })} />
             </div>
-            <CoinStack monthly={monthly} />
+            <CoinJar monthly={monthly} />
           </div>
           <div className="mt-2 flex min-h-[26px] items-center justify-between gap-2">
             <PerYear annual={monthly * 12} />
@@ -223,7 +223,13 @@ export function HousingScreen({ draft, update, showErrors, titleAction, flash }:
   const rentBlock = useMemo(
     () => (
       <Field id="rent" label={t('flow.housing.rent')} help={t('flow.housing.rentHelp')} error={err}>
-        <CurrencyInput id="rent" value={rent} flash={flash.rent} invalid={!!err} describedBy="rent-help rent-error" onChange={(v) => update({ rent: v })} />
+        {/* a rent meter beside the field: the needle swings past the 30% mark and turns amber */}
+        <div className="flex items-end gap-3">
+          <div className="min-w-0 flex-1">
+            <CurrencyInput id="rent" value={rent} flash={flash.rent} invalid={!!err} describedBy="rent-help rent-error" onChange={(v) => update({ rent: v })} />
+          </div>
+          <RentGauge share={rentShare(rent, income)} active={rent !== null && rent > 0 && income > 0} />
+        </div>
         <RentShare rent={rent} income={income} />
       </Field>
     ),
@@ -259,7 +265,7 @@ export function HousingScreen({ draft, update, showErrors, titleAction, flash }:
           {occupantsBlock}
         </div>
         <div className="-mt-4">
-          <FloorPlan bedrooms={bedrooms} occupants={occupants} />
+          <Dollhouse bedrooms={bedrooms} occupants={occupants} />
         </div>
         {unsafeBlock}
       </div>
@@ -308,9 +314,9 @@ export function MoneyScreen({ draft, update, showErrors, titleAction, flash, ext
           ))}
         </div>
       </section>
-      {/* what's owed against what's saved: tags drop onto the pans as values are entered */}
+      {/* what's owed against what's saved: weights drop onto one pan, the savings jar sits on the other */}
       <div className="mt-6 flex justify-center">
-        <DebtScale debts={draft.debts} savings={draft.savings} />
+        <BalanceScale debts={draft.debts} savings={draft.savings} />
       </div>
       <div className="mt-6 flex flex-col gap-6">
         <Field id="savings" label={t('flow.money.savings')} help={t('flow.money.savingsHelp')} error={savingsErr}>

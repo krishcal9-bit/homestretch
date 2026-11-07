@@ -1,13 +1,13 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { Upload } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useLang } from '@/lib/i18n';
-import { ease, spring, exit as exitT } from '@/lib/motion';
+import { spring, exit as exitT } from '@/lib/motion';
 import { Spinner } from '@/components/ui/Spinner';
-import { PayStubDoc, SCAN_MS, type StubPhase } from '@/components/illustrations/intake/PayStubDoc';
+import { PayStub, SCAN_MS } from '@/components/illustrations/PayStub';
 
+type StubPhase = 'idle' | 'scanning' | 'read';
 type State = { kind: 'idle' } | { kind: 'reading' } | { kind: 'done'; message: string } | { kind: 'error'; message: string };
 
 /**
@@ -17,11 +17,6 @@ type State = { kind: 'idle' } | { kind: 'reading' } | { kind: 'done'; message: s
 export type UploadOutcome = string | { message: string; fly: { text: string; to: string; land: () => void } };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-/** A measured flight: the stub's amount box (`from`) and the transform that puts its text on the field's. */
-type Flight = { text: string; from: DOMRect; x: number; y: number; s: number };
-const FLY_DELAY = 0.16; // the amount shows on the stub first
-const FLY_DUR = 0.4;
 
 /** Camera/file upload card. Posts the file to `endpoint`; `onResult` turns the JSON into a success message. */
 export function UploadCard({
@@ -39,17 +34,17 @@ export function UploadCard({
   button: string;
   endpoint: string;
   onResult: (data: Record<string, unknown>) => UploadOutcome;
-  /** 'paystub': a pay stub sketch that is scanned on upload, and the amount it reads flies into the field. */
+  /** 'paystub': an illustrated pay stub (PayStub) that is scanned on upload, and the amount it reads flies into the field. */
   art?: 'paystub';
 }) {
   const { t, lang } = useLang();
   const reduce = useReducedMotion();
   const input = useRef<HTMLInputElement>(null);
-  const amountRef = useRef<HTMLSpanElement>(null);
   const [state, setState] = useState<State>({ kind: 'idle' });
   const [phase, setPhase] = useState<StubPhase>('idle');
   const [amount, setAmount] = useState<string>();
-  const [flight, setFlight] = useState<Flight | null>(null);
+  // the field the read amount flies into (set while a flight is pending)
+  const [flyTo, setFlyTo] = useState<string>();
   // A value in flight is always written into the form, even if the card unmounts before it lands.
   const pendingLand = useRef<(() => void) | null>(null);
   useEffect(
@@ -63,7 +58,7 @@ export function UploadCard({
     const f = pendingLand.current;
     pendingLand.current = null;
     f?.();
-    setFlight(null);
+    setFlyTo(undefined);
   }, []);
 
   const upload = async (file: File) => {
@@ -104,33 +99,20 @@ export function UploadCard({
     setPhase('read');
     setState({ kind: 'done', message: out.message });
     pendingLand.current = out.fly.land;
-    // The amount appears on the stub, then a copy flies into the field (FLIP: measured, transform only).
-    requestAnimationFrame(() => {
-      const span = amountRef.current;
-      const from = span?.getBoundingClientRect();
-      const r = document.getElementById(out.fly.to)?.getBoundingClientRect();
-      if (reduce || !span || !from || !r || from.width === 0 || r.top < 0 || r.bottom > window.innerHeight) return land();
-      // Where the text sits inside the stub's box, so the copy's text lands exactly on the field's text.
-      const range = document.createRange();
-      range.selectNodeContents(span);
-      const txt = range.getBoundingClientRect();
-      const s = 16 / 13; // the field's text size over the stub's
-      const a = txt.left - from.left;
-      const b = txt.top - from.top + txt.height / 2;
-      // CurrencyInput draws its "$" 14px in from the left edge; the flying "$5,200" lands on top of it.
-      setFlight({ text: out.fly.text, from, x: r.left + 14 - from.left - s * a, y: r.top + r.height / 2 - from.top - s * b, s });
-    });
+    // The amount shows on the stub, lifts off and flies into the field (PayStub measures and flies it).
+    if (reduce) land();
+    else setFlyTo(out.fly.to);
   };
 
   return (
     <div className="panel mt-2 !p-5" data-testid={`upload-${id}`}>
-      {/* with art: title and body beside the sketch, the button full-width below (it never wraps) */}
+      {/* with art: title and body beside the pay stub, the button full-width below (it never wraps) */}
       <div className={art ? 'flex items-start gap-4' : undefined}>
         <div className="min-w-0 flex-1">
           <p className="text-[16px] font-medium text-ink">{title}</p>
           <p className="mt-1 text-[15px] leading-[22px] text-ink-2">{body}</p>
         </div>
-        {art === 'paystub' && <PayStubDoc phase={phase} amount={amount} amountRef={amountRef} />}
+        {art === 'paystub' && <PayStub scanning={phase === 'scanning'} amount={phase === 'read' ? amount : undefined} flyTo={flyTo ? { id: flyTo, inset: 14 } : undefined} onLanded={flyTo ? land : undefined} />}
       </div>
       <input
         ref={input}
@@ -173,32 +155,6 @@ export function UploadCard({
           )}
         </AnimatePresence>
       </div>
-      {flight && createPortal(<FlyingValue key={flight.text + flight.from.top} {...flight} onLand={land} />, document.body)}
     </div>
-  );
-}
-
-/**
- * The read amount, copied off the stub, flying into the field. It starts exactly over the stub's amount and
- * ends with its text where the field's text sits, at the field's 16px size; then the field takes over.
- */
-function FlyingValue({ text, from, x, y, s, onLand }: Flight & { onLand: () => void }) {
-  // The amount shows on the stub for a beat, then flies; the timer is a backstop if the animation is cut short.
-  useEffect(() => {
-    const id = setTimeout(onLand, (FLY_DELAY + FLY_DUR) * 1000 + 300);
-    return () => clearTimeout(id);
-  }, [onLand]);
-  return (
-    <motion.span
-      aria-hidden
-      className="pointer-events-none fixed z-50 flex items-center justify-center rounded-[3px] bg-pine-soft"
-      style={{ left: from.left, top: from.top, width: from.width, height: from.height, originX: 0, originY: 0 }}
-      initial={{ x: 0, y: 0, scale: 1 }}
-      animate={{ x, y, scale: s }}
-      transition={{ duration: FLY_DUR, delay: FLY_DELAY, ease: ease.inOut }}
-      onAnimationComplete={onLand}
-    >
-      <span className="tnum text-[13px] leading-[15px] text-ink">{text}</span>
-    </motion.span>
   );
 }

@@ -1,46 +1,40 @@
 'use client';
-import { motion, useReducedMotion } from 'motion/react';
+import { useReducedMotion, useSpring } from 'motion/react';
+import { memo, useEffect, useMemo } from 'react';
+import { P } from '@/lib/illustrationPalette';
 import type { CreditBand } from '@/lib/types';
-import { spring } from '@/lib/motion';
+import { Dial, useSvgId, type DialBand } from './shared';
 
-const CX = 32;
-const CY = 32;
-const R = 26;
-const p = (deg: number) => {
-  const a = (deg * Math.PI) / 180;
-  return `${(CX + R * Math.cos(a)).toFixed(2)} ${(CY - R * Math.sin(a)).toFixed(2)}`;
-};
-const arc = (from: number, to: number) => `M${p(from)}A${R} ${R} 0 0 1 ${p(to)}`;
-
-/** Left to right: needs work, building, good (60° each, small gaps). */
-const BANDS: { band: CreditBand; d: string }[] = [
-  { band: 'needs_work', d: arc(178, 122) },
-  { band: 'building', d: arc(118, 62) },
-  { band: 'good', d: arc(58, 2) },
-];
-/** Needle angle from straight up. "Not sure" wavers just left of center; no answer yet rests flat. */
+/** Needle angle from straight up. "Not sure" rests just left of centre; no answer yet lies flat on its stop. */
 const ANGLE: Record<CreditBand, number> = { needs_work: -60, building: 0, good: 60, unknown: -14 };
+const TICKS = [-90, -60, -30, 0, 30, 60, 90];
+const MAJOR = [-30, 30];
 
-/** A small semicircle gauge beside the credit question; the needle swings (spring) to the chosen band. */
-export function CreditGauge({ value }: { value: CreditBand | null }) {
+/**
+ * Step 4: a credit gauge beside the credit question: three bands (needs work in amber, building in sage,
+ * good in pine); the chosen band lights and the needle swings to it with a damped spring, overshooting a
+ * little and settling. Decorative: the segmented control carries the answer.
+ */
+export const CreditGauge = memo(function CreditGauge({ value }: { value: CreditBand | null }) {
+  const id = useSvgId();
   const reduce = useReducedMotion();
-  const rot = value ? ANGLE[value] : -90;
-  const needle = value === null ? 'var(--line)' : value === 'unknown' ? 'var(--ink-2)' : 'var(--pine)';
-  return (
-    <svg width={64} height={36} viewBox="0 0 64 36" className="pointer-events-none shrink-0 overflow-visible" aria-hidden data-testid="credit-gauge">
-      {BANDS.map(({ band, d }) => (
-        <path key={band} d={d} fill="none" strokeWidth={4} style={{ stroke: value === band ? 'var(--pine)' : 'var(--line)', transition: 'stroke 200ms ease' }} />
-      ))}
-      <motion.path
-        d={`M${CX} ${CY}V${CY - 19}`}
-        strokeWidth={2}
-        strokeLinecap="round"
-        style={{ stroke: needle, transition: 'stroke 200ms ease', originX: 0.5, originY: 1 }}
-        initial={false}
-        animate={{ rotate: rot }}
-        transition={reduce ? { duration: 0 } : spring.smooth}
-      />
-      <circle cx={CX} cy={CY} r={2.5} fill="var(--surface)" stroke="var(--pine)" strokeWidth={1.5} />
-    </svg>
+  const target = value ? ANGLE[value] : -90;
+  const angle = useSpring(target, { visualDuration: 0.55, bounce: 0.25 });
+  useEffect(() => {
+    if (reduce) angle.jump(target);
+    else angle.set(target);
+  }, [target, reduce, angle]);
+  const bands = useMemo<DialBand[]>(
+    () => [
+      { from: -88, to: -31.5, color: P.amber, on: value === 'needs_work', off: P.amberSoft },
+      { from: -28.5, to: 28.5, color: P.sage, on: value === 'building' },
+      { from: 31.5, to: 88, color: P.pineLight, on: value === 'good', off: P.pineSoft },
+    ],
+    [value],
   );
-}
+  return (
+    <div className="pointer-events-none shrink-0" aria-hidden data-testid="credit-gauge">
+      <Dial id={id} width={84} angle={angle} bands={bands} ticks={TICKS} major={MAJOR} tone={value === null ? 'idle' : value === 'unknown' ? 'ink' : value === 'needs_work' ? 'amber' : 'pine'} />
+    </div>
+  );
+});

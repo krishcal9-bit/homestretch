@@ -1,16 +1,19 @@
 'use client';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLang } from '@/lib/i18n';
 import { computeReadiness, addMonths } from '@/lib/engine';
 import { whyThisDate } from '@/lib/explain';
 import type { Profile } from '@/lib/types';
 import type { PlanOutput } from '@/lib/plan';
 import { Road } from '@/components/result/Road';
-import { Skyline } from '@/components/ui/Skyline';
-import { ReadyHero } from '@/components/result/ResultScreen';
+import { PanelStreet } from '@/components/illustrations/result/PanelStreet';
+import { ReadyHero } from '@/components/illustrations/result/ReadyHero';
 import { Section, WhyThisDate } from '@/components/result/Panels';
 import { PlanChecklist, PlanSkeleton } from '@/components/result/PlanChecklist';
+import { keysReachAt, markPlayed, panelRoadWidth, readPlayed } from '@/components/illustrations/result/timing';
+
+const DRAW = 0.6; // families revisit this page: a shorter entrance than the result screen
 
 export function PlanNotFound() {
   const { t } = useLang();
@@ -29,7 +32,25 @@ export function PlanView({ code, createdAt, profile, initialPlan, initialCheckli
   const { t, lang } = useLang();
   const [plan, setPlan] = useState<PlanOutput | null>(initialPlan);
   const [checklist, setChecklist] = useState(initialChecklist);
-  const [revealed, setRevealed] = useState(false);
+  // Decided after mount (this page is server-rendered): the entrance plays once per session per plan.
+  const [phase, setPhase] = useState<'pending' | 'play' | 'static'>('pending');
+  useEffect(() => {
+    let reduce = false;
+    try {
+      reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    } catch {}
+    const key = `hs.planPlayed:${code}`;
+    const played = readPlayed(key);
+    markPlayed(key);
+    setKeysAt(keysReachAt(computeReadiness(profile), DRAW, panelRoadWidth(), 'inOut'));
+    setPhase(!reduce && !played ? 'play' : 'static');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code]);
+  const play = phase === 'play';
+  const [settled, setSettled] = useState(false);
+  const [roadDone, setRoadDone] = useState(false);
+  const onSettled = useCallback(() => setSettled(true), []);
+  const onRoadDone = useCallback(() => setRoadDone(true), []);
   const result = useMemo(() => computeReadiness(profile), [profile]);
   const why = useMemo(() => whyThisDate(profile, result, lang), [profile, result, lang]);
   // Months since the plan was made: the Road's pine fill shows progress so far.
@@ -64,14 +85,31 @@ export function PlanView({ code, createdAt, profile, initialPlan, initialCheckli
   };
 
   const keys = result.milestones.find((m) => m.key === 'keys')?.month ?? 0;
+  const [keysAt, setKeysAt] = useState(0);
   return (
     <div className="pb-16 pt-8">
       <p className="t-helper tnum mb-4 text-ink-2">{t('plan.planFor', { code })}</p>
       <h1 className="sr-only">{t('result.roadTitle')}</h1>
-      <ReadyHero months={result.monthsToReady} readyDate={result.readyDate} keysDate={addMonths(new Date(), keys)} reveal={revealed} noIncome={result.noIncome} />
+      <div style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
+        <ReadyHero key={phase} months={result.monthsToReady} readyDate={result.readyDate} keysDate={addMonths(new Date(), keys)} noIncome={result.noIncome} play={play} at={Math.max(0.2, keysAt - 0.05)} roll={0.4} onSettled={onSettled} />
+      </div>
       <div className="panel mt-8 !px-5 !pb-2 !pt-4">
-        <Road result={result} elapsed={elapsed} drawDuration={0.6} onEntranceDone={() => setRevealed(true)} />
-        <Skyline mode="static" count={10} height={56} className="-mx-5 mt-1 opacity-70" keysLit={revealed} litCount={Object.values(checklist).filter(Boolean).length} />
+        {phase === 'pending' ? (
+          <div className="h-[78px]" />
+        ) : (
+          <Road
+            result={result}
+            elapsed={elapsed}
+            entrance={play ? 'always' : 'none'}
+            drawDuration={DRAW}
+            drawEase="inOut"
+            onEntranceDone={onRoadDone}
+            keysVariant="house"
+            keysBuild={play && !roadDone ? 'short' : 'none'}
+            keysBuildDelay={keysAt}
+          />
+        )}
+        <PanelStreet keysLit={settled} litCount={Object.values(checklist).filter(Boolean).length} />
       </div>
       <WhyThisDate sentences={why} />
       <Section title={t('plan.title')} id="plan">

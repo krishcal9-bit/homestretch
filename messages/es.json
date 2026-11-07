@@ -162,6 +162,12 @@
     "year": "Año {n}",
     "tenPlus": "Más de 10 años"
   },
+  "resultArt": {
+    "sooner": "{n} meses antes",
+    "sooner1": "1 mes antes",
+    "later": "{n} meses después",
+    "later1": "1 mes después"
+  },
   "road": {
     "labels": {
       "collections": "Cobranzas pagadas",

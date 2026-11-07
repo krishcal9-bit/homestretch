@@ -1,42 +1,37 @@
 'use client';
-import { animate, motion, useReducedMotion } from 'motion/react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { computeReadiness, isEligible, addMonths, MAX_MONTHS } from '@/lib/engine';
+import { animate, useReducedMotion } from 'motion/react';
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { computeReadiness, isEligible, addMonths } from '@/lib/engine';
 import { draftToProfile, type Draft } from '@/lib/draft';
 import { whyThisDate } from '@/lib/explain';
 import { useLang } from '@/lib/i18n';
-import { monthName } from '@/lib/format';
-import { spring, dur, ease } from '@/lib/motion';
+import { spring, dur } from '@/lib/motion';
 import type { Levers as LeversT, Profile } from '@/lib/types';
-import { AnimatedMonth } from '@/components/ui/AnimatedMonth';
 import { Button } from '@/components/ui/Button';
 import { Road } from './Road';
 import { Levers } from './Levers';
 import { FinancePanel, Section, WhyThisDate } from './Panels';
 import { AimForHome } from './AimForHome';
 import { TwoFutures } from './TwoFutures';
-import { Skyline } from '@/components/ui/Skyline';
+import { PanelStreet } from '@/components/illustrations/result/PanelStreet';
+import { useDateDelta } from '@/components/illustrations/result/DeltaPill';
+import { keysReachAt, panelRoadWidth } from '@/components/illustrations/result/timing';
+import { ReadyHero, useEntrance } from '@/components/illustrations/result/ReadyHero';
+
+export { ReadyHero };
+
+/** The value, once it has stopped changing for `ms` (the first value immediately). */
+function useSettled<T>(value: T, ms: number): T {
+  const [settled, setSettled] = useState(value);
+  useEffect(() => {
+    if (Object.is(value, settled)) return;
+    const id = setTimeout(() => setSettled(value), ms);
+    return () => clearTimeout(id);
+  }, [value, settled, ms]);
+  return settled;
+}
 
 export type ResultExtrasProps = { profile: Profile; draft: Draft; setDraft: (d: Draft | ((p: Draft) => Draft)) => void };
-
-export function ReadyHero({ months, readyDate, keysDate, reveal, noIncome }: { months: number; readyDate: string; keysDate: string; reveal: boolean; noIncome?: boolean }) {
-  const { t, lang } = useLang();
-  const sub =
-    months >= MAX_MONTHS ? t('result.tooFar') : months === 0 ? t('result.readyNow') : months === 1 ? t('result.oneMonth') : t('result.monthsAway', { n: months });
-  if (noIncome) return null;
-  return (
-    <motion.div initial={false} animate={{ opacity: reveal ? 1 : 0, y: reveal ? 0 : 8 }} transition={{ duration: dur.medium, ease: ease.out }}>
-      <p className="text-[15px] text-ink-2">{t('result.eyebrow')}</p>
-      <p className="mt-1 text-[clamp(40px,11vw,56px)] font-semibold leading-[1.07] tracking-[-0.01em] text-brass">
-        <AnimatedMonth text={months >= MAX_MONTHS ? t('result.tenPlus') : monthName(readyDate, lang)} testId="ready-date" />
-      </p>
-      <p className="tnum mt-3 text-[16px] text-ink" data-testid="ready-sub">
-        {sub}
-      </p>
-      <p className="tnum t-helper mt-2 text-ink-2">{t('result.keys', { month: monthName(keysDate, lang) })}</p>
-    </motion.div>
-  );
-}
 
 export function ResultScreen({
   draft,
@@ -56,7 +51,12 @@ export function ResultScreen({
   const pending = useRef<LeversT | null>(null);
   const raf = useRef<number | null>(null);
   const solving = useRef<{ stop: () => void }[]>([]);
-  const [revealed, setRevealed] = useState(false);
+  // Entrance, once per session (the Road's own key, so a revisit in the same tab is calm).
+  const play = useEntrance('hs.roadPlayed');
+  const [settled, setSettled] = useState(false);
+  const [roadDone, setRoadDone] = useState(false);
+  const onSettled = useCallback(() => setSettled(true), []);
+  const onRoadDone = useCallback(() => setRoadDone(true), []);
   const [ticks, setTicks] = useState(0);
   useEffect(() => {
     const on = (e: Event) => setTicks((e as CustomEvent<number>).detail);
@@ -84,8 +84,23 @@ export function ResultScreen({
   const baseProfile = useMemo(() => draftToProfile(draft), [draft]);
   const profile = useMemo(() => ({ ...baseProfile, levers }), [baseProfile, levers]);
   const result = useMemo(() => computeReadiness(profile), [profile]);
-  const why = useMemo(() => whyThisDate(profile, result, lang), [profile, result, lang]);
+  // The hero, the Road and the sliders follow every frame of a drag. "Aim for a specific home" follows a
+  // deferred copy (rendered between frames, so its small Road still re-flows while a solve glides); the
+  // sections nobody reads mid-drag (why, finance, plan, save, counselor) follow a copy that settles 160ms
+  // after the last change. Keeps a drag under one frame at 4x CPU throttle.
+  const deferredProfile = useDeferredValue(profile);
+  const settledProfile = useSettled(profile, 160);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const settledResult = useMemo(() => (settledProfile === profile ? result : computeReadiness(settledProfile)), [settledProfile]);
+  const why = useMemo(() => whyThisDate(settledProfile, settledResult, lang), [settledProfile, settledResult, lang]);
+  const extrasDraft = useMemo(() => ({ ...draft, levers: settledProfile.levers }), [draft, settledProfile]);
+  const leversRef = useRef(levers);
+  leversRef.current = levers;
   const keysMonth = result.milestones.find((m) => m.key === 'keys')?.month ?? 0;
+  // The Keys house builds as the drawing line reaches it; the date lands as its door turns brass.
+  const [keysAt] = useState(() => keysReachAt(result, dur.long, panelRoadWidth(), 'inOut'));
+  const dateAt = Math.max(0.3, keysAt);
+  const { baseline, keysGlow, begin } = useDateDelta(result.monthsToReady);
 
   // Haptic tick when the ready date crosses a month boundary.
   const lastMonth = useRef(result.monthsToReady);
@@ -97,20 +112,22 @@ export function ResultScreen({
   }, [result.monthsToReady]);
 
   const onUserLevers = (l: LeversT) => {
+    begin();
     solving.current.forEach((c) => c.stop());
     solving.current = [];
     commit(l);
   };
 
   /** D1: sliders animate to their solved positions with spring.smooth while the road re-flows. */
-  const onSolve = (target: LeversT) => {
+  const onSolve = useCallback((target: LeversT) => {
+    begin();
     solving.current.forEach((c) => c.stop());
     if (reduce) {
       setLevers(target);
       return;
     }
-    const from = { ...levers };
-    const live = { ...levers };
+    const from = { ...leversRef.current };
+    const live = { ...leversRef.current };
     solving.current = (['extraDebt', 'monthlySavings'] as const).map((k) =>
       animate(from[k], target[k], {
         ...spring.smooth,
@@ -124,7 +141,7 @@ export function ResultScreen({
         },
       }),
     );
-  };
+  }, [reduce, commit, begin]);
 
   const eligible = isEligible(result);
 
@@ -153,12 +170,23 @@ export function ResultScreen({
           <p className="mt-1 text-[15px] text-ink-2">{t('result.notEligibleBody')}</p>
         </div>
       )}
-      <ReadyHero months={result.monthsToReady} readyDate={result.readyDate} keysDate={addMonths(new Date(), keysMonth)} reveal={revealed} />
+      <ReadyHero months={result.monthsToReady} readyDate={result.readyDate} keysDate={addMonths(new Date(), keysMonth)} play={play} at={dateAt} onSettled={onSettled} baseline={baseline} />
 
       <div className="panel mt-8 !px-5 !pb-2 !pt-4">
-        <Road result={result} onEntranceDone={() => setRevealed(true)} vtName="road" />
+        <Road
+          result={result}
+          entrance={play ? 'always' : 'none'}
+          drawEase="inOut"
+          onEntranceDone={onRoadDone}
+          vtName="road"
+          keysVariant="house"
+          keysBuild={play && !roadDone ? 'quick' : 'none'}
+          keysBuildDelay={keysAt}
+          progressTo={result.monthsToReady}
+          keysGlow={keysGlow}
+        />
         {/* the street: the Keys house lights brass once the date settles; each ticked plan item lights a window */}
-        <Skyline mode="static" count={10} height={56} className="-mx-5 mt-1 opacity-70" keysLit={revealed} litCount={ticks} />
+        <PanelStreet keysLit={settled} litCount={ticks} />
       </div>
 
       <div className="panel mt-4 !p-5">
@@ -168,10 +196,10 @@ export function ResultScreen({
       </div>
 
       <WhyThisDate sentences={why} />
-      <FinancePanel result={result} rent={profile.rent} />
-      <AimForHome profile={profile} onSolve={onSolve} />
+      <FinancePanel result={settledResult} rent={settledProfile.rent} />
+      <AimForHome profile={deferredProfile} onSolve={onSolve} />
       <TwoFutures profile={baseProfile} />
-      {Extras && <Extras profile={profile} draft={{ ...draft, levers }} setDraft={setDraft} />}
+      {Extras && <Extras profile={settledProfile} draft={extrasDraft} setDraft={setDraft} />}
 
       <Section title="">
         <button type="button" onClick={onEdit} className="min-h-[44px] text-[15px] font-medium text-pine underline-offset-4 hover:underline">

@@ -407,5 +407,8 @@
       "savings": "Ahorros"
     },
     "more": "+{n} más"
+  },
+  "landingArt": {
+    "grossPay": "Pago bruto"
   }
 }

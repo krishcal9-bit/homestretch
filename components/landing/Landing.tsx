@@ -19,7 +19,7 @@ import { SectionArrow, SectionDots, SectionNavProvider, useSectionPlay } from '.
 import { PhoneVoice } from '@/components/illustrations/landing/PhoneVoice';
 import { JourneyRoad } from '@/components/illustrations/landing/JourneyRoad';
 import { NeighborhoodMap } from '@/components/illustrations/landing/NeighborhoodMap';
-import { HundredHouses } from '@/components/illustrations/landing/HundredHouses';
+import { HundredCount, HundredHouses } from '@/components/illustrations/landing/HundredHouses';
 import { AnimatePresence } from 'motion/react';
 import { StaffLink, Wordmark } from '@/components/FamilyHeader';
 import type { Profile } from '@/lib/types';
@@ -531,8 +531,7 @@ function SceneIntake() {
     <SceneSection
       id="scene-intake"
       index={1}
-      bob
-      minGraphic={560}
+      minGraphic={600}
       text={(reduce) => (
         <>
           <MaskHeading reduce={reduce}>{t('landing.s1')}</MaskHeading>
@@ -559,7 +558,7 @@ function SceneRoad() {
       index={2}
       flip
       bob
-      minGraphic={400}
+      minGraphic={220}
       text={(reduce) => (
         <>
           <MaskHeading reduce={reduce}>{t('landing.s2')}</MaskHeading>
@@ -582,17 +581,26 @@ function SceneHomes() {
   const { t } = useLang();
   const lots = useMemo(() => {
     const fams = SEED_FAMILIES.map((f) => ({ f, r: computeReadiness(f.profile) })).filter((x) => isEligible(x.r));
-    return SEED_HOMES.slice(0, 6).map((h) => ({
-      id: h.id,
-      label: `${h.city} · ${h.bedrooms}BR`,
-      ready: fams.filter((x) => homeFits(x.f.profile.householdSize, h.bedrooms) && x.r.monthsToReady <= monthsUntil(h.completion)).length,
-    }));
+    const homes = SEED_HOMES.slice(0, 6);
+    // build stage for the illustration, by completion: two finished, the next one finishing (its scaffolding comes
+    // down), then one roofing and two framing
+    const order = [...homes].sort((a, b) => a.completion.localeCompare(b.completion)).map((h) => h.id);
+    return homes.map((h) => {
+      const rank = order.indexOf(h.id);
+      return {
+        id: h.id,
+        label: `${h.city} · ${h.bedrooms}BR`,
+        ready: fams.filter((x) => homeFits(x.f.profile.householdSize, h.bedrooms) && x.r.monthsToReady <= monthsUntil(h.completion)).length,
+        stage: (['finished', 'finished', 'finished', 'roofing', 'framing', 'framing'] as const)[rank],
+        finishing: rank === 2,
+      };
+    });
   }, []);
   return (
     <SceneSection
       id="scene-homes"
       index={3}
-      minGraphic={380}
+      minGraphic={210}
       text={(reduce) => (
         <>
           <MaskHeading reduce={reduce}>{t('landing.s3')}</MaskHeading>
@@ -609,7 +617,7 @@ function SceneHomes() {
   );
 }
 
-/** The only dark section: 100 houses fill in white while the counter rolls to 100; then the sentence and button rise. */
+/** The only dark section: a dusk street of 100 homes lights up row by row while the counter rolls to 100; then the sentence and button rise. */
 function Closing() {
   const { t } = useLang();
   const reduce = !!useReducedMotion();
@@ -617,7 +625,7 @@ function Closing() {
   const n = useSectionPlay(4, ref);
   return (
     <section ref={ref} id="closing" data-testid="closing" className="snap-section relative flex min-h-[calc(100svh-64px)] flex-col bg-pine text-white" aria-label={t('landing.nav4')}>
-      <div className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col justify-center px-5 py-16 lg:px-8" key={n}>
+      <div className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col justify-center px-5 py-12 lg:px-8" key={n}>
         {n > 0 && <ClosingBody reduce={reduce} />}
       </div>
       {/* the up arrow sits in the pine band, above the footer */}
@@ -641,14 +649,14 @@ const ClosingBody = memo(function ClosingBody({ reduce }: { reduce: boolean }) {
             <div className="flex flex-wrap items-end gap-x-10 gap-y-6">
               <HundredHouses reduce={reduce} />
               <p className="tnum text-[72px] font-semibold leading-none tracking-[-0.02em] lg:text-[96px]">
-                <RollTo to={100} reduce={reduce} format={fmt} />
+                <HundredCount reduce={reduce} format={fmt} />
               </p>
             </div>
             <motion.p
               initial={reduce ? false : { opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, ease: ease.out, delay: reduce ? 0 : 0.9 }}
-              className="tnum mt-12 max-w-[24ch] text-[34px] font-semibold leading-[40px] tracking-[-0.02em] lg:text-[52px] lg:leading-[56px]"
+              transition={{ duration: 0.45, ease: ease.out, delay: reduce ? 0 : 1.25 }}
+              className="tnum mt-10 max-w-[24ch] text-[34px] font-semibold leading-[40px] tracking-[-0.02em] lg:text-[52px] lg:leading-[56px]"
             >
               {a1}
               <RollTo to={100} reduce={reduce} format={fmt} />
@@ -656,7 +664,7 @@ const ClosingBody = memo(function ClosingBody({ reduce }: { reduce: boolean }) {
               <RollTo to={100} reduce={reduce} format={fmt} />
               {b2}
             </motion.p>
-            <motion.div initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: ease.out, delay: reduce ? 0 : 1.1 }}>
+            <motion.div initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: ease.out, delay: reduce ? 0 : 1.45 }}>
               <motion.a
                 href="/start"
                 onClick={(e) => {

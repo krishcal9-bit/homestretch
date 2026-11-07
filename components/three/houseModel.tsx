@@ -239,6 +239,8 @@ export type HouseHandle = {
   state: HouseState;
   /** the key's flight (intro only) */
   key: boolean;
+  /** timeline speed for the intro (1 = as authored) */
+  speed?: number;
 };
 
 /** Mutable controller shared between the scene and its React wrapper (no re-renders). */
@@ -288,7 +290,7 @@ export function House({ ctl, onBuilt }: { ctl: HouseHandle; onBuilt?: () => void
     // map real time to intro-timeline time
     let t: number;
     if (b === 'none') t = 99;
-    else if (b === 'intro') t = raw;
+    else if (b === 'intro') t = raw * (ctl.speed ?? 1);
     else t = BUILD_FROM + raw / SCALE[b];
     const intro = b === 'intro';
     if (t < TL.end + 0.6) moving = true;

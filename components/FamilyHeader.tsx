@@ -4,17 +4,19 @@ import { useEffect, useState } from 'react';
 import { useLang } from '@/lib/i18n';
 import { useVTRouter } from '@/lib/vt';
 import { LanguageToggle } from './LanguageToggle';
+import { Wordmark as BrandWordmark } from './brand/Wordmark';
+import { BRAND_LAYOUT_ID, useBrand } from '@/lib/brand';
 
-export function Wordmark() {
-  return (
-    <span className="inline-flex items-center gap-2 text-[16px] font-semibold tracking-[-0.01em] text-ink">
-      <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden>
-        <path d="M3 9.5 10 3l7 6.5V17H3z" fill="none" stroke="var(--pine)" strokeWidth="1.75" strokeLinejoin="round" />
-        <path d="M3 14h14" stroke="var(--pine)" strokeWidth="1.75" />
-      </svg>
-      Homestretch
-    </span>
-  );
+/** The HomeStretch wordmark (static): footer, staff console, login. */
+export function Wordmark({ height = 24 }: { height?: number }) {
+  return <BrandWordmark height={height} />;
+}
+
+/** The header wordmark. On the landing page it receives the title card's wordmark in flight. */
+function HeaderWordmark({ height = 24 }: { height?: number }) {
+  const b = useBrand();
+  if (b.stage === 'title') return <BrandWordmark height={height} className="invisible" />;
+  return <BrandWordmark height={height} layoutId={b.fly ? BRAND_LAYOUT_ID : undefined} />;
 }
 
 /** Quiet "Staff sign in" link; navigates with the crisp staff fade. */
@@ -52,8 +54,12 @@ export function FamilyHeader({ variant = 'app' }: { variant?: 'landing' | 'app' 
     window.addEventListener('scroll', on, { passive: true });
     return () => window.removeEventListener('scroll', on);
   }, [landing]);
+  // During the landing intro the header sits above the overlay so the wordmark can fly into it;
+  // its controls fade in once the wordmark has landed.
+  const b = useBrand();
+  const onStage = b.stage === 'title' || b.fly;
   return (
-    <header className="vt-header sticky top-0 z-30">
+    <header className={`vt-header sticky top-0 ${onStage ? 'z-[75]' : 'z-30'}`}>
       <div
         aria-hidden
         className={`absolute inset-0 border-b transition-opacity duration-200 ${landing ? 'border-line bg-surface' : 'border-line bg-paper'}`}
@@ -63,10 +69,10 @@ export function FamilyHeader({ variant = 'app' }: { variant?: 'landing' | 'app' 
         {t('app.skipToContent')}
       </a>
       <div className={`relative mx-auto flex h-16 items-center justify-between px-5 ${landing ? 'max-w-[1280px] lg:px-8' : 'max-w-[560px]'}`}>
-        <Link href="/" className="-ml-1 rounded px-1" aria-label="Homestretch">
-          <Wordmark />
+        <Link href="/" className="-ml-1 flex items-center rounded px-1" aria-label="HomeStretch">
+          <HeaderWordmark />
         </Link>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 transition-opacity duration-300" style={{ opacity: b.stage === 'title' ? 0 : 1, pointerEvents: b.stage === 'title' ? 'none' : undefined, transitionTimingFunction: 'cubic-bezier(0.23,1,0.32,1)', transitionDuration: b.stage === 'title' ? '0ms' : '300ms', transitionDelay: b.fly ? '250ms' : '0ms' }}>
           <StaffLink />
           <LanguageToggle />
         </div>

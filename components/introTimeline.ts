@@ -1,0 +1,17 @@
+/**
+ * The landing intro, one continuous film (seconds from the first 3D frame):
+ *  0.00–0.37  sky + blueprint grid, construction lines draw
+ *  0.37–1.30  the house builds with overlap (plinth, walls 60ms apart, roof drops and settles, chimney,
+ *             windows and door slot in); the camera orbits 20° and pushes in while the trees grow
+ *  1.45       the first window lights; smoke starts
+ *  1.63–1.91  the brass key flies in, turns; the door swings open, warm light spills out
+ *  1.95–3.75  title card: the scene blurs and dims; "HomeStretch" rises letter by letter, the road
+ *             draws under "Stretch", the house mark pops and its window lights, one shimmer
+ *  3.75–4.25  the wordmark flies into the header; the scene un-blurs and lands on the hero's house slot;
+ *             the hero assembles
+ * Without WebGL (or if three.js is late) the still render plays the same title card on a shorter clock.
+ */
+export const INTRO = { speed: 1.35, title: 1.95, exit: 3.75, pull: 3.75, total: 4.25 };
+export const INTRO_STILL = { title: 0.55, exit: 2.35, pull: 2.35, total: 2.85 };
+/** If the 3D stage hasn't drawn its first frame by then, the still plays instead. */
+export const INTRO_WAIT_MS = 1200;

@@ -13,8 +13,9 @@ import { Segmented } from '@/components/ui/Segmented';
 import { AnimatedMonth } from '@/components/ui/AnimatedMonth';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { Road } from '@/components/result/Road';
-import { Skyline } from '@/components/ui/Skyline';
-import { Intro, INTRO } from '@/components/Intro';
+import { Intro, INTRO, preloadIntro } from '@/components/Intro';
+import { HouseCanvas, preloadHouse } from '@/components/three/HouseCanvas';
+import { brand } from '@/lib/brand';
 import { SectionArrow, SectionDots, SectionNavProvider, useSectionPlay } from './SectionNav';
 import { PhoneVoice } from '@/components/illustrations/landing/PhoneVoice';
 import { JourneyRoad } from '@/components/illustrations/landing/JourneyRoad';
@@ -23,6 +24,12 @@ import { HundredHouses } from '@/components/illustrations/landing/HundredHouses'
 import { AnimatePresence } from 'motion/react';
 import { StaffLink, Wordmark } from '@/components/FamilyHeader';
 import type { Profile } from '@/lib/types';
+
+// The intro and the hero house are 3D: start fetching three.js the moment the landing code runs.
+if (typeof window !== 'undefined') {
+  preloadIntro().catch(() => {});
+  preloadHouse().catch(() => {});
+}
 
 /* ------------------------------------------------------------------ */
 /* Load sequence (seconds from first paint). One movement, ~1.4s.      */
@@ -184,7 +191,7 @@ function OdometerDate({ iso, phase, lang }: { iso: string; phase: Phase; lang: '
 /* ------------------------------------------------------------------ */
 /* Hero demo                                                            */
 /* ------------------------------------------------------------------ */
-function HeroDemo({ phase, onEarlier }: { phase: Phase; onEarlier: () => void }) {
+function HeroDemo({ phase, onEarlier, introUp }: { phase: Phase; onEarlier: () => void; introUp: boolean }) {
   const { t, lang } = useLang();
   const reduce = useReducedMotion();
   const [family, setFamily] = useState<'reyes' | 'nguyen'>('reyes');
@@ -193,6 +200,13 @@ function HeroDemo({ phase, onEarlier }: { phase: Phase; onEarlier: () => void })
   const result = useMemo(() => computeReadiness({ ...profile, levers: { ...profile.levers, extraDebt: extra[family] } }), [profile, extra, family]);
   const play = animated(phase);
   const t0 = offset(phase);
+  // The 3D house answers the slider: the earlier the date, the warmer the sun and the more windows lit.
+  const span = useMemo(() => {
+    const at = (x: number) => computeReadiness({ ...profile, levers: { ...profile.levers, extraDebt: x } }).monthsToReady;
+    return { base: at(profile.levers.extraDebt), best: at(400) };
+  }, [profile]);
+  const gain = span.base > span.best ? Math.min(1, Math.max(0, (span.base - result.monthsToReady) / (span.base - span.best))) : 0;
+  const litWindows = 1 + Math.round(gain * 3);
 
   // "7 months sooner" pill: delta since the drag began; fades 1.5s after the last change.
   const baseline = useRef<number | null>(null);
@@ -264,7 +278,7 @@ function HeroDemo({ phase, onEarlier }: { phase: Phase; onEarlier: () => void })
 
   return (
     <div className="relative [perspective:1200px]" onPointerMove={onMove} onPointerLeave={reset} data-testid="sample-road" data-intro style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
-      <motion.div {...fade(phase === 'opening' ? 0.1 : SEQ.sub)} className="flex flex-wrap items-center justify-between gap-3">
+      <motion.div key={`toggle-${phase === 'pending'}`} {...fade(phase === 'opening' ? 0.1 : SEQ.sub)} className="flex flex-wrap items-center justify-between gap-3">
         <div className="w-[280px]">
           <Segmented<'reyes' | 'nguyen'>
             size="sm"
@@ -282,57 +296,59 @@ function HeroDemo({ phase, onEarlier }: { phase: Phase; onEarlier: () => void })
         </p>
       </motion.div>
 
-      <div className="relative mt-8 [container-type:inline-size]">
-        <div aria-hidden className="pointer-events-none absolute -left-16 -top-16 h-[260px] w-[520px] max-w-full" style={{ background: 'radial-gradient(closest-side, rgba(30,92,71,0.08), transparent)' }} />
-        <div className="relative flex min-h-[28px] items-center justify-between gap-3">
-          <motion.p {...fade(phase === 'opening' ? 0.15 : SEQ.dateAt - 0.1)} className="text-[15px] text-ink-2">
-            {t('landing.readyBy')}
-          </motion.p>
-          {/* reserved slot: the pill never shifts layout */}
-          <div className="relative h-[28px]" aria-live="polite">
-            <AnimatePresence>
-              {delta && (
-                <motion.span
-                  key="pill"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                  transition={{ duration: 0.16, ease: ease.out }}
-                  className={`tnum absolute right-0 top-0 inline-flex h-[28px] items-center whitespace-nowrap rounded-full px-3 text-[13px] font-medium transition-colors duration-200 ${delta.n < 0 ? 'bg-pine text-white' : 'bg-surface text-ink-2 ring-1 ring-line'}`}
-                  data-testid="delta-pill"
-                >
-                  {/* one pill; only its text swaps while the drag continues */}
-                  <AnimatedMonth text={deltaText} />
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </div>
+      <div className="mt-6 grid grid-cols-1 items-end gap-x-6 lg:grid-cols-[minmax(0,1fr)_220px] xl:grid-cols-[minmax(0,1fr)_300px]">
+        {/* the 3D house, next to the date (first on phones); the intro lands on exactly this slot */}
+        <div className="order-first mx-auto mb-2 w-full max-w-[360px] lg:order-none lg:col-start-2 lg:row-start-1 lg:mb-0 lg:max-w-none" data-testid="hero-house" style={{ opacity: introUp ? 0 : 1 }}>
+          <HouseCanvas eager priority hold={introUp} build="none" lit={litWindows} porch doorOpen smoke sun={gain} tilt />
         </div>
-        <p className="tnum relative mt-1 text-[min(80px,13cqw)] font-semibold tracking-[-0.02em] text-brass" aria-live="polite">
-          <OdometerDate iso={result.readyDate} phase={phase} lang={lang} />
-        </p>
+        <div className="relative [container-type:inline-size] lg:col-start-1 lg:row-start-1 lg:pb-4">
+          <div className="relative flex min-h-[28px] items-center justify-between gap-3">
+            <motion.p key={`ready-${phase === 'pending'}`} {...fade(phase === 'opening' ? 0.15 : SEQ.dateAt - 0.1)} className="text-[15px] text-ink-2">
+              {t('landing.readyBy')}
+            </motion.p>
+            {/* reserved slot: the pill never shifts layout */}
+            <div className="relative h-[28px]" aria-live="polite">
+              <AnimatePresence>
+                {delta && (
+                  <motion.span
+                    key="pill"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                    transition={{ duration: 0.16, ease: ease.out }}
+                    className={`tnum absolute right-0 top-0 inline-flex h-[28px] items-center whitespace-nowrap rounded-full px-3 text-[13px] font-medium transition-colors duration-200 ${delta.n < 0 ? 'bg-pine text-white' : 'bg-surface text-ink-2 ring-1 ring-line'}`}
+                    data-testid="delta-pill"
+                  >
+                    {/* one pill; only its text swaps while the drag continues */}
+                    <AnimatedMonth text={deltaText} />
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+          <p className="tnum relative mt-1 text-[min(80px,13cqw)] font-semibold tracking-[-0.02em] text-brass" aria-live="polite">
+            <OdometerDate iso={result.readyDate} phase={phase} lang={lang} />
+          </p>
+        </div>
       </div>
 
-      <motion.div className="mt-6 origin-center" style={{ rotateX: rx, rotateY: ry, transformStyle: 'preserve-3d' }}>
+      <motion.div className="mt-4 origin-center" style={{ rotateX: rx, rotateY: ry, transformStyle: 'preserve-3d' }}>
         {phase !== 'pending' && (
           <Road
             result={result}
             size="lg"
             entrance={play ? 'always' : 'none'}
-            entranceDelay={phase === 'opening' ? INTRO.pull + 0.3 : SEQ.roadAt}
-            drawDuration={phase === 'opening' ? 0.5 : SEQ.roadDraw}
+            entranceDelay={phase === 'opening' ? INTRO.pull + 0.25 : SEQ.roadAt}
+            drawDuration={phase === 'opening' ? 0.6 : SEQ.roadDraw}
             drawEase="inOut"
-            trackDrawn={phase === 'opening'}
-            keysAt={phase === 'opening' ? INTRO.total - 0.12 : undefined}
             progressTo={result.monthsToReady}
             keysGlow={keysGlow}
-            keysVariant="house"
           />
         )}
-        {phase === 'pending' && <div className="h-[114px]" />}
+        {phase === 'pending' && <div className="h-[92px]" />}
       </motion.div>
 
-      <motion.div {...fade(phase === 'opening' ? 0.35 : SEQ.roadAt + 0.3)} className="mt-6">
+      <motion.div key={`lever-${phase === 'pending'}`} {...fade(phase === 'opening' ? 0.35 : SEQ.roadAt + 0.3)} className="mt-6">
         <div className="flex items-center justify-between gap-4">
           <label htmlFor="sample-extra" className="text-[16px] font-medium text-ink">
             {t('landing.lever')}
@@ -351,7 +367,7 @@ function HeroDemo({ phase, onEarlier }: { phase: Phase; onEarlier: () => void })
           onChange={onSlide}
           label={t('landing.lever')}
           valueText={money(extra[family], lang)}
-          nudgeAt={play ? (phase === 'opening' ? INTRO.total + 0.3 : SEQ.nudgeAt) : undefined}
+          nudgeAt={play ? (phase === 'opening' ? INTRO.total + 0.5 : SEQ.nudgeAt) : undefined}
         />
         <div className="h-[20px]">
           <AnimatePresence>
@@ -367,29 +383,28 @@ function HeroDemo({ phase, onEarlier }: { phase: Phase; onEarlier: () => void })
   );
 }
 
-function Hero({ phase }: { phase: Phase }) {
+function Hero({ phase, introUp }: { phase: Phase; introUp: boolean }) {
   const { t } = useLang();
   const router = useVTRouter();
   const reduce = useReducedMotion();
   const play = animated(phase);
   const t0 = offset(phase);
-  const [flash, setFlash] = useState(0);
-  const onEarlier = useMemo(() => () => setFlash((f) => f + 1), []);
+  const onEarlier = useMemo(() => () => {}, []);
   const fadeUp = play
     ? { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.4, ease: ease.out, delay: t0 + (phase === 'opening' ? 0.25 : SEQ.sub) } }
     : { initial: phase === 'reduced' ? { opacity: 0 } : false, animate: { opacity: 1 }, transition: { duration: 0.15 } };
   return (
     <section id="hero" data-testid="hero" className="snap-section relative min-h-[calc(100svh-64px)] overflow-hidden">
-      <div className="relative z-[1] mx-auto grid max-w-[1280px] grid-cols-1 items-center gap-x-8 gap-y-14 px-5 pb-40 pt-10 lg:min-h-[calc(100svh-64px)] lg:grid-cols-12 lg:px-8 lg:pb-36 lg:pt-8">
+      <div className="relative z-[1] mx-auto grid max-w-[1280px] grid-cols-1 items-center gap-x-8 gap-y-14 px-5 pb-28 pt-10 lg:min-h-[calc(100svh-64px)] lg:grid-cols-12 lg:px-8 lg:pb-24 lg:pt-8">
         <div className="lg:col-span-6 xl:col-span-5">
-          <motion.p {...fadeUp} transition={play ? { duration: 0.3, ease: ease.out, delay: t0 } : fadeUp.transition} className="mb-5 text-[15px] text-ink-2">
+          <motion.p key={`partner-${phase === 'pending'}`} {...fadeUp} transition={play ? { duration: 0.3, ease: ease.out, delay: t0 } : fadeUp.transition} className="mb-5 text-[15px] text-ink-2">
             {t('app.partner')}
           </motion.p>
           <Headline text={t('landing.headline')} phase={phase} />
-          <motion.p {...fadeUp} className="mt-6 max-w-[44ch] text-[18px] leading-[28px] text-ink-2 lg:text-[20px] lg:leading-[30px]" data-intro style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
+          <motion.p key={`sub-${phase === 'pending'}`} {...fadeUp} className="mt-6 max-w-[44ch] text-[18px] leading-[28px] text-ink-2 lg:text-[20px] lg:leading-[30px]" data-intro style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
             {t('landing.sub')}
           </motion.p>
-          <motion.div {...fadeUp} className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4" data-intro style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
+          <motion.div key={`cta-${phase === 'pending'}`} {...fadeUp} className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4" data-intro style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
             <motion.a
               href="/start"
               onClick={(e) => {
@@ -418,12 +433,8 @@ function Hero({ phase }: { phase: Phase }) {
           </motion.div>
         </div>
         <div className="lg:col-span-6 xl:col-span-7 xl:pl-8">
-          <HeroDemo phase={phase} onEarlier={onEarlier} />
+          <HeroDemo phase={phase} onEarlier={onEarlier} introUp={introUp} />
         </div>
-      </div>
-      {/* The street the Road heads toward. Living: one window glows at a time. */}
-      <div className="absolute inset-x-0 bottom-0 z-0" style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
-        <Skyline mode="living" count={16} parallax stagger={0.03} drawInAt={phase === 'opening' ? INTRO.pull + 0.3 : phase === 'play' ? 1.3 : false} flashKey={flash} height={120} />
       </div>
       <SectionArrow index={0} label={t('landing.arrowNext')} topLabel={t('landing.arrowTop')} />
     </section>
@@ -729,7 +740,28 @@ export function Landing() {
   const { t } = useLang();
   const [phase, setPhase] = useIntroPhase();
   const [intro, setIntro] = useState(true);
-  const onIntroDone = useCallback(() => setIntro(false), []);
+  // The intro's 3D stage is torn down later, when the page is idle (WebGL teardown is a long task).
+  const [introMounted, setIntroMounted] = useState(true);
+  useEffect(() => {
+    if (intro) return;
+    let idle = 0;
+    const t = window.setTimeout(() => {
+      const ric = (window as Window & { requestIdleCallback?: (f: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+      idle = ric ? ric(() => setIntroMounted(false), { timeout: 6000 }) : window.setTimeout(() => setIntroMounted(false), 0);
+    }, 4000);
+    return () => {
+      clearTimeout(t);
+      (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(idle);
+    };
+  }, [intro]);
+  const [handoff, setHandoff] = useState(false);
+  const onHandoff = useCallback(() => setHandoff(true), []);
+  const onIntroDone = useCallback(() => {
+    setIntro(false);
+    brand.set({ stage: 'header', fly: false });
+  }, []);
+  // While the film runs the hero waits (laid out, invisible); at the hand-off it plays its own sequence.
+  const heroPhase: Phase = phase === 'opening' ? (handoff || !intro ? 'play' : 'pending') : phase;
   const onIntroSkip = useCallback(() => {
     setIntro(false);
     setPhase('static');
@@ -740,15 +772,9 @@ export function Landing() {
       <noscript>
         <style>{`[data-intro]{visibility:visible!important}`}</style>
       </noscript>
-      <AnimatePresence>
-        {phase === 'opening' && intro && (
-          <motion.div key="intro" exit={{ opacity: 0, transition: { duration: 0.2 } }}>
-            <Intro onDone={onIntroDone} onSkip={onIntroSkip} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {phase === 'opening' && introMounted && <Intro live={intro} onHandoff={onHandoff} onDone={onIntroDone} onSkip={onIntroSkip} />}
       {/* a skip remounts the hero straight into its final state */}
-      <HeroM key={phase === 'static' ? 'static' : 'live'} phase={phase} />
+      <HeroM key={phase === 'static' ? 'static' : 'live'} phase={heroPhase} introUp={phase === 'opening' && intro} />
       <SceneIntakeM />
       <SceneRoadM />
       <SceneHomesM />

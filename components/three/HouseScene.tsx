@@ -95,7 +95,7 @@ export default function HouseScene({ build = 'full', lit = 0, porch = false, doo
       className={className}
       frameloop={active ? 'demand' : 'never'}
       dpr={[1, 2]}
-      shadows
+      shadows="percentage"
       flat
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       camera={{ fov: FOV, near: 1, far: 200, position: [20, 10, 20] }}

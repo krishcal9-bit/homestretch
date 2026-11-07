@@ -35,8 +35,9 @@ export function HouseCanvas({
   priority = false,
   label,
   onReady,
+  hold = false,
   ...scene
-}: HouseSceneProps & { eager?: boolean; priority?: boolean; label?: string; onReady?: () => void }) {
+}: HouseSceneProps & { eager?: boolean; priority?: boolean; label?: string; onReady?: () => void; /** render one frame (compile now), then wait */ hold?: boolean }) {
   const reduce = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const near = useInView(ref, { margin: '400px 0px' });
@@ -68,7 +69,7 @@ export function HouseCanvas({
         <div className="absolute inset-0 transition-opacity duration-300" style={{ opacity: ready || building ? 1 : 0 }}>
           <Scene
             {...scene}
-            active={visible}
+            active={visible && !(hold && ready)}
             onFirstFrame={() => {
               setReady(true);
               onReady?.();

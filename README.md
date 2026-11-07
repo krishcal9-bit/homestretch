@@ -1,16 +1,13 @@
-# Homestretch
+# HomeStretch: get the keys, keep the keys
 
-Built at the Claude Impact Lab, UC Irvine, November 7 2026, for Habitat for Humanity of Orange County.
+Built at the Claude Impact Lab (UC Irvine × SoCal Affordable Housing) for Habitat for Humanity of Orange County and the UCI Merage Center for Real Estate. Live: https://homestretch-umber.vercel.app
 
-Homestretch answers one question for every family Habitat OC meets: **how far is this family from keys, what exactly closes the gap, and which upcoming home can they realistically get?**
+Getting a family into a home is half the job; keeping them there is the other half, and it's getting harder. California homeowners insurance is up about 84% since 2020 and the FAIR Plan raised rates 29.1% on October 15, 2026. Rising insurance and property tax flow into escrow, so a family's payment jumps with little warning. Under Habitat's model, homeowner payments fund the next homes.
 
-- **Families** answer four short screens (or say their answers out loud, or scan a pay stub) and get a date, a road to keys, and a 90-day plan in English or Spanish.
-- **Sliders** show what changes the date: extra toward debt, monthly savings, a co-applicant. "Aim for a specific home" works the plan backwards from a real Habitat build.
-- **Staff** see every family who shared their code in one pipeline, grouped by when they'll be mortgage-ready, matched against the homes Habitat is actually building.
-- **A Monday check-in** finds who moved, who stalled and who now fits a home, and drafts a nudge in the family's language. Nothing sends automatically.
-- **The numbers come from a deterministic engine** (`lib/engine.ts`), not from an LLM. Claude explains, reads documents and writes; it never decides a date.
-
-Screenshots: [result](docs/screenshots/step4-result-mobile.png) · [plan](docs/screenshots/step5-plan-page-mobile.png) · [Underwriter's eye](docs/screenshots/step6-underwriters-eye-mobile.png) · [voice](docs/screenshots/step10-voice-es-mobile.png) · [pipeline](docs/screenshots/step7-pipeline.png) · [drawer](docs/screenshots/step7-drawer.png) · [insights](docs/screenshots/step9-insights.png) · [check-in](docs/screenshots/step11-checkin.png) · motion clip in [docs/motion](docs/motion).
+- **Keep** (`/keep`, the star): set up a home in two minutes (or drop an insurance renewal, escrow statement or tax bill and Claude reads it). A **24-month Payment Forecast** shows the family their payment before it changes, with shock markers and a breathing-room band; a **flatten slider** shows how a small set-aside absorbs the spike. **Shock Shield** ranks the moves that help (insurance, Homeowners' Exemption, CARE/FERA, set aside early, talk to Habitat early). **Home Health** turns a photo of a water-heater data plate into a monthly repair set-aside; **Relief Finder** and a **monthly check-in** keep it current. A one-page **My Home Plan** PDF.
+- **Ready** (`/start`): four short screens (voice or type), a mortgage-ready date, the Road, levers, a 90-day plan, and **Your first year of owning**, a preview of the real monthly cost after closing.
+- **Staff** (`/staff`): **Early warning** sorts every homeowner by risk of payment stress in the next six months and drafts bilingual outreach before anyone misses a payment; **Stress test** shows what a 29% insurance jump does across the portfolio and what a small program prevents, in dollars that fund the next homes; a **weekly digest** agent streams what changed; the **Ready pipeline**.
+- **The numbers come from deterministic engines** (`lib/forecast.ts`, `lib/engine.ts`), unit-tested. Claude reads documents, explains and writes; it never produces a number.
 
 ## Architecture
 
@@ -94,14 +91,14 @@ TURSO_DATABASE_URL=libsql://YOUR-DB.turso.io TURSO_AUTH_TOKEN=YOUR-TOKEN npm run
 
 ## Demo script (3 minutes)
 
-1. Open `/` on a laptop and let the landing page load: the headline rises line by line, the Road draws, each milestone pops in, the date odometers to December 2028. Drag **Extra toward debt**, switch to the Nguyen family, then scroll the story. Tap **Find my date** (it morphs into the intake), toggle **ES**, tap the microphone (or "O escriba lo que diría") and say *"somos cuatro, vivimos en Santa Ana, gano como cinco mil doscientos al mes, pagamos dos mil trescientos cincuenta de renta."* Watch the fields fill. Switch back to English.
-2. On the income screen, upload `public/samples/paystub.png` and watch income fill. On the money screen add a $1,900 collection and $3,100 saved (credit: needs work).
-3. Land on the result. Let the Road draw. Read the date aloud. Drag **Extra toward debt** to $150 and watch the date pull years closer. *"That's the conversation Habitat has never been able to have in a number."*
-4. **Aim for a specific home**: pick the Westminster 4-bedroom. The sliders glide to the solved plan, the Road redraws, and the sentence says exactly what it takes. Scroll to **Ten years from now** and read the equity number.
-5. Upload `public/samples/bank-statement.pdf` on the money screen to show **Underwriter's eye**; tap **Write my explanation letter**.
-6. Open `/staff`. Pipeline: 4 families ready in ≤ 6 months. Homes: which builds have families ready by completion. Match: **Draft outreach**.
-7. Insights: toggle **Matched savings** and read the headline: more families ready by December 2027, and what it costs.
-8. Click **Run Monday check-in** and let the families stream in. Close on: *"Habitat finishes 100 homes; Homestretch makes sure 100 families are ready to buy them, and never loses one on the way."*
+1. Load the site and let the intro play: the house builds, the key turns, "HomeStretch" fills the screen and flies to the header; the house lands on its street.
+2. *"Getting families into homes is half the job. In California, insurance is up 84% since 2020 and the FAIR Plan just went up 29%. That shows up in a family's mortgage payment with almost no warning."* Press Down through the scenes (the shock on the kitchen wall, the water heater, Habitat seeing it first), then back to the top.
+3. **I own a Habitat home** → **Try the sample family**: the Ramirez family, Santa Ana, on the FAIR Plan. (Or go through setup and tap **Use the sample notice** to drop their insurance renewal: the fields fill, tagged "From your document", and it reads: *"Your insurance is going up $412 a year… your payment goes up about $69 a month in March."*)
+4. **Payment Forecast**: the line draws, the March spike drops in, breathing room turns red. Drag **Set aside each month**: the spike flattens; at the recommended $48 the marker says **Covered** and the red month is gone. *"$48 a month starting now, and March doesn't hurt."*
+5. **Shock Shield**: apply the higher deductible and the Homeowners' Exemption and watch the rise shrink; **Talk to Habitat early** shows the message, in Spanish for a Spanish-speaking family.
+6. Open `/staff` (password: `STAFF_PASSWORD`). **Early warning**: homeowners heading toward stress before anyone missed a payment (the count is computed live; 15 of 40 on Nov 7 2026). Open an Act now household and **Draft outreach** in Spanish.
+7. **Stress test**: insurance at 29% puts homeowners at risk; turn on a $150/month matched repair fund and the count drops, with the yearly payments protected (e.g. 15 → 7, about $15,600 a year that keeps funding the next homes).
+8. Close: *"Habitat builds the homes. HomeStretch helps families get the keys, and keep them."*
 
 ## What Habitat OC would need to adopt this
 

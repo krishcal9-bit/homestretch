@@ -1,0 +1,5 @@
+{
+  "subject": "La casa de la familia {surname}: el año que viene",
+  "body": "Hola, {givenName}:\n\nLe escribe el equipo de Habitat OC para saber cómo está la casa de la familia {surname}. Revisamos su pago de la casa. {shock} No hay ningún problema y hay tiempo para prepararse.\n\nUn paso que ayuda mucho ahora: {step}. Responda a este mensaje o llámenos, y lo hacemos con usted.\n\nHabitat for Humanity of Orange County",
+  "translation": "Hi {givenName},\n\nThis is the Habitat OC team checking in on the {surname} family home. We looked at your house payment. {shockEn} Nothing is wrong, and there is time to get ready.\n\nOne step that helps most right now: {stepEn}. Reply to this message or call us, and we'll do it with you.\n\nHabitat for Humanity of Orange County"
+}

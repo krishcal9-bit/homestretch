@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { staffLogin } from './helpers';
+import { staffReady } from './helpers';
 
 test('wrong password is rejected', async ({ page }) => {
   await page.goto('/staff');
@@ -9,8 +9,8 @@ test('wrong password is rejected', async ({ page }) => {
   await expect(page.getByText("That password didn't work. Try again.")).toBeVisible();
 });
 
-test('pipeline buckets, drawer, homes, match, insights', async ({ page }) => {
-  await staffLogin(page);
+test('ready pipeline buckets, drawer, homes, match, insights', async ({ page }) => {
+  await staffReady(page);
   await expect(page.getByTestId('family-row')).toHaveCount(14);
   const expected: Record<string, number> = { ready_now: 2, le6: 4, six_18: 2, gt18: 4, not_eligible: 2 };
   for (const [k, n] of Object.entries(expected)) {
@@ -46,7 +46,7 @@ test('pipeline buckets, drawer, homes, match, insights', async ({ page }) => {
 });
 
 test('Monday check-in twice: second run reports no changes', async ({ page }) => {
-  await staffLogin(page);
+  await staffReady(page);
   await page.getByTestId('run-checkin').click();
   await expect(page.getByTestId('checkin-item').nth(4)).toBeVisible({ timeout: 60_000 });
   await expect(page.getByTestId('rerun')).toBeEnabled({ timeout: 60_000 });

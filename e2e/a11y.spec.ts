@@ -64,10 +64,16 @@ for (const theme of ['light', 'dark'] as const) {
       await page.goto('/staff/login');
       await audit(page, `login (${theme})`);
       await staffLogin(page);
+      await audit(page, `early warning (${theme})`);
+      await page.getByTestId('homeowner-row').first().click();
+      await expect(page.getByTestId('homeowner-drawer')).toBeVisible();
+      await audit(page, `homeowner drawer (${theme})`);
+      await page.goto('/staff/ready');
+      await page.waitForSelector('[data-testid=family-row]');
       await audit(page, `pipeline (${theme})`);
       await page.getByTestId('family-row').first().click();
       await audit(page, `drawer (${theme})`);
-      for (const r of ['/staff/homes', '/staff/match?home=h1', '/staff/insights']) {
+      for (const r of ['/staff/stress', '/staff/digest', '/staff/homes', '/staff/match?home=h1', '/staff/insights']) {
         await page.goto(r);
         await audit(page, `${r} (${theme})`);
       }

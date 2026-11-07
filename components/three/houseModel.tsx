@@ -590,6 +590,8 @@ export type HouseHandle = {
   groundOverride?: number;
   /** set by the intro film (components/three/introFilm.tsx): where the sun points (it follows the action) and how much dusk is left */
   film?: { focus: THREE.Vector3; dusk: number };
+  /** the cursor (−1…1 each axis, fine pointers): the sun leans a few degrees toward it, so the shadows shift */
+  lightShift?: [number, number];
   /** the intro film hides the house until its beat */
   hidden?: boolean;
   /** HOUSE_VARIANTS index (0 = the family's house) */
@@ -1481,7 +1483,8 @@ export function Lights({ ctl }: { ctl: HouseHandle }) {
       // afternoon: high and from the front-left; golden hour: lower and warmer (longer shadows); night: the moon
       const fx = f?.focus.x ?? 0;
       const fz = f?.focus.z ?? 0;
-      dir.current.position.set(fx - 5.5 - 1.5 * s, 11 - 4.5 * s + 1.5 * n, fz + 9 - 1.5 * s);
+      const [lx, ly] = ctl.lightShift ?? [0, 0];
+      dir.current.position.set(fx - 5.5 - 1.5 * s + 1.6 * lx, 11 - 4.5 * s + 1.5 * n - 0.8 * ly, fz + 9 - 1.5 * s + 1.0 * ly);
       if (dir.current.target.position.x !== fx || dir.current.target.position.z !== fz) {
         dir.current.target.position.set(fx, 0, fz);
         dir.current.target.updateMatrixWorld();

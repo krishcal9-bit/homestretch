@@ -207,7 +207,7 @@ function Shelf() {
     [72, 12, 58, P.sageDark],
   ];
   return (
-    <svg viewBox="0 0 220 130" className="absolute left-[5cqw] top-[12cqh] hidden w-[clamp(150px,15cqw,250px)] overflow-visible lg:block">
+    <svg viewBox="0 0 220 130" className="absolute left-[5cqw] top-[2.5cqh] hidden w-[clamp(140px,13cqw,220px)] overflow-visible lg:block">
       <defs>
         <linearGradient id="sc-sh-under" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor={P.ink} stopOpacity="0.16" />
@@ -253,7 +253,7 @@ function Shelf() {
 /** A framed family photo on the wall: a bevelled frame, a mat, a little landscape in the kit's hills. */
 function Photo() {
   return (
-    <svg viewBox="0 0 100 120" className="absolute left-[30cqw] top-[9cqh] hidden w-[clamp(70px,6.4cqw,110px)] overflow-visible lg:block">
+    <svg viewBox="0 0 100 120" className="absolute left-[24cqw] top-[2cqh] hidden w-[clamp(60px,5.4cqw,92px)] overflow-visible lg:block">
       <rect x={5} y={7} width={92} height={112} fill={P.ink} opacity={0.07} />
       <rect x={3} y={4} width={92} height={112} fill={P.ink} opacity={0.06} />
       <rect x={0} y={0} width={92} height={112} fill={P.bark} />

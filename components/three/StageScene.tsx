@@ -56,7 +56,7 @@ function Rig({ mode, slot, tilt, active, start, frame, ctl, ground }: { mode: Mu
       cur.current.y += (want.current.y - cur.current.y) * k;
       slotCamera(cam, size.width, size.height, cur.current.x, cur.current.y, F);
       // the sun leans a few degrees toward the cursor too (Lights reads it): the shadows shift with the tilt
-      (ctl as typeof ctl & { lightShift?: [number, number] }).lightShift = [cur.current.x, cur.current.y];
+      ctl.lightShift = [cur.current.x, cur.current.y];
       if (Math.abs(want.current.x - cur.current.x) > 0.001 || Math.abs(want.current.y - cur.current.y) > 0.001) invalidate();
       return;
     }

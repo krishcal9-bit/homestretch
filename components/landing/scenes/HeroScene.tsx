@@ -4,6 +4,7 @@ import { memo, useMemo, type ReactNode } from 'react';
 import { P, mix } from '@/lib/illustrationPalette';
 import { Layer, SceneRoot } from './Scene';
 import { CloudShape, StreetLamp, nightStyle } from './parts';
+import { Bush, Hills, Kit, Tree } from '@/components/illustrations/kit';
 import { RoadStreetContext, roadTrackY } from '@/components/result/Road';
 import STILLS from '@/public/house/street-stills.json';
 
@@ -229,22 +230,34 @@ const Clouds = memo(function Clouds({ phone }: { phone: boolean }) {
   );
 });
 
-/** Distant hills and rooftops, hazed into the sky, just above the lawns. */
+/**
+ * Distant hills hazed into the sky just above the lawns, in the kit's language: smooth layered crests, the far
+ * ones paler and cooler, a few small hazy trees on the nearer ridge (atmospheric perspective).
+ */
 const Far = memo(function Far({ W, top }: { W: number; top: number }) {
-  const haze = (c: string, k: number) => mix(c, P.skyBottom, k);
-  const roofs: [number, number, number][] = [];
-  for (let x = -20, i = 0; x < W + 40; x += 58 + ((i * 37) % 41), i++) roofs.push([x, 22 + ((i * 13) % 12), 40 + ((i * 29) % 26)]);
+  const trees = useMemo(() => {
+    const out: { x: number; k: number; sp: 'oak' | 'cypress' | 'palm' | 'jacaranda' }[] = [];
+    const sp = ['oak', 'cypress', 'oak', 'palm', 'jacaranda', 'cypress'] as const;
+    for (let x = 30, i = 0; x < W; x += 90 + ((i * 53) % 70), i++) out.push({ x, k: 0.75 + ((i * 7) % 5) * 0.08, sp: sp[i % sp.length] });
+    return out;
+  }, [W]);
   return (
     <svg className="absolute left-0 overflow-visible" width={W} height={120} viewBox={`0 0 ${W} 120`} style={{ top: top - 96 }} aria-hidden>
-      <path d={`M0 70 C ${W * 0.18} 30 ${W * 0.32} 44 ${W * 0.5} 58 S ${W * 0.82} 26 ${W} 52 V120 H0Z`} fill={haze(P.sageDark, 0.62)} />
-      <path d={`M0 92 C ${W * 0.22} 70 ${W * 0.4} 84 ${W * 0.62} 80 S ${W * 0.9} 64 ${W} 78 V120 H0Z`} fill={haze(P.sage, 0.45)} />
-      {roofs.map(([x, h, w], i) => (
-        <g key={i} transform={`translate(${x} ${120 - h - 8})`}>
-          <rect x={0} y={h * 0.45} width={w} height={h * 0.55 + 8} fill={haze(P.wallShade, 0.5)} />
-          <path d={`M-3 ${h * 0.48} L${w / 2} 0 L${w + 3} ${h * 0.48}Z`} fill={haze(P.slate, 0.55)} />
-          <rect className="sc-light" x={w * 0.3} y={h * 0.62} width={w * 0.14} height={h * 0.18} fill={P.honey} style={nightStyle(0.3 + (i % 5) * 0.08)} />
-        </g>
-      ))}
+      <Kit>
+        <Hills
+          x0={-20}
+          x1={W + 20}
+          bottom={124}
+          layers={[
+            { y: 44, amp: 16, waves: 2, seed: 7, haze: 0.66 },
+            { y: 70, amp: 12, waves: 3, seed: 3, haze: 0.48 },
+            { y: 92, amp: 8, waves: 4, seed: 11, haze: 0.32 },
+          ]}
+        />
+        {trees.map((t) => (
+          <Tree key={t.x} species={t.sp} x={t.x} base={98 + (t.x % 7)} size={30 * t.k} haze={0.45} shadow={0.5} />
+        ))}
+      </Kit>
     </svg>
   );
 });
@@ -322,19 +335,17 @@ const Lamps = memo(function Lamps({ layout }: { layout: StreetLayout }) {
   );
 });
 
-/** The near side of the street: a low hedge on the near sidewalk, cut by both edges (the foreground). */
+/** The near side of the street: low shrubs on the near verge, cut by both edges (the foreground). */
 const Foreground = memo(function Foreground({ W, phone }: { W: number; phone: boolean }) {
   const r = phone ? 16 : 24;
-  const bush = (x: number, k: number) => (
-    <g key={x}>
-      <ellipse cx={x} cy={r * 1.2} rx={r * 1.25 * k} ry={r * k} fill={P.treeDark} />
-      <ellipse cx={x - r * 0.3 * k} cy={r * 1.05} rx={r * 0.8 * k} ry={r * 0.7 * k} fill={P.tree} />
-      <ellipse cx={x - r * 0.45 * k} cy={r * 0.9} rx={r * 0.35 * k} ry={r * 0.28 * k} fill={P.treeLight} opacity={0.8} />
-    </g>
-  );
   return (
     <svg className="absolute bottom-0 left-0 overflow-visible" width={W} height={r * 1.4} viewBox={`0 0 ${W} ${r * 1.4}`} style={{ bottom: -r * 0.55 }} aria-hidden>
-      {[bush(-r * 0.2, 1.1), bush(r * 1.6, 0.85), bush(W + r * 0.1, 1.15), bush(W - r * 1.7, 0.8)]}
+      <Kit>
+        <Bush x={-r * 0.2} base={r * 1.9} size={r * 2.3} seed={2} />
+        <Bush x={r * 1.6} base={r * 1.9} size={r * 1.7} seed={5} />
+        <Bush x={W + r * 0.1} base={r * 1.9} size={r * 2.4} seed={8} />
+        <Bush x={W - r * 1.7} base={r * 1.9} size={r * 1.6} seed={4} />
+      </Kit>
     </svg>
   );
 });

@@ -53,9 +53,9 @@ function Rig({ p, ctl, refs, reduce }: { p: MotionValue<number>; ctl: HouseHandl
     const s = costStages(reduce ? 0.62 : p.get());
     const e = s.explode;
     // the parts (houseModel's explode hook; offsets in world units)
-    const c = ctl as HouseHandle & { parts?: Record<string, [number, number, number]>; roofGlow?: number };
-    c.parts = { foundation: [0, -1.05 * e, 0], walls: [0, 0, 0], roof: [0, 1.95 * e, 0] };
-    c.roofGlow = s.glow;
+    // a new object each frame: the hook re-renders on assignment
+    ctl.parts = { foundation: [0, -1.05 * e, 0], walls: [0, 0, 0], roof: [0, 1.95 * e, 0] };
+    ctl.roofGlow = s.glow;
     if (util.current) util.current.position.set(HW + 0.09 + 1.5 * s.tools, 1.05, 0.35);
     if (tool.current) {
       tool.current.position.set(2.55 + 0.7 * s.tools, 0.02 + 0.25 * Math.sin(Math.PI * s.tools) * (1 - s.tools), 2.35 + 1.0 * s.tools);
@@ -67,12 +67,13 @@ function Rig({ p, ctl, refs, reduce }: { p: MotionValue<number>; ctl: HouseHandl
     const wide = aspect > 1.1;
     cam.fov = FOV;
     cam.aspect = aspect;
-    const off = wide ? (1 - s.turn) * W * 0.14 : 0;
+    // the house steps right for the caption while the roof glows (the caption is on the left)
+    const off = wide ? (1 - s.turn) * W * 0.14 + s.glow * W * 0.13 : 0;
     cam.setViewOffset(W, H, -off, 0, W, H);
     cam.updateProjectionMatrix();
     // phones: pull back so the label columns at the edges clear the house
-    const dist = fitDistance(aspect, FOV, aspect < 0.8 ? { w: 15.5, h: 12 } : { w: 10.6, h: 10.8 });
-    placeCamera(cam, { az: 34 - 12 * s.turn, el: 21 - 3 * s.turn, dist, target: [0.1, 1.5 + 0.2 * e, 0.4] });
+    const dist = fitDistance(aspect, FOV, aspect < 0.8 ? { w: 15.5, h: 13.5 } : { w: 10.6, h: 12.6 });
+    placeCamera(cam, { az: 34 - 12 * s.turn, el: 21 - 3 * s.turn, dist, target: [0.1, 1.5 + 0.75 * e, 0.4] });
     // labels: project each anchor, place its label in its column at that height, draw the leader line
     const anchors: Record<CostPart, [number, number, number]> = {
       insurance: [-0.9, RIDGE - 0.35 + 1.95 * e, 0.2],
@@ -82,19 +83,32 @@ function Rig({ p, ctl, refs, reduce }: { p: MotionValue<number>; ctl: HouseHandl
       repairs: [2.55 + 0.7 * s.tools + 0.2, 0.45, 2.35 + 1.0 * s.tools],
     };
     const margin = Math.max(16, Math.min(80, W * 0.055));
-    COST_PARTS.forEach((k, i) => {
+    // place each label in its column at its anchor's height, then push apart any that overlap (per column)
+    const items = COST_PARTS.map((k, i) => {
       v.set(...anchors[k]).project(cam);
+      const el = refs.labels.current[i];
+      const lw = el?.offsetWidth ?? 0;
+      const lh = el?.offsetHeight ?? 0;
       const ax = ((v.x + 1) / 2) * W;
       const ay = ((1 - v.y) / 2) * H;
-      const el = refs.labels.current[i];
+      return { k, i, el, lw, lh, ax, ay, side: COST_SIDE[k], ly: Math.max(72, Math.min(H - lh - 72, ay - lh / 2)) };
+    });
+    for (const side of [-1, 1] as const) {
+      const col = items.filter((it) => it.side === side && it.el && it.el.style.opacity !== '0').sort((a, b) => a.ly - b.ly);
+      for (let j = 1; j < col.length; j++) col[j].ly = Math.max(col[j].ly, col[j - 1].ly + col[j - 1].lh + 8);
+      // if the column ran off the bottom, slide it back up
+      const last = col[col.length - 1];
+      if (last && last.ly + last.lh > H - 72) {
+        const over = last.ly + last.lh - (H - 72);
+        col.forEach((it) => (it.ly -= over));
+      }
+    }
+    for (const it of items) {
+      const { el, lw, lh, ax, ay, side, ly, i } = it;
+      if (!el) continue;
       const line = refs.lines.current[i];
       const dot = refs.dots.current[i];
-      if (!el) return;
-      const side = COST_SIDE[k];
-      const lw = el.offsetWidth;
-      const lh = el.offsetHeight;
       const lx = side < 0 ? margin : W - margin - lw;
-      const ly = Math.max(72, Math.min(H - lh - 72, ay - lh / 2));
       el.style.transform = `translate3d(${lx.toFixed(1)}px, ${ly.toFixed(1)}px, 0)`;
       const ex = side < 0 ? lx + lw + 10 : lx - 10;
       if (line) {
@@ -107,7 +121,7 @@ function Rig({ p, ctl, refs, reduce }: { p: MotionValue<number>; ctl: HouseHandl
         dot.setAttribute('cx', ax.toFixed(1));
         dot.setAttribute('cy', ay.toFixed(1));
       }
-    });
+    }
   });
   return (
     <>
@@ -176,7 +190,7 @@ function CursorLight({ light, ctl }: { light: ReturnType<typeof useCursorLight>;
     const w = light.want.current;
     c.x += (w.x - c.x) * k;
     c.y += (w.y - c.y) * k;
-    (ctl as HouseHandle & { lightShift?: [number, number] }).lightShift = [c.x, c.y];
+    ctl.lightShift = [c.x, c.y];
     if (Math.abs(w.x - c.x) > 0.002 || Math.abs(w.y - c.y) > 0.002) invalidate();
   });
   return null;

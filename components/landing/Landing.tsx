@@ -430,7 +430,7 @@ function SceneIntake() {
     ),
     [t],
   );
-  return <SceneSection id="scene-intake" index={2} minGraphic={420} low label={t('landing.nav1')} text={text} scene={homeScene} />;
+  return <SceneSection id="scene-intake" index={2} minGraphic={420} label={t('landing.nav1')} text={text} scene={homeScene} />;
 }
 const homeScene = (play: number, reduce: boolean) => <HomeScene play={play} reduce={reduce} />;
 const repairScene = (play: number, reduce: boolean) => <RepairScene play={play} reduce={reduce} />;
@@ -485,7 +485,8 @@ function Closing() {
     <section ref={ref} id="closing" data-testid="closing" className="snap-section relative flex min-h-[calc(100svh-64px)] flex-col text-on-band" aria-label={t('landing.nav4')}>
       <div className="relative flex flex-1 flex-col">
         <ClosingScene play={n} reduce={reduce} />
-        <div className="relative z-[1] mx-auto flex w-full max-w-[1440px] flex-1 flex-col px-5 pb-[34svh] pt-10 sm:px-8 lg:px-20 lg:pb-[30svh] lg:pt-14">
+        {/* light text on the dusk scene (≈12:1 measured from pixels; axe can't see the scene, see e2e/a11y.spec.ts) */}
+        <div className="relative z-[1] mx-auto flex w-full max-w-[1440px] flex-1 flex-col px-5 pb-[34svh] pt-10 sm:px-8 lg:px-20 lg:pb-[30svh] lg:pt-14" data-axe-scene-bg>
           <ClosingBody play={n} />
         </div>
         {/* the up arrow sits in the band, above the footer */}

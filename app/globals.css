@@ -57,9 +57,13 @@ p, li { text-wrap: pretty; }
   --radius-panel: 14px;
 }
 
-html,
-body {
+html {
   background: var(--paper);
+  color: var(--ink);
+}
+/* transparent so scenery layers placed behind the content (negative z) can show; html paints the paper */
+body {
+  background: transparent;
   color: var(--ink);
 }
 
@@ -222,4 +226,47 @@ html.landing-snap.landing-snap-off { scroll-snap-type: none; }
   background-color: var(--paper);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.094 0 0 0 0 0.141 0 0 0 0 0.125 0 0 0 1.4 -0.55'/%3E%3C/filter%3E%3Cfilter id='f' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.32' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.094 0 0 0 0 0.141 0 0 0 0 0.125 0 0 0 2.2 -1.15'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)' opacity='0.05'/%3E%3Crect width='200' height='200' filter='url(%23f)' opacity='0.035'/%3E%3C/svg%3E");
   background-size: 200px 200px;
+}
+
+/* scenery: the landing world's slow life (transform/opacity only; none under reduced motion) */
+@keyframes scenery-cloud { from { transform: translateX(-30vw); } to { transform: translateX(130vw); } }
+.scenery-cloud { left: 0; animation: scenery-cloud 80s linear infinite; will-change: transform; }
+@keyframes scenery-birds {
+  0% { transform: translate(-12vw, 0); opacity: 0; }
+  2% { opacity: 1; }
+  24% { transform: translate(112vw, -40px); opacity: 1; }
+  25%, 100% { transform: translate(112vw, -40px); opacity: 0; }
+}
+.scenery-birds { animation: scenery-birds 34s linear 6s infinite both; }
+@keyframes scenery-walker {
+  0% { transform: translateX(-60px); }
+  70% { transform: translateX(1660px); }
+  100% { transform: translateX(1660px); }
+}
+.scenery-walker { animation: scenery-walker 62s linear -20s infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .scenery-cloud, .scenery-birds, .scenery-walker { animation: none; }
+  .scenery-birds { display: none; }
+}
+
+/* landing hero: the 3D house stands on the world's street (--street-bottom is set by the World) */
+.hero-house {
+  --hw: min(88vw, 360px, calc(34svh * 1.25));
+  --hh: calc(var(--hw) * 0.8);
+  position: absolute;
+  z-index: 1;
+  width: var(--hw);
+  left: 50%;
+  translate: -50% 0;
+  /* plinth base (~93% down the slot) on the near sidewalk, a little in front of the street */
+  top: calc(100svh - 64px - var(--street-bottom, 50px) * 0.62 - var(--hh) * 0.93);
+}
+.hero-house-spacer { height: calc(var(--hw, 300px) * 0.8 + 8px); --hw: min(88vw, 360px, calc(34svh * 1.25)); }
+@media (min-width: 1024px) {
+  .hero-house { --hw: clamp(220px, 33vh, 350px); left: 64%; }
+  .hero-content { padding-bottom: calc(clamp(220px, 33vh, 350px) * 0.8 + 24px); }
+}
+@media (max-width: 1023px) and (max-height: 700px) {
+  .hero-house { position: relative; left: auto; top: auto; translate: none; margin: 0 auto -8px; }
+  .hero-house-spacer { display: none; }
 }

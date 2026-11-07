@@ -45,6 +45,15 @@ export const P = {
   stoneShade: '#CEC6B7',
   asphalt: '#5A666C',
   asphaltLight: '#6E7A80',
+  // golden hour (late in the landing page; result sky warming)
+  goldTop: '#F4E3C8',
+  goldBottom: '#F8EBDA',
+  // jacaranda blooms (OC street trees), muted to sit with the palette
+  jacaranda: '#A493BE',
+  jacarandaLight: '#BDAED3',
+  jacarandaDark: '#857AA0',
+  // solar panels
+  solar: '#34465A',
   // trees
   tree: '#2E5E45',
   treeLight: '#3F7658',

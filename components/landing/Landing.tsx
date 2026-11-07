@@ -16,6 +16,7 @@ import { Road } from '@/components/result/Road';
 import { Intro, INTRO, preloadIntro } from '@/components/Intro';
 import { HouseCanvas, hasWebGL, preloadHouse } from '@/components/three/HouseCanvas';
 import { brand } from '@/lib/brand';
+import { World } from '@/components/scenery/World';
 import { SectionArrow, SectionDots, SectionNavProvider, useSectionPlay } from './SectionNav';
 import { PhoneVoice } from '@/components/illustrations/landing/PhoneVoice';
 import { JourneyRoad } from '@/components/illustrations/landing/JourneyRoad';
@@ -191,7 +192,7 @@ function OdometerDate({ iso, phase, lang }: { iso: string; phase: Phase; lang: '
 /* ------------------------------------------------------------------ */
 /* Hero demo                                                            */
 /* ------------------------------------------------------------------ */
-function HeroDemo({ phase, onEarlier, introUp, intro3d }: { phase: Phase; onEarlier: () => void; introUp: boolean; intro3d: boolean }) {
+function HeroDemo({ phase, onEarlier, onHouse }: { phase: Phase; onEarlier: () => void; onHouse: (h: { lit: number; sun: number }) => void }) {
   const { t, lang } = useLang();
   const reduce = useReducedMotion();
   const [family, setFamily] = useState<'reyes' | 'nguyen'>('reyes');
@@ -207,6 +208,8 @@ function HeroDemo({ phase, onEarlier, introUp, intro3d }: { phase: Phase; onEarl
   }, [profile]);
   const gain = span.base > span.best ? Math.min(1, Math.max(0, (span.base - result.monthsToReady) / (span.base - span.best))) : 0;
   const litWindows = 1 + Math.round(gain * 3);
+  const sunStep = Math.round(gain * 20) / 20;
+  useEffect(() => onHouse({ lit: litWindows, sun: sunStep }), [litWindows, sunStep, onHouse]);
 
   // "7 months sooner" pill: delta since the drag began; fades 1.5s after the last change.
   const baseline = useRef<number | null>(null);
@@ -296,12 +299,8 @@ function HeroDemo({ phase, onEarlier, introUp, intro3d }: { phase: Phase; onEarl
         </p>
       </motion.div>
 
-      <div className="mt-6 grid grid-cols-1 items-end gap-x-6 lg:grid-cols-[minmax(0,1fr)_220px] xl:grid-cols-[minmax(0,1fr)_300px]">
-        {/* the 3D house, next to the date (first on phones); the intro lands on exactly this slot */}
-        <div className="order-first mx-auto mb-2 w-full max-w-[360px] lg:order-none lg:col-start-2 lg:row-start-1 lg:mb-0 lg:max-w-none" data-testid="hero-house" style={{ opacity: intro3d ? 0 : 1 }}>
-          <HouseCanvas eager priority hold={introUp} hideLive={introUp} build="none" lit={litWindows} porch doorOpen smoke sun={gain} tilt />
-        </div>
-        <div className="relative [container-type:inline-size] lg:col-start-1 lg:row-start-1 lg:pb-4">
+      <div className="mt-6">
+        <div className="relative [container-type:inline-size]">
           <div className="relative flex min-h-[28px] items-center justify-between gap-3">
             <motion.p key={`ready-${phase === 'pending'}`} {...fade(phase === 'opening' ? 0.15 : SEQ.dateAt - 0.1)} className="text-[15px] text-ink-2">
               {t('landing.readyBy')}
@@ -390,12 +389,15 @@ function Hero({ phase, introUp, intro3d }: { phase: Phase; introUp: boolean; int
   const play = animated(phase);
   const t0 = offset(phase);
   const onEarlier = useMemo(() => () => {}, []);
+  // the demo's slider drives the house (sun toward golden hour, windows lighting)
+  const [house, setHouse] = useState({ lit: 1, sun: 0 });
+  const onHouse = useCallback((h: { lit: number; sun: number }) => setHouse((c) => (c.lit === h.lit && c.sun === h.sun ? c : h)), []);
   const fadeUp = play
     ? { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.4, ease: ease.out, delay: t0 + (phase === 'opening' ? 0.25 : SEQ.sub) } }
     : { initial: phase === 'reduced' ? { opacity: 0 } : false, animate: { opacity: 1 }, transition: { duration: 0.15 } };
   return (
-    <section id="hero" data-testid="hero" className="snap-section relative min-h-[calc(100svh-64px)] overflow-hidden">
-      <div className="relative z-[1] mx-auto grid max-w-[1280px] grid-cols-1 items-center gap-x-8 gap-y-14 px-5 pb-28 pt-10 lg:min-h-[calc(100svh-64px)] lg:grid-cols-12 lg:px-8 lg:pb-24 lg:pt-8">
+    <section id="hero" data-testid="hero" className="snap-section relative min-h-[calc(100svh-64px)]">
+      <div className="hero-content relative z-[1] mx-auto grid max-w-[1280px] grid-cols-1 items-center gap-x-8 gap-y-10 px-5 pb-20 pt-10 lg:min-h-[calc(100svh-64px)] lg:grid-cols-12 lg:gap-y-14 lg:px-8 lg:pt-8">
         <div className="lg:col-span-6 xl:col-span-5">
           <motion.p key={`partner-${phase === 'pending'}`} {...fadeUp} transition={play ? { duration: 0.3, ease: ease.out, delay: t0 } : fadeUp.transition} className="mb-5 text-[15px] text-ink-2">
             {t('app.partner')}
@@ -432,9 +434,15 @@ function Hero({ phase, introUp, intro3d }: { phase: Phase; introUp: boolean; int
             </a>
           </motion.div>
         </div>
+        {/* phones: room for the house, which stands on the street at the bottom of the first screen */}
+        <div className="hero-house-spacer lg:hidden" aria-hidden />
         <div className="lg:col-span-6 xl:col-span-7 xl:pl-8">
-          <HeroDemo phase={phase} onEarlier={onEarlier} introUp={introUp} intro3d={intro3d} />
+          <HeroDemo phase={phase} onEarlier={onEarlier} onHouse={onHouse} />
         </div>
+      </div>
+      {/* the 3D house stands on the neighborhood's street (the world's horizon band), not floating */}
+      <div className="hero-house" data-testid="hero-house" style={{ opacity: intro3d ? 0 : 1 }}>
+        <HouseCanvas eager priority hold={introUp} hideLive={introUp} build="none" lit={house.lit} porch doorOpen smoke sun={house.sun} tilt />
       </div>
       <SectionArrow index={0} label={t('landing.arrowNext')} topLabel={t('landing.arrowTop')} />
     </section>
@@ -773,6 +781,7 @@ export function Landing() {
       <noscript>
         <style>{`[data-intro]{visibility:visible!important}`}</style>
       </noscript>
+      <World />
       {phase === 'opening' && introMounted && <Intro live={intro} onStart={setIntroMode} onHandoff={onHandoff} onDone={onIntroDone} onSkip={onIntroSkip} />}
       {/* a skip remounts the hero straight into its final state */}
       <HeroM key={phase === 'static' ? 'static' : 'live'} phase={heroPhase} introUp={phase === 'opening' && intro} intro3d={phase === 'opening' && intro && introMode === '3d'} />

@@ -70,7 +70,7 @@ export function PlanView({ code, createdAt, profile, initialPlan, initialCheckli
   useEffect(() => {
     // Plans saved before Claude finished (or seeded) get one generated on first view.
     if (plan) return;
-    fetch('/api/plan', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ profile, lang }) })
+    fetch('/api/ready-plan', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ profile, lang }) })
       .then((r) => r.json())
       .then(async (d) => {
         if (!d.plan) return;

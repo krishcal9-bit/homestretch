@@ -37,7 +37,7 @@ export function usePlan(profile: ResultExtrasProps['profile'], lang: Lang) {
       try {
         const ctrl = new AbortController();
         const kill = setTimeout(() => ctrl.abort(), 45_000);
-        const res = await fetch('/api/plan', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ profile: profileRef.current, lang, regenerate }), signal: ctrl.signal });
+        const res = await fetch('/api/ready-plan', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ profile: profileRef.current, lang, regenerate }), signal: ctrl.signal });
         clearTimeout(kill);
         const data = await res.json();
         if (data.plan) setStored({ lang, plan: data.plan, source: data.source, key: answersKey(profileRef.current) });

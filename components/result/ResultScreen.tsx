@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { Road } from './Road';
 import { Levers } from './Levers';
 import { FinancePanel, Section, WhyThisDate } from './Panels';
+import { FirstYear } from './FirstYear';
 import { AimForHome } from './AimForHome';
 import { TwoFutures } from './TwoFutures';
 import { RoadScene } from '@/components/scenery/RoadScene';
@@ -210,6 +211,7 @@ export function ResultScreen({
 
       <WhyThisDate sentences={why} />
       <FinancePanel result={settledResult} rent={settledProfile.rent} />
+      <FirstYear profile={settledProfile} result={settledResult} />
       <AimForHome profile={deferredProfile} onSolve={onSolve} onChosen={setChosen} />
       <TwoFutures profile={baseProfile} />
       {Extras && <Extras profile={settledProfile} draft={extrasDraft} setDraft={setDraft} />}

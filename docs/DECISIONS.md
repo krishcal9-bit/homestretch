@@ -170,3 +170,22 @@ Ambiguities resolved during the build, with the choice made.
   days this week. Four households are drafted at a time, each streamed as it finishes. Rules template on any failure.
 - Staff strings stay in English in the components, as in the rest of the staff console (staff work in English;
   families' notes are bilingual).
+
+## KEEP extras: Home health, Relief, Check-in, the Ready bridge, the home plan PDF
+
+- **Home health numbers are rules only.** Claude reads a data plate (system, manufacture year, confidence, a short
+  description); age = this year − manufacture year, and the typical life and Orange County cost range always come
+  from SYSTEM_DEFAULTS (lib/homeHealth.ts resolveSystem). Typed facts never call Claude. Photos are read in memory
+  and discarded. One system per kind (a second water heater replaces the first; "something else" always adds).
+- **The one monthly number** is lib/forecast maintenanceSetAside (each system's mid cost over its remaining life,
+  at least 12 months, + $40 for small repairs). "Due now" systems therefore weigh heavily; that is the point.
+- **Leak help shows the static safe checklist at once** and swaps in Claude's tailored steps when they arrive: in an
+  emergency the safe steps must not wait on a model. A water-heater problem is never "can wait" (server floor).
+- **Relief values are conservative and rules-made** (lib/relief.ts): Homeowners' Exemption $7,000 × 1% = $70/yr;
+  CARE $420/yr and FERA $220/yr on a typical bill; CARE = 200% and FERA = 250% (3+ people) of the 2025 federal
+  poverty guideline, labelled "2025 limits"; wildfire discount 5% of the premium ("many give more"). Claude only
+  rewrites why / worth / next step, and the route drops any sentence carrying a dollar amount the rules didn't give.
+- **Check-in answers apply immediately** (lib/keepCheckin.ts): a new premium also re-analyses escrow
+  ((tax + premium) / 12, never lower than today); "something breaking" flags that system due within a year. SMS
+  delivery is a mock: POST /api/keep-checkin logs each message to the server console; nothing is stored server-side.
+- **POST /api/ready-plan** is the 90-day plan route; /api/plan re-exports it so saved clients keep working.

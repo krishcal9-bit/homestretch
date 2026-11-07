@@ -1,0 +1,9 @@
+{
+  "items": [
+    { "id": "exemption", "why": "You own your home in Santa Ana and live in it, so you can claim it. Many Habitat families never file.", "worth": "It takes $7,000 off your assessed value, about $70 less property tax every year.", "nextStep": "File form BOE-266 with the Orange County Assessor this week. You only file once." },
+    { "id": "careFera", "why": "Your household of 4 earns under the FERA limit of $80,400 a year, so you likely qualify for FERA.", "worth": "About $220 a year off your Southern California Edison bill.", "nextStep": "Apply on the Southern California Edison website. It takes about 5 minutes and no documents." },
+    { "id": "wildfire", "why": "You're on the California FAIR Plan, which must give a discount for wildfire-safety upgrades.", "worth": "At least $71 a year off your premium, often more.", "nextStep": "Clear 5 feet around the house and screen your vents, then call the FAIR Plan and ask for the Safer from Wildfires discount." },
+    { "id": "habitatRepair", "why": "As a Habitat homeowner you can ask for help before a repair becomes an emergency.", "worth": "Repairs at low or no cost, depending on the program and your income.", "nextStep": "Call Habitat OC and ask which home repair programs are open now." },
+    { "id": "oc211", "why": "Anyone in Orange County can call, day or night, in English or Spanish.", "worth": "Help with your mortgage, utilities or food if a big bill or a job loss hits.", "nextStep": "Save 211 in your phone, or visit 211oc.org to see what's open near you." }
+  ]
+}

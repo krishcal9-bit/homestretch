@@ -346,6 +346,263 @@
       "counselor": "Counselor"
     }
   },
+  "keepCommon": {
+    "emptyTitle": "Set up Keep first",
+    "emptyBody": "Keep needs a few facts about your home and payment. It takes about two minutes, and it stays on this device.",
+    "setUp": "Set up Keep",
+    "useSample": "Look around with a sample family"
+  },
+  "keepHome": {
+    "title": "Home health",
+    "sub": "Know what's wearing out before it breaks, and save a little each month so a repair is never a crisis.",
+    "perMonth": "a month",
+    "setAsideTitle": "Set aside for repairs",
+    "setAsideCovers": "Covers the {n} systems below by the time each is due, plus small repairs.",
+    "setAsideNoSystems": "An estimate from your home's age. Add your systems below to make it exact.",
+    "savingsNow": "Your savings today",
+    "dueFiveYears": "Due in the next 5 years",
+    "gap": "Your {system} will likely need replacing by {year}. Save about {gap} more to cover it.",
+    "gapNow": "Your {system} is due now. Save about {gap} more to cover it.",
+    "covered": "Your savings already cover the {system}, the next thing due.",
+    "timelineTitle": "The next five years",
+    "timelineSub": "When each system will likely need replacing, with typical Orange County costs.",
+    "timelineEmpty": "Add your water heater, roof or heating below to see when each will likely need replacing.",
+    "now": "Now",
+    "dueNow": "Due now",
+    "dueIn": "Likely by {year}",
+    "dueLater": "Not until {year}",
+    "costRange": "{low}–{high}",
+    "kind": {
+      "water_heater": "Water heater",
+      "roof": "Roof",
+      "hvac": "Heating and air",
+      "appliances": "Appliances",
+      "other": "Something else"
+    },
+    "fromPhoto": "From your photo",
+    "fromTypical": "Typical age",
+    "fromYou": "You told us",
+    "confidence": {
+      "low": "Low confidence",
+      "medium": "Medium confidence",
+      "high": "High confidence"
+    },
+    "confidenceWhy": {
+      "photo": "We read the date on the label. Change the age if it's wrong.",
+      "typed": "From the age you typed.",
+      "default": "We couldn't tell its age, so this is a typical guess. Change it if you know."
+    },
+    "systemsTitle": "Your systems",
+    "systemsSub": "Change an age and the set-aside updates.",
+    "lasts": "Usually lasts about {n} years",
+    "ageLabel": "Years old",
+    "ageLess": "One year younger: {system}",
+    "ageMore": "One year older: {system}",
+    "remove": "Remove {system}",
+    "readError": "We couldn't read that photo. Try a clearer photo of the label, or type the age.",
+    "updated": "Saved: {system}.",
+    "added": "Added: {system}.",
+    "addTitle": "Add or check a system",
+    "addSub": "Take a photo of the label on the side, or type how old it is.",
+    "whichSystem": "Which system?",
+    "photoTitle": "Photo of the label",
+    "photoHelp": "The sticker on the side usually shows when it was made.",
+    "takePhoto": "Take a photo",
+    "reading": "Reading the label",
+    "useSamplePhoto": "Use the sample photo",
+    "photoPrivacy": "We read the photo and throw it away. It is never saved.",
+    "typedTitle": "Or type its age",
+    "typedHelp": "In years. Leave it empty if you don't know.",
+    "yearsPlaceholder": "Years",
+    "check": "Check it",
+    "yourPhoto": "Your photo",
+    "readMade": "{system}, made in {year}",
+    "readAbout": "{system}",
+    "ageQuestion": "How old is it?",
+    "readLife": "Lasts about {n} years. A new one costs {low}–{high} in Orange County.",
+    "update": "Update my {system}",
+    "add": "Add to my home",
+    "discard": "Discard",
+    "leakTitle": "Something leaking or broken?",
+    "leakSub": "Get safe first steps right now, and see what you have saved for it.",
+    "leakWaterHeater": "My water heater is leaking",
+    "leakOther": "Something else is broken",
+    "broken": {
+      "roof": "Roof leak",
+      "hvac": "Heating or AC",
+      "appliances": "An appliance",
+      "other": "Something else"
+    },
+    "urgency": {
+      "now": "Do this now",
+      "soon": "Handle this today or tomorrow",
+      "can_wait": "This can wait a few days"
+    },
+    "tailoring": "Fitting these steps to your home",
+    "leakSavings": "You have {amount} saved for the house.",
+    "leakCost": "Replacing the {system} usually costs {low}–{high}.",
+    "leakAge": "Yours is about {n} years old.",
+    "leakRelief": "See repair help from Habitat OC",
+    "kindIn": {
+      "water_heater": "water heater",
+      "roof": "roof",
+      "hvac": "heating and air",
+      "appliances": "appliances",
+      "other": "system"
+    }
+  },
+  "keepRelief": {
+    "title": "Relief you can claim",
+    "sub": "Programs that lower what your home costs each year. Check off each one as you do it.",
+    "stillToClaim": "Still to claim",
+    "perYear": "a year",
+    "conservative": "A careful estimate. Many families get more.",
+    "doneCount": "{n} of {total} done",
+    "claimedWorth": "Already claimed: about {amount} a year.",
+    "markDone": "Mark done: {name}",
+    "done": "Done",
+    "likelihood": {
+      "likely": "You likely qualify",
+      "maybe": "Worth checking",
+      "unlikely": "Probably not this year"
+    },
+    "worth": "Worth",
+    "nextStep": "Next step",
+    "open": "Open {site}",
+    "newTab": "(opens in a new tab)"
+  },
+  "keepCheckin": {
+    "title": "Monthly check-in",
+    "sub": "Three quick questions, once a month. Your answers update your forecast right away.",
+    "threadLabel": "Check-in messages",
+    "last": "Last check-in {date}",
+    "byText": "By text message",
+    "typing": "HomeStretch is typing",
+    "reply": "Your answer",
+    "send": "Send",
+    "saved": "Check-in saved. Your forecast is up to date.",
+    "again": "Check in again",
+    "toHome": "Open Home health",
+    "bot": {
+      "hello": "Hi, it's HomeStretch with your monthly check-in. Three quick questions.",
+      "bills": "Any new bills for the house this month?",
+      "whichBill": "Which one changed?",
+      "amount": {
+        "escrow": "What's your new monthly escrow payment?",
+        "premium": "What's your new yearly insurance premium?",
+        "hoa": "What are your HOA dues each month now?",
+        "tax": "How much is the tax bill?"
+      },
+      "income": "Did your take-home pay change?",
+      "takeHome": "What do you take home each month now?",
+      "breaking": "Is anything in the house breaking or wearing out?",
+      "breakingNext": "Home health has safe first steps and what a replacement usually costs.",
+      "thanks": "Thanks. Your plan is up to date. I'll text you again on {date}."
+    },
+    "ans": {
+      "noBills": "No new bills",
+      "yesBill": "Yes, a bill went up",
+      "incomeSame": "No change",
+      "incomeUp": "It went up",
+      "incomeDown": "It went down",
+      "nothing": "Nothing"
+    },
+    "bill": {
+      "escrow": "Escrow payment",
+      "premium": "Insurance premium",
+      "hoa": "HOA dues",
+      "tax": "A tax bill"
+    },
+    "me": {
+      "amount": {
+        "escrow": "{amount} a month",
+        "premium": "{amount} a year",
+        "hoa": "{amount} a month",
+        "tax": "{amount}",
+        "takeHome": "{amount} a month"
+      }
+    },
+    "unit": {
+      "escrow": "Escrow, each month",
+      "premium": "Insurance premium, each year",
+      "hoa": "HOA dues, each month",
+      "tax": "Tax bill, one time",
+      "takeHome": "Take-home pay, each month"
+    },
+    "change": {
+      "same": "That doesn't change your forecast.",
+      "billUp": "Your highest month is now {amount}, in {month}: {delta} more than before.",
+      "billDown": "Your highest month is now {amount}, in {month}: {delta} less than before.",
+      "incomeUp": "Your tightest month now leaves {amount} to spare.",
+      "incomeDown": "Your tightest month now leaves only {amount} to spare.",
+      "incomeShort": "In your tightest month you'd be {amount} short. Shock Shield can help you plan for it.",
+      "repairUp": "Flagged. Your repair set-aside is now {amount} a month, {delta} more.",
+      "repairSame": "Flagged. Your repair set-aside stays {amount} a month."
+    },
+    "live": {
+      "title": "Your forecast",
+      "sub": "Updates with each answer.",
+      "now": "This month",
+      "nowHelp": "Mortgage, escrow, HOA and repairs",
+      "peak": "Highest month",
+      "tightest": "Left in the tightest month",
+      "tightestHelp": "After the home and basic living costs",
+      "repair": "Repair set-aside",
+      "repairHelp": "Each month, from Home health"
+    }
+  },
+  "keepPdf": {
+    "download": "Download my home plan",
+    "downloadHelp": "One page: your forecast, repairs and relief. A PDF to print or share.",
+    "error": "We couldn't make the PDF. Try again.",
+    "title": "My home plan",
+    "made": "Made {date} with HomeStretch",
+    "today": "Your home costs today",
+    "peak": "Highest in the next 24 months",
+    "setAside": "You set aside each month",
+    "recommended": "Recommended: {amount}",
+    "repairs": "Repair set-aside",
+    "repairsHelp": "Included in the monthly cost",
+    "forecastTitle": "The next 24 months",
+    "nextShock": "Next change: {month}, about {amount} more a month ({cause}).",
+    "noShock": "No big jumps expected in the next 24 months.",
+    "cause": {
+      "insurance": "insurance renewal",
+      "tax": "property tax",
+      "supplemental": "supplemental tax bill",
+      "hoa": "HOA dues"
+    },
+    "barsHelp": "Monthly cost. Amber: a month your payment rises.",
+    "systemsTitle": "Repairs ahead",
+    "noSystems": "No systems listed yet. Add them in Home health.",
+    "dueNow": "Due now",
+    "movesTitle": "Moves done",
+    "noMoves": "None yet. Shock Shield suggests a few.",
+    "moves": {
+      "setAside": "Set aside early",
+      "claim": "Claimed a relief program",
+      "insurance": "Shopped for insurance",
+      "habitat": "Talked with Habitat OC"
+    },
+    "reliefTitle": "Relief",
+    "claimed": "Claimed",
+    "worth": "Worth about {amount} a year",
+    "footer": "Estimates from HomeStretch's forecast for Habitat for Humanity of Orange County homeowners. Made on your device; Habitat sees it only if you share it."
+  },
+  "firstYear": {
+    "title": "Your first year of owning",
+    "sub": "What the home will likely cost each month once you have the keys.",
+    "mortgage": "Mortgage",
+    "mortgageHelp": "Habitat's 0% loan",
+    "escrow": "Property tax and insurance",
+    "escrowHelp": "Paid monthly through escrow",
+    "setAside": "Set aside for repairs",
+    "setAsideHelp": "So a repair is never a crisis",
+    "total": "Each month",
+    "perMonth": "{amount}",
+    "estimate": "An estimate for a new Habitat home in Orange County.",
+    "seeKeep": "See how Keep works"
+  },
   "landing": {
     "headline": "Get the keys. Keep the keys.",
     "sub": "HomeStretch gets your family mortgage-ready, then sees payment changes coming months ahead and helps you keep your home.",

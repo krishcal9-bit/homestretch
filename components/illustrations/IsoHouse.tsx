@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import { useEffect, useId, useState } from 'react';
 import { ease } from '@/lib/motion';
 import { P, alpha } from '@/lib/illustrationPalette';
+import { Bush } from './kit';
 
 /**
  * The 2D house: Keystone's recurring object wherever the 3D canvas isn't used (the Road's Keys marker,
@@ -275,9 +276,7 @@ export function IsoHouse({
           {/* shrub by the door */}
           {fine && (
             <motion.g {...pop(1.15)} style={{ transformBox: 'fill-box', transformOrigin: '50% 100%' }}>
-              <circle cx={W * 0.86} cy={-4.5} r={6} fill={P.tree} />
-              <circle cx={W * 0.76} cy={-3.5} r={4.6} fill={P.treeLight} />
-              <circle cx={W * 0.745} cy={-5} r={1.6} fill={P.pineLighter} opacity={0.6} />
+              <Bush x={W * 0.82} base={0.5} size={20} shadow={0.7} />
             </motion.g>
           )}
         </>

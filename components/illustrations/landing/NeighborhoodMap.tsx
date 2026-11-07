@@ -7,6 +7,7 @@ import { Figure } from '@/components/illustrations/Figure';
 import { IsoHouse, isoPx, type HouseStage } from '@/components/illustrations/IsoHouse';
 import { P, mix, type ClothKey } from '@/lib/illustrationPalette';
 import { alpha, KitDefs, Shade, Tree, useOnScreen, useStaged } from './kit';
+import { Tree as KitTree, type TreeSpecies } from '@/components/illustrations/kit';
 
 /**
  * Scene 3: a neighborhood block drawn in the same oblique projection as the house (fronts face us, sides
@@ -97,8 +98,10 @@ function RollUp({ to, at: when, format }: { to: number; at: number; format: (n: 
 /**
  * `plain`: the block sits flush on a ground plane drawn by the page (no plinth, no lawn or street of its own,
  * no rise). `badgeY`: extra travel for the count badges, so they float above the block when the page moves.
+ * `settled`: the markers stand at their final status with no entrance (a scene's resting state); change
+ * `badgeKey` to replay their entrance (they rise, then turn) without touching the homes.
  */
-export function NeighborhoodMap({ lots, reduce, plain = false, badgeY, night = false, site = true, built = false, badges = true }: { lots: Lot[]; reduce: boolean; plain?: boolean; badgeY?: MotionValue<number>; /** night: the finished homes' windows and porch lights are on */ night?: boolean; /** the tower crane (a block still being built) */ site?: boolean; /** the homes stand already (no build-in) */ built?: boolean; /** show the badges / markers */ badges?: boolean }) {
+export function NeighborhoodMap({ lots, reduce, plain = false, badgeY, night = false, site = true, built = false, badges = true, settled = false, badgeKey = 0 }: { lots: Lot[]; reduce: boolean; plain?: boolean; badgeY?: MotionValue<number>; settled?: boolean; badgeKey?: number; /** night: the finished homes' windows and porch lights are on */ night?: boolean; /** the tower crane (a block still being built) */ site?: boolean; /** the homes stand already (no build-in) */ built?: boolean; /** show the badges / markers */ badges?: boolean }) {
   const { t } = useLang();
   const id = `nb${useId().replace(/:/g, '')}`;
   const box = useRef<HTMLDivElement>(null);
@@ -161,7 +164,7 @@ export function NeighborhoodMap({ lots, reduce, plain = false, badgeY, night = f
           const c = corner(i);
           const delay = T.houses + (SLOTS[i].w / 92) * 0.09 + (SLOTS[i].side === 'R' ? 0.05 : 0);
           return (
-            <div key={lot.id} className={`absolute ${reduce ? '' : 'la-show'}`} style={{ left: pct(c.x - hp.x, VB.w), top: pct(c.y - hp.y, VB.h), width: pct(S, VB.w), zIndex: z(SLOTS[i].w), animationDelay: `${delay + 0.09}s` }}>
+            <div key={lot.id} className={`absolute ${reduce || built ? '' : 'la-show'}`} style={{ left: pct(c.x - hp.x, VB.w), top: pct(c.y - hp.y, VB.h), width: pct(S, VB.w), zIndex: z(SLOTS[i].w), animationDelay: `${delay + 0.09}s` }}>
               <IsoHouse size={S} stage={lot.stage ?? 'finished'} build={reduce || built ? 'none' : 'quick'} delay={delay} porch={(home[i] || night) && finishedLot(lot)} lit={finishedLot(lot) && (night || (lot.finishing ? done : home[i]))} ground={false} className="h-auto w-full" />
             </div>
           );
@@ -179,7 +182,11 @@ export function NeighborhoodMap({ lots, reduce, plain = false, badgeY, night = f
                 <defs>
                   <KitDefs id={`${id}t${i}`} />
                 </defs>
-                <PopTree id={`${id}t${i}`} s={tr.s} kind={tr.kind} delay={0.45 + i * 0.06} reduce={reduce} />
+                {built ? (
+                  <KitTree species={KIT_SPECIES[tr.kind]} x={0} base={0} size={(tr.kind === 'tall' ? 64 : 50) * tr.s} />
+                ) : (
+                  <PopTree id={`${id}t${i}`} s={tr.s} kind={tr.kind} delay={0.45 + i * 0.06} reduce={reduce} />
+                )}
               </svg>
             </div>
           );
@@ -191,7 +198,7 @@ export function NeighborhoodMap({ lots, reduce, plain = false, badgeY, night = f
         ))}
         {/* count badges pop above each home and roll up from 0 */}
         {st >= 4 && badges && (
-        <motion.div className="absolute inset-0" style={{ zIndex: 2000, y: badgeY }}>
+        <motion.div key={badgeKey} className="absolute inset-0" style={{ zIndex: 2000, y: badgeY }}>
         {six.map((lot, i) => {
           const c = corner(i);
           const ready = lot.ready > 0;
@@ -200,7 +207,7 @@ export function NeighborhoodMap({ lots, reduce, plain = false, badgeY, night = f
               <motion.div
                 className="absolute bottom-0 left-0 flex -translate-x-1/2 flex-col items-center"
                 style={{ transformOrigin: '50% 100%' }}
-                initial={reduce ? false : { opacity: 0, y: 8, scale: 0.92 }}
+                initial={reduce || settled ? false : { opacity: 0, y: 8, scale: 0.92 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ type: 'spring', duration: 0.4, bounce: 0.25, delay: reduce ? 0 : T.badges + i * 0.06, opacity: { duration: 0.15, delay: reduce ? 0 : T.badges + i * 0.06 } }}
               >
@@ -208,7 +215,7 @@ export function NeighborhoodMap({ lots, reduce, plain = false, badgeY, night = f
                   {lot.label}
                 </span>
                 {lot.status ? (
-                  <StatusMarker status={lot.status} turnsAt={reduce ? 0 : (lot.turnsAt ?? 0)} />
+                  <StatusMarker status={lot.status} turnsAt={reduce || settled ? 0 : (lot.turnsAt ?? 0)} />
                 ) : (
                   <>
                     <span className={`tnum whitespace-nowrap rounded-full border px-[9px] text-[12px] font-semibold leading-[20px] ${ready ? 'text-white' : 'text-ink-2'}`} style={{ background: ready ? P.pine : 'var(--surface)', borderColor: ready ? P.pine : 'var(--line)' }}>
@@ -231,6 +238,7 @@ export function NeighborhoodMap({ lots, reduce, plain = false, badgeY, night = f
   );
 }
 
+const KIT_SPECIES: Record<'round' | 'tall' | 'cluster', TreeSpecies> = { round: 'oak', tall: 'cypress', cluster: 'jacaranda' };
 const YARD_TREES: { u: number; w: number; s: number; kind: 'round' | 'tall' | 'cluster' }[] = [
   { u: 8, w: 14, s: 1, kind: 'round' },
   { u: 112, w: 100, s: 0.85, kind: 'tall' },

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'motion/react';
 import { ChevronLeft } from 'lucide-react';
-import { spring } from '@/lib/motion';
+import { dur, ease, spring } from '@/lib/motion';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/Toast';
@@ -20,9 +20,11 @@ export function CheckinRunner() {
   const [status, setStatus] = useState<'running' | 'done' | 'error'>('running');
   const [queued, setQueued] = useState<Record<string, boolean>>({});
   const [edits, setEdits] = useState<Record<string, string>>({});
+  const [runId, setRunId] = useState(0);
   const started = useRef(false);
 
   const run = async () => {
+    setRunId((n) => n + 1); // a fresh progress line per run, starting from the left
     setItems([]);
     setDone(0);
     setStatus('running');
@@ -58,7 +60,6 @@ export function CheckinRunner() {
     if (started.current) return;
     started.current = true;
     run();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -83,8 +84,15 @@ export function CheckinRunner() {
           Run again
         </Button>
       </div>
-      <div className="mt-2 h-[3px] w-full bg-line">
-        <motion.div className="h-full origin-left bg-pine" animate={{ scaleX: total ? done / total : 0 }} transition={spring.smooth} />
+      {/* A thin pine line that runs across with the progress, then fades once the run has finished. */}
+      <div className="relative mt-4 h-[2px] w-full" aria-hidden>
+        <motion.div
+          key={runId}
+          className="absolute inset-0 origin-left bg-pine"
+          initial={{ scaleX: 0, opacity: 1 }}
+          animate={{ scaleX: total ? done / total : 0, opacity: status === 'running' ? 1 : 0 }}
+          transition={{ scaleX: spring.smooth, opacity: { duration: dur.short, ease: ease.out, delay: status === 'running' ? 0 : dur.short } }}
+        />
       </div>
 
       {status === 'done' && items.length === 0 && (

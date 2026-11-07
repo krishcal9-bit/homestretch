@@ -2,8 +2,10 @@
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 import { Wordmark } from '@/components/FamilyHeader';
-import { spring } from '@/lib/motion';
+import { dur, ease, spring } from '@/lib/motion';
+import { arrivingFromLogin } from './handoff';
 
 const TABS = [
   { href: '/staff', label: 'Pipeline' },
@@ -14,9 +16,11 @@ const TABS = [
 
 export function StaffNav() {
   const path = usePathname();
+  // Straight after sign-in the bar fades in (no travel) while the page below slides in from the right.
+  const [arrive] = useState(arrivingFromLogin);
   const active = TABS.slice().reverse().find((t) => (t.href === '/staff' ? path === '/staff' : path.startsWith(t.href)))?.href;
   return (
-    <header className="border-b border-line bg-paper">
+    <motion.header className="border-b border-line bg-paper" initial={arrive ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: dur.short, ease: ease.out }}>
       <div className="flex h-14 max-w-[1280px] items-center gap-8 px-8">
         <Link href="/staff" className="-ml-1 rounded px-1" aria-label="Homestretch staff, pipeline">
           <Wordmark />
@@ -43,6 +47,6 @@ export function StaffNav() {
           </button>
         </form>
       </div>
-    </header>
+    </motion.header>
   );
 }

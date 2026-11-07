@@ -1,7 +1,7 @@
 'use client';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import { AnimatePresence, motion } from 'motion/react';
+import { motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { P } from '@/lib/illustrationPalette';
 import { brand, BRAND_LAYOUT_ID } from '@/lib/brand';
@@ -140,9 +140,8 @@ export function Intro({ live = true, onStart, onHandoff, onDone, onSkip }: { liv
 
       {/* the title card */}
       <div className="pointer-events-none absolute inset-x-0 flex justify-center" style={{ top: vp.h * 0.44 - titleW / 5.6 / 2 }}>
-        <AnimatePresence>
-          {beat === 'title' && <WordmarkTitle key="title" width={titleW} layoutId={BRAND_LAYOUT_ID} onMarkLit={() => setPulse((p) => p + 1)} />}
-        </AnimatePresence>
+        {/* unmounts as the header copy mounts: the header copy flies from here (shared layoutId, no crossfade) */}
+        {beat === 'title' && <WordmarkTitle width={titleW} layoutId={BRAND_LAYOUT_ID} onMarkLit={() => setPulse((p) => p + 1)} />}
       </div>
     </div>
   );

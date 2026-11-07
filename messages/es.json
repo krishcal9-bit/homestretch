@@ -346,6 +346,263 @@
       "counselor": "Asesor"
     }
   },
+  "keepCommon": {
+    "emptyTitle": "Primero configure Keep",
+    "emptyBody": "Keep necesita algunos datos de su casa y su pago. Toma unos dos minutos y se queda en este dispositivo.",
+    "setUp": "Configurar Keep",
+    "useSample": "Ver con una familia de ejemplo"
+  },
+  "keepHome": {
+    "title": "Salud de la casa",
+    "sub": "Sepa qué se está desgastando antes de que se descomponga, y ahorre un poco cada mes para que una reparación nunca sea una crisis.",
+    "perMonth": "al mes",
+    "setAsideTitle": "Ahorro para reparaciones",
+    "setAsideCovers": "Cubre los {n} sistemas de abajo para cuando toque cambiarlos, más reparaciones pequeñas.",
+    "setAsideNoSystems": "Un cálculo según la edad de su casa. Agregue sus sistemas abajo para hacerlo exacto.",
+    "savingsNow": "Sus ahorros hoy",
+    "dueFiveYears": "Por cambiar en 5 años",
+    "gap": "Probablemente toque cambiar {system} para {year}. Ahorre unos {gap} más para cubrirlo.",
+    "gapNow": "Ya toca cambiar {system}. Ahorre unos {gap} más para cubrirlo.",
+    "covered": "Sus ahorros ya cubren {system}, lo próximo por cambiar.",
+    "timelineTitle": "Los próximos cinco años",
+    "timelineSub": "Cuándo probablemente habrá que cambiar cada sistema, con costos típicos del Condado de Orange.",
+    "timelineEmpty": "Agregue abajo su calentador de agua, techo o calefacción para ver cuándo habrá que cambiarlos.",
+    "now": "Hoy",
+    "dueNow": "Toca ya",
+    "dueIn": "Probablemente para {year}",
+    "dueLater": "No antes de {year}",
+    "costRange": "{low}–{high}",
+    "kind": {
+      "water_heater": "Calentador de agua",
+      "roof": "Techo",
+      "hvac": "Calefacción y aire",
+      "appliances": "Aparatos",
+      "other": "Otra cosa"
+    },
+    "fromPhoto": "De su foto",
+    "fromTypical": "Edad típica",
+    "fromYou": "Usted nos dijo",
+    "confidence": {
+      "low": "Confianza baja",
+      "medium": "Confianza media",
+      "high": "Confianza alta"
+    },
+    "confidenceWhy": {
+      "photo": "Leímos la fecha en la etiqueta. Cambie la edad si no es correcta.",
+      "typed": "Según la edad que escribió.",
+      "default": "No pudimos saber su edad; es un cálculo típico. Cámbielo si la sabe."
+    },
+    "systemsTitle": "Sus sistemas",
+    "systemsSub": "Cambie una edad y el ahorro se actualiza.",
+    "lasts": "Suele durar unos {n} años",
+    "ageLabel": "Años",
+    "ageLess": "Un año menos: {system}",
+    "ageMore": "Un año más: {system}",
+    "remove": "Quitar {system}",
+    "readError": "No pudimos leer esa foto. Pruebe con una foto más clara de la etiqueta, o escriba la edad.",
+    "updated": "Guardado: {system}.",
+    "added": "Agregado: {system}.",
+    "addTitle": "Agregar o revisar un sistema",
+    "addSub": "Tome una foto de la etiqueta del costado, o escriba cuántos años tiene.",
+    "whichSystem": "¿Qué sistema?",
+    "photoTitle": "Foto de la etiqueta",
+    "photoHelp": "La etiqueta del costado suele mostrar cuándo se fabricó.",
+    "takePhoto": "Tomar una foto",
+    "reading": "Leyendo la etiqueta",
+    "useSamplePhoto": "Usar la foto de ejemplo",
+    "photoPrivacy": "Leemos la foto y la desechamos. Nunca se guarda.",
+    "typedTitle": "O escriba su edad",
+    "typedHelp": "En años. Déjelo vacío si no la sabe.",
+    "yearsPlaceholder": "Años",
+    "check": "Revisar",
+    "yourPhoto": "Su foto",
+    "readMade": "{system}, fabricado en {year}",
+    "readAbout": "{system}",
+    "ageQuestion": "¿Cuántos años tiene?",
+    "readLife": "Dura unos {n} años. Uno nuevo cuesta {low}–{high} en el Condado de Orange.",
+    "update": "Actualizar {system}",
+    "add": "Agregar a mi casa",
+    "discard": "Descartar",
+    "leakTitle": "¿Algo gotea o se descompuso?",
+    "leakSub": "Vea ahora los primeros pasos seguros, y cuánto tiene ahorrado para esto.",
+    "leakWaterHeater": "Mi calentador de agua gotea",
+    "leakOther": "Otra cosa se descompuso",
+    "broken": {
+      "roof": "Gotera en el techo",
+      "hvac": "Calefacción o aire",
+      "appliances": "Un aparato",
+      "other": "Otra cosa"
+    },
+    "urgency": {
+      "now": "Haga esto ahora",
+      "soon": "Atiéndalo hoy o mañana",
+      "can_wait": "Puede esperar unos días"
+    },
+    "tailoring": "Ajustando estos pasos a su casa",
+    "leakSavings": "Tiene {amount} ahorrados para la casa.",
+    "leakCost": "Cambiar {system} suele costar {low}–{high}.",
+    "leakAge": "El suyo tiene unos {n} años.",
+    "leakRelief": "Ver ayuda para reparaciones de Habitat OC",
+    "kindIn": {
+      "water_heater": "el calentador de agua",
+      "roof": "el techo",
+      "hvac": "la calefacción y el aire",
+      "appliances": "los aparatos",
+      "other": "ese sistema"
+    }
+  },
+  "keepRelief": {
+    "title": "Ayuda que puede pedir",
+    "sub": "Programas que bajan lo que cuesta su casa cada año. Marque cada uno cuando lo haga.",
+    "stillToClaim": "Por pedir",
+    "perYear": "al año",
+    "conservative": "Un cálculo cuidadoso. Muchas familias reciben más.",
+    "doneCount": "{n} de {total} hechos",
+    "claimedWorth": "Ya pedido: unos {amount} al año.",
+    "markDone": "Marcar como hecho: {name}",
+    "done": "Hecho",
+    "likelihood": {
+      "likely": "Probablemente califica",
+      "maybe": "Vale la pena revisar",
+      "unlikely": "Probablemente no este año"
+    },
+    "worth": "Vale",
+    "nextStep": "Siguiente paso",
+    "open": "Abrir {site}",
+    "newTab": "(se abre en otra pestaña)"
+  },
+  "keepCheckin": {
+    "title": "Revisión mensual",
+    "sub": "Tres preguntas rápidas, una vez al mes. Sus respuestas actualizan su pronóstico de inmediato.",
+    "threadLabel": "Mensajes de la revisión",
+    "last": "Última revisión: {date}",
+    "byText": "Por mensaje de texto",
+    "typing": "HomeStretch está escribiendo",
+    "reply": "Su respuesta",
+    "send": "Enviar",
+    "saved": "Revisión guardada. Su pronóstico está al día.",
+    "again": "Revisar otra vez",
+    "toHome": "Abrir Salud de la casa",
+    "bot": {
+      "hello": "Hola, es HomeStretch con su revisión mensual. Tres preguntas rápidas.",
+      "bills": "¿Tiene cuentas nuevas de la casa este mes?",
+      "whichBill": "¿Cuál cambió?",
+      "amount": {
+        "escrow": "¿Cuál es su nuevo pago mensual de escrow?",
+        "premium": "¿Cuál es su nueva prima de seguro al año?",
+        "hoa": "¿Cuánto paga de HOA al mes ahora?",
+        "tax": "¿De cuánto es la cuenta de impuestos?"
+      },
+      "income": "¿Cambió lo que recibe de pago?",
+      "takeHome": "¿Cuánto recibe al mes ahora, después de impuestos?",
+      "breaking": "¿Algo en la casa se está descomponiendo o desgastando?",
+      "breakingNext": "En Salud de la casa hay pasos seguros y lo que suele costar cambiarlo.",
+      "thanks": "Gracias. Su plan está al día. Le escribo otra vez el {date}."
+    },
+    "ans": {
+      "noBills": "No hay cuentas nuevas",
+      "yesBill": "Sí, una cuenta subió",
+      "incomeSame": "Sin cambio",
+      "incomeUp": "Subió",
+      "incomeDown": "Bajó",
+      "nothing": "Nada"
+    },
+    "bill": {
+      "escrow": "Pago de escrow",
+      "premium": "Prima del seguro",
+      "hoa": "Cuota de HOA",
+      "tax": "Una cuenta de impuestos"
+    },
+    "me": {
+      "amount": {
+        "escrow": "{amount} al mes",
+        "premium": "{amount} al año",
+        "hoa": "{amount} al mes",
+        "tax": "{amount}",
+        "takeHome": "{amount} al mes"
+      }
+    },
+    "unit": {
+      "escrow": "Escrow, cada mes",
+      "premium": "Prima del seguro, cada año",
+      "hoa": "Cuota de HOA, cada mes",
+      "tax": "Cuenta de impuestos, una vez",
+      "takeHome": "Pago después de impuestos, cada mes"
+    },
+    "change": {
+      "same": "Eso no cambia su pronóstico.",
+      "billUp": "Su mes más alto ahora es {amount}, en {month}: {delta} más que antes.",
+      "billDown": "Su mes más alto ahora es {amount}, en {month}: {delta} menos que antes.",
+      "incomeUp": "Su mes más apretado ahora le deja {amount} de sobra.",
+      "incomeDown": "Su mes más apretado ahora le deja solo {amount} de sobra.",
+      "incomeShort": "En su mes más apretado le faltarían {amount}. Shock Shield le ayuda a prepararse.",
+      "repairUp": "Anotado. Su ahorro para reparaciones ahora es {amount} al mes, {delta} más.",
+      "repairSame": "Anotado. Su ahorro para reparaciones sigue en {amount} al mes."
+    },
+    "live": {
+      "title": "Su pronóstico",
+      "sub": "Se actualiza con cada respuesta.",
+      "now": "Este mes",
+      "nowHelp": "Hipoteca, escrow, HOA y reparaciones",
+      "peak": "Mes más alto",
+      "tightest": "Le queda en el mes más apretado",
+      "tightestHelp": "Después de la casa y los gastos básicos",
+      "repair": "Ahorro para reparaciones",
+      "repairHelp": "Cada mes, de Salud de la casa"
+    }
+  },
+  "keepPdf": {
+    "download": "Descargar mi plan de la casa",
+    "downloadHelp": "Una página: su pronóstico, reparaciones y ayudas. Un PDF para imprimir o compartir.",
+    "error": "No pudimos crear el PDF. Inténtelo de nuevo.",
+    "title": "Mi plan de la casa",
+    "made": "Hecho el {date} con HomeStretch",
+    "today": "Su casa cuesta hoy",
+    "peak": "Lo más alto en 24 meses",
+    "setAside": "Aparta cada mes",
+    "recommended": "Recomendado: {amount}",
+    "repairs": "Ahorro para reparaciones",
+    "repairsHelp": "Incluido en el costo mensual",
+    "forecastTitle": "Los próximos 24 meses",
+    "nextShock": "Próximo cambio: {month}, unos {amount} más al mes ({cause}).",
+    "noShock": "No se esperan subidas grandes en los próximos 24 meses.",
+    "cause": {
+      "insurance": "renovación del seguro",
+      "tax": "impuesto a la propiedad",
+      "supplemental": "cuenta de impuesto suplementario",
+      "hoa": "cuota de HOA"
+    },
+    "barsHelp": "Costo mensual. Ámbar: un mes en que su pago sube.",
+    "systemsTitle": "Reparaciones por venir",
+    "noSystems": "Aún no hay sistemas. Agréguelos en Salud de la casa.",
+    "dueNow": "Toca ya",
+    "movesTitle": "Pasos hechos",
+    "noMoves": "Ninguno todavía. Shock Shield le sugiere algunos.",
+    "moves": {
+      "setAside": "Apartar dinero antes",
+      "claim": "Pidió una ayuda",
+      "insurance": "Comparó seguros",
+      "habitat": "Habló con Habitat OC"
+    },
+    "reliefTitle": "Ayudas",
+    "claimed": "Pedida",
+    "worth": "Vale unos {amount} al año",
+    "footer": "Cálculos del pronóstico de HomeStretch para propietarios de Habitat for Humanity del Condado de Orange. Hecho en su dispositivo; Habitat solo lo ve si usted lo comparte."
+  },
+  "firstYear": {
+    "title": "Su primer año como dueño",
+    "sub": "Lo que probablemente costará la casa cada mes cuando tenga las llaves.",
+    "mortgage": "Hipoteca",
+    "mortgageHelp": "El préstamo al 0% de Habitat",
+    "escrow": "Impuesto y seguro",
+    "escrowHelp": "Se pagan cada mes por escrow",
+    "setAside": "Ahorro para reparaciones",
+    "setAsideHelp": "Para que una reparación nunca sea una crisis",
+    "total": "Cada mes",
+    "perMonth": "{amount}",
+    "estimate": "Un cálculo para una casa nueva de Habitat en el Condado de Orange.",
+    "seeKeep": "Ver cómo funciona Keep"
+  },
   "landing": {
     "headline": "Vea exactamente cuándo su familia puede recibir las llaves.",
     "sub": "Responda unas preguntas y obtenga una fecha, los pasos que la acercan y la casa de Habitat que le corresponde.",

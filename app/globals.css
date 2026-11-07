@@ -269,4 +269,62 @@ html.landing-snap.landing-snap-off { scroll-snap-type: none; }
 @media (max-width: 1023px) and (max-height: 700px) {
   .hero-house { position: relative; left: auto; top: auto; translate: none; margin: 0 auto -8px; }
   .hero-house-spacer { display: none; }
+/* r5:landing-art */
+/* Landing scene illustrations (components/illustrations/landing) and the Skyline. Compositor-only CSS:
+   transform and opacity. Ambient loops pause (.la-paused) while their scene is off screen; reduced motion
+   removes every animation here (final states). */
+.la-paused { animation-play-state: paused !important; }
+/* Scene 1: the phone floats (one 8s loop); its floor shadow breathes in step */
+@keyframes la-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+@keyframes la-float-shadow { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.93); opacity: 0.78; } }
+.la-float { animation: la-float 8s cubic-bezier(0.45, 0, 0.55, 1) 1.2s infinite; }
+.la-float-shadow { animation: la-float-shadow 8s cubic-bezier(0.45, 0, 0.55, 1) 1.2s infinite; }
+/* the voice bars: three waveforms, settling to small dots */
+@keyframes la-bar-0 { 0% { transform: scaleY(0.25); } 14% { transform: scaleY(1); } 30% { transform: scaleY(0.4); } 46% { transform: scaleY(0.95); } 62% { transform: scaleY(0.35); } 80% { transform: scaleY(0.8); } 100% { transform: scaleY(0.25); } }
+@keyframes la-bar-1 { 0% { transform: scaleY(0.25); } 18% { transform: scaleY(0.7); } 34% { transform: scaleY(1); } 52% { transform: scaleY(0.45); } 70% { transform: scaleY(0.9); } 86% { transform: scaleY(0.4); } 100% { transform: scaleY(0.25); } }
+@keyframes la-bar-2 { 0% { transform: scaleY(0.25); } 12% { transform: scaleY(0.55); } 28% { transform: scaleY(0.85); } 44% { transform: scaleY(0.3); } 60% { transform: scaleY(1); } 78% { transform: scaleY(0.5); } 100% { transform: scaleY(0.25); } }
+.la-bar { transform: scaleY(0.25); animation-duration: 1.25s; animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); animation-fill-mode: both; }
+.la-bar-0 { animation-name: la-bar-0; }
+.la-bar-1 { animation-name: la-bar-1; }
+.la-bar-2 { animation-name: la-bar-2; }
+/* Entrances (delayed per element): a plane rises into place and settles (a small overshoot, like a spring) */
+@keyframes la-in-0 { from { opacity: 0; } to { opacity: 1; } }
+@keyframes la-in-1 { 0% { opacity: 0; transform: translateY(8px); } 55% { opacity: 1; transform: translateY(-0.6px); } 100% { opacity: 1; transform: none; } }
+@keyframes la-in-2 { 0% { opacity: 0; transform: translateY(18px); } 55% { opacity: 1; transform: translateY(-1.4px); } 100% { opacity: 1; transform: none; } }
+@keyframes la-in-3 { 0% { opacity: 0; transform: translateY(28px); } 55% { opacity: 1; transform: translateY(-2.2px); } 100% { opacity: 1; transform: none; } }
+/* longhands: a shorthand without a name can lose its fill mode when minified, and the delayed state must hold */
+.la-in { animation-duration: 0.7s; animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1); animation-fill-mode: both; }
+.la-in-0 { animation-name: la-in-0; animation-duration: 0.45s; }
+.la-in-1 { animation-name: la-in-1; }
+.la-in-2 { animation-name: la-in-2; }
+.la-in-3 { animation-name: la-in-3; }
+/* a house appears the moment its walls start rising (hides the fixtures that are drawn before the build) */
+.la-show { animation: la-in-0 0.1s linear both; }
+/* A tree pops up from its base with a slight overshoot, then sways once and settles (follow-through) */
+@keyframes la-tree {
+  0% { opacity: 0; transform: translateY(6px) scale(0.84); animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1); }
+  30% { opacity: 1; transform: translateY(-1px) scale(1.03); animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
+  48% { transform: rotate(2.6deg); animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
+  66% { transform: rotate(-1.5deg); animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
+  83% { transform: rotate(0.6deg); animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
+  100% { opacity: 1; transform: none; }
+}
+.la-tree { transform-box: fill-box; transform-origin: 50% 100%; animation: la-tree 1.2s both; }
+/* Scene 2: the car's body bobs on its suspension while it drives (finite, set per drive) */
+@keyframes la-bob { from { transform: translateY(0); } to { transform: translateY(-1.6%); } }
+.la-bob { animation: la-bob 0.11s ease-in-out alternate both; }
+/* Scene 3: the crane's head slowly slews (the jib swings toward us and back: one 10s loop); people bob as they walk */
+@keyframes la-slew { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(0.45); } }
+.la-slew { animation: la-slew 10s cubic-bezier(0.45, 0, 0.55, 1) 1.4s infinite; }
+@keyframes la-walk { from { transform: translateY(0); } to { transform: translateY(-3%); } }
+.la-walk { animation: la-walk 0.16s ease-in-out alternate both; }
+/* Closing: each row of windows comes on (opacity, staggered by row from the front to the back) */
+@keyframes la-light { from { opacity: 0; } to { opacity: 1; } }
+.la-light { opacity: 0; animation: la-light 0.45s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+/* Skyline: each house (and tree) rises from the lawn with a slight settle */
+@keyframes la-rise { 0% { opacity: 0; transform: translateY(10px) scaleY(0.82); } 60% { opacity: 1; transform: translateY(-1px) scaleY(1.02); } 100% { opacity: 1; transform: none; } }
+.la-rise { transform-box: fill-box; transform-origin: 50% 100%; animation: la-rise 0.55s cubic-bezier(0.23, 1, 0.32, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .la-float, .la-float-shadow, .la-bar, .la-bob, .la-slew, .la-walk, .la-rise, .la-in, .la-show, .la-tree { animation: none; }
+  .la-light { opacity: 1; animation: none; }
 }

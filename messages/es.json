@@ -410,5 +410,8 @@
   },
   "brand": {
     "tagline": "Su camino hacia un hogar de Habitat."
+  },
+  "landingArt": {
+    "grossPay": "Pago bruto"
   }
 }

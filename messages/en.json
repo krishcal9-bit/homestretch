@@ -410,5 +410,8 @@
   },
   "brand": {
     "tagline": "Your road to a Habitat home."
+  },
+  "landingArt": {
+    "grossPay": "Gross pay"
   }
 }

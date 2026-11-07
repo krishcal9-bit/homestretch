@@ -244,27 +244,8 @@ html.landing-snap.landing-snap-off { scroll-snap-type: none; }
   .scenery-birds { display: none; }
 }
 
-/* landing hero: the 3D house stands on the world's street (--street-bottom is set by the World) */
-.hero-house {
-  --hw: min(88vw, 360px, calc(34svh * 1.25));
-  --hh: calc(var(--hw) * 0.8);
-  position: absolute;
-  z-index: 1;
-  width: var(--hw);
-  left: 50%;
-  translate: -50% 0;
-  /* plinth base (~93% down the slot) on the near sidewalk, a little in front of the street */
-  top: calc(100svh - 64px - var(--street-bottom, 50px) * 0.62 - var(--hh) * 0.93);
-}
-.hero-house-spacer { height: calc(var(--hw, 300px) * 0.8 + 8px); --hw: min(88vw, 360px, calc(34svh * 1.25)); }
-@media (min-width: 1024px) {
-  .hero-house { --hw: clamp(220px, 33vh, 350px); left: 64%; }
-  .hero-content { padding-bottom: calc(clamp(220px, 33vh, 350px) * 0.8 + 24px); }
-}
-@media (max-width: 1023px) and (max-height: 700px) {
-  .hero-house { position: relative; left: auto; top: auto; translate: none; margin: 0 auto -8px; }
-  .hero-house-spacer { display: none; }
-}
+/* landing hero: the house stands in the product stage (components/three/HeroHouse.tsx); the canvas hangs on
+   the intro's stage during the film and docks into its slot on the Road */
 
 /* r5:landing-art */
 /* Landing scene illustrations (components/illustrations/landing) and the Skyline. Compositor-only CSS:

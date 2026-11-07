@@ -1,5 +1,4 @@
 'use client';
-import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { animate, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -8,17 +7,17 @@ import { brand } from '@/lib/brand';
 import { useLang } from '@/lib/i18n';
 import { WordmarkTitle, TITLE_T } from '@/components/brand/Wordmark';
 import { HOUSE_SIZES, HOUSE_STILL, hasWebGL } from '@/components/three/HouseCanvas';
+import { introStage } from '@/components/three/introStage';
 import { INTRO, INTRO_STILL, INTRO_WAIT_MS } from './introTimeline';
 
 export { INTRO } from './introTimeline';
-const IntroScene = dynamic(() => import('./three/IntroScene'), { ssr: false });
-/** Fetch the intro's 3D chunk as early as possible (the landing page calls this on load). */
-export const preloadIntro = () => import('./three/IntroScene');
 
 /**
  * The landing intro overlay: the 3D house film, then the HomeStretch title card, then the hand-off to the
  * hero (the wordmark flies into the header, the house lands on the hero's slot). Any click, wheel, touch or
  * key skips straight to the final hero. The hero is rendered underneath the whole time.
+ * The film's canvas is the hero's own house canvas (components/three/HeroHouse.tsx): it hangs on this
+ * overlay's stage while the film plays and docks into the hero's slot at the end (introStage.dock()).
  */
 /** pending: the 3D stage is mounted, waiting for its first frame; late: it missed the wait → still. */
 type Mode = 'pending' | 'late' | '3d' | 'still';
@@ -35,6 +34,7 @@ export function Intro({ live = true, onStart, onHandoff, onDone, onSkip }: { liv
   const [pulse, setPulse] = useState(0);
   const [stillTo, setStillTo] = useState<DOMRect | null>(null);
   const finished = useRef(false);
+  const stageRef = useCallback((el: HTMLDivElement | null) => introStage.set({ stage: el }), []);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const end = useCallback(
@@ -43,6 +43,7 @@ export function Intro({ live = true, onStart, onHandoff, onDone, onSkip }: { liv
       finished.current = true;
       timers.current.forEach(clearTimeout);
       document.documentElement.style.overflow = '';
+      introStage.set({ mode: 'none' });
       if (skipped) {
         brand.set({ stage: 'header', fly: false });
         onSkip();
@@ -55,6 +56,7 @@ export function Intro({ live = true, onStart, onHandoff, onDone, onSkip }: { liv
   const run = useCallback(
     (m: '3d' | 'still') => {
       setMode(m);
+      introStage.set({ mode: m });
       onStart?.(m);
       const T = m === '3d' ? INTRO : INTRO_STILL;
       const at = (s: number, f: () => void) => timers.current.push(setTimeout(f, s * 1000));
@@ -81,7 +83,11 @@ export function Intro({ live = true, onStart, onHandoff, onDone, onSkip }: { liv
           setBeat('landed');
         }
       });
-      at(T.total, () => end(false));
+      at(T.total, () => {
+        // the house canvas moves into the hero's slot (same frame) before the overlay goes
+        if (m === '3d') introStage.dock();
+        end(false);
+      });
     },
     [end, onHandoff, onStart],
   );
@@ -98,11 +104,19 @@ export function Intro({ live = true, onStart, onHandoff, onDone, onSkip }: { liv
     window.addEventListener('wheel', skip, opts);
     window.addEventListener('touchmove', skip, opts);
     const gl = hasWebGL();
+    introStage.set({ mode: gl ? 'pending' : 'still', firstFrame: false });
     if (!gl) run('still');
+    // the hero's house canvas, on this stage, has drawn its first frame: the film starts
+    const off = introStage.subscribe(() => {
+      const s = introStage.get();
+      if (s.firstFrame && s.mode === 'pending' && !finished.current) run('3d');
+    });
     const wait = gl ? setTimeout(() => setMode((m) => (m === 'pending' ? 'late' : m)), INTRO_WAIT_MS) : undefined;
     const list = timers.current;
     return () => {
       if (wait) clearTimeout(wait);
+      off();
+      introStage.set({ mode: 'none', stage: null });
       list.forEach(clearTimeout);
       ['pointerdown', 'keydown', 'wheel', 'touchmove'].forEach((e) => window.removeEventListener(e, skip));
       document.documentElement.style.overflow = '';
@@ -119,7 +133,8 @@ export function Intro({ live = true, onStart, onHandoff, onDone, onSkip }: { liv
   // big: ~85% of a phone's width, ~68% of a desktop's (cap height ≈ 105px at 1440)
   const titleW = vp.w < 640 ? Math.round(vp.w * 0.85) : Math.round(Math.min(1120, Math.max(560, vp.w * 0.68)));
   const dim = beat === 'title';
-  const exiting = beat === 'exit';
+  // the sky stays gone once the hand-off starts (the title landing in the header must not bring it back)
+  const exiting = beat === 'exit' || beat === 'landed';
   // the still version: a large centred house that moves onto the hero slot at the end
   const stillW = Math.min(vp.w * 0.86, vp.h * 0.7 * 1.25, 760);
   const stillBox = { left: (vp.w - stillW) / 2, top: vp.h * 0.5 - (stillW / 1.25) * 0.52, w: stillW };
@@ -135,7 +150,8 @@ export function Intro({ live = true, onStart, onHandoff, onDone, onSkip }: { liv
       <div className="absolute inset-0" style={{ filter: dim ? 'blur(8px)' : 'blur(0px)', transition: `filter ${dim ? 400 : 300}ms cubic-bezier(0.23,1,0.32,1)` }}>
         {(mode === 'pending' || mode === '3d') && (
           <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: mode === '3d' ? 1 : 0 }} transition={{ duration: 0.45, ease: EASE }}>
-            <IntroScene slot={heroSlot} paused={!live} onFirstFrame={() => !finished.current && run('3d')} />
+            {/* the hero house's canvas hangs here during the film */}
+            <div ref={stageRef} className="absolute inset-0" />
           </motion.div>
         )}
         {mode === 'still' && (

@@ -1,6 +1,7 @@
 // Captures the still render of the 3D house (public/house/house.png): the placeholder shown until the canvas
-// draws, and the fallback without WebGL or with reduced motion. Taken from the landing hero's house slot
-// (door open, porch light on, one window lit — the hero's resting state) on a transparent background.
+// draws, and the fallback without WebGL or with reduced motion. Taken from the landing hero's house slot (the
+// product stage's Road end; door open, porch light on, one window lit — the hero's resting state) on a
+// transparent background, with the slot's own 5:4 framing (components/three/HouseScene.tsx SLOT_POSE).
 // usage: npx tsx scripts/render-house.ts [baseUrl]
 import { chromium } from 'playwright';
 (async () => {
@@ -10,7 +11,7 @@ import { chromium } from 'playwright';
   await p.goto(`${base}/?nointro&force3d`, { timeout: 120000 });
   await p.waitForSelector('[data-testid=hero-house] canvas', { timeout: 60000 });
   // render the slot at 600px (same 5:4 framing) so the 2× canvas is 1200px wide
-  await p.addStyleTag({ content: '[data-testid=hero-house]{position:fixed!important;left:0!important;top:0!important;width:600px!important;max-width:none!important;z-index:999}' });
+  await p.addStyleTag({ content: '[data-testid=keys-house]{transform:none!important;translate:none!important} [data-testid=hero-house]{position:fixed!important;left:0!important;top:0!important;width:600px!important;height:480px!important;max-width:none!important;z-index:999}' });
   await p.waitForTimeout(5000);
   // only the canvas, on transparency
   await p.addStyleTag({ content: 'html,body,body *{background:transparent!important;box-shadow:none!important} body *{visibility:hidden!important} [data-testid=hero-house], [data-testid=hero-house] canvas{visibility:visible!important} [data-testid=hero-house] img{display:none!important}' });

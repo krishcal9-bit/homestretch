@@ -464,8 +464,8 @@ export function House({ ctl, onBuilt }: { ctl: HouseHandle; onBuilt?: () => void
       }
       sm.children.forEach((c, i) => {
         const ph = ((smokeT.current / 7 + i / sm.children.length) % 1 + 1) % 1;
-        c.position.set(Math.sin(ph * Math.PI * 2 + i * 1.7) * 0.12 + ph * 0.3, ph * 1.15, -ph * 0.08);
-        c.scale.setScalar(0.1 + ph * 0.26);
+        c.position.set(Math.sin(ph * Math.PI * 2 + i * 1.7) * 0.1 + ph * 0.2, ph * 0.55, -ph * 0.06);
+        c.scale.setScalar(0.09 + ph * 0.18);
         ((c as THREE.Mesh).material as THREE.MeshStandardMaterial).opacity = (on ? 1 : 0) * 0.32 * Math.sin(ph * Math.PI) * clamp01((t - TL.smoke) * 2 + (intro ? 0 : 1));
       });
     }

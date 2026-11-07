@@ -59,3 +59,18 @@ Ambiguities resolved during the build, with the choice made.
   - **On result and plan the scenery lives inside the Road panel (`RoadScene`), not page-wide.** The owner asked for the neighborhood behind the Road, and it keeps the rest of the page calm.
   - **Title card.** A 700-weight glyph set is generated alongside the 600 header set. The title itself flies onto the header's placeholder (a manual FLIP on one vector element) rather than using a Motion `layoutId`, because the two weights differ and a `layoutId` morph would snap from 700 to 600 mid-flight.
   - **The intro is now about 5.0s with 3D and 3.6s in the still version.** The owner's longer hold and flight supersede the earlier ~4.2s limit.
+
+## Round 6 — hero product stage
+- The hero's right 7 columns are one product stage (surface panel): the ready date, the 3D house standing on the
+  Road's Keys end (`slotKind="stage"`, ~59% of the column; `pinKeys` keeps Keys at the road's end so the house
+  never slides while dragging), then the slider. Phones (< 560px) stack date, house (~75% of the screen), Road,
+  slider; the subline and buttons follow the stage so the house lands on the first screen.
+- One canvas for the intro and the hero (`components/three/HeroHouse.tsx` + `StageScene.tsx`, store in
+  `introStage.ts`). During the film the hero house's canvas is portaled onto the intro's stage; the camera lands on
+  the slot through a view offset with the slot's own camera; at the end `dock()` moves the canvas element into the
+  slot, resizes it and renders the slot frame in the same task. Verified on a frozen clock at 1440×900 and 390×844:
+  the frames either side of the dock are identical over the house (edge anti-aliasing only).
+- The slot framing was re-calibrated (SLOT_POSE target, EXTENT): ~9% air at the sides, chimney ~11% below the top
+  (smoke rises less and fades inside that air), plinth base ~6% above the bottom; Road anchors moved to
+  ax 0.38 / ay 0.785 (projected path end). `public/house/house.png` re-rendered with it.
+- The intro's sky no longer fades back in when the title lands in the header (it flashed for ~50ms before).

@@ -30,9 +30,16 @@ const GEOM: Record<Size, { trackY: number; h: number; r: number; keysR: number; 
  * (the 3D house: where its stepping-stone path meets the lawn's front edge). The Road reserves room on the
  * right so the object always fits, and the road surface ends under it.
  */
-export type SlotKind = 'house' | 'home';
+export type SlotKind = 'house' | 'home' | 'stage';
+/**
+ * house: the 3D house on the result and plan pages; stage: the same house as the landing hero's centerpiece
+ * (larger: ~64% of the road); home: a chosen home's 2D house.
+ * ax/ay for the 3D house come from its camera framing (components/three/HouseScene.tsx SLOT_POSE): the point
+ * where the stepping-stone path meets the lawn's front edge.
+ */
 const SLOT: Record<SlotKind, { frac: number; min: number; max: number; aspect: number; ax: number; ay: number; labelGap: number }> = {
-  house: { frac: 0.46, min: 136, max: 236, aspect: 0.8, ax: 0.31, ay: 0.81, labelGap: 6 },
+  house: { frac: 0.46, min: 136, max: 236, aspect: 0.8, ax: 0.38, ay: 0.785, labelGap: 6 },
+  stage: { frac: 0.64, min: 220, max: 420, aspect: 0.8, ax: 0.38, ay: 0.785, labelGap: 6 },
   home: { frac: 0.22, min: 72, max: 96, aspect: 94 / 92, ax: 0.03, ay: 0.99, labelGap: -6 },
 };
 export function slotBox(kind: SlotKind, roadWidth: number) {
@@ -367,6 +374,10 @@ type RoadProps = {
   slotKind?: SlotKind;
   /** With keysVariant 'slot': the label over the slot (defaults to "Keys"). */
   keysLabel?: string;
+  /** Keys always sits at the end of the road (the domain is exactly Today → Keys): what stands there never moves. */
+  pinKeys?: boolean;
+  /** Lay everything out (the slot included) but hold the drawing and its entrance until this turns false. */
+  hold?: boolean;
 };
 
 /**
@@ -376,7 +387,7 @@ type RoadProps = {
  * medallion, the small house, or a slot for the caller's object (the 3D house) where the road ends.
  * Markers follow lever changes with spring.gentle; nothing in it moves on its own.
  */
-export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, entrance = 'session', entranceDelay = 0, drawDuration = dur.long, drawEase = 'out', size = 'md', highlight = [], vtName, className = '', progressTo, keysGlow = 0, trackDrawn = false, keysAt, keysVariant = 'dot', keysBuild = 'none', keysBuildDelay, keysSlot, slotKind = 'house', keysLabel }: RoadProps) {
+export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, entrance = 'session', entranceDelay = 0, drawDuration = dur.long, drawEase = 'out', size = 'md', highlight = [], vtName, className = '', progressTo, keysGlow = 0, trackDrawn = false, keysAt, keysVariant = 'dot', keysBuild = 'none', keysBuildDelay, keysSlot, slotKind = 'house', keysLabel, pinKeys = false, hold = false }: RoadProps) {
   const { t, lang } = useLang();
   const uid = `rd${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const reduce = useReducedMotion();
@@ -438,6 +449,7 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
     return () => ro.disconnect();
   }, []);
   useEffect(() => {
+    if (hold) return;
     if (!play) {
       setEntranceOver(true);
       onEntranceDone?.();
@@ -448,11 +460,11 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
       }, (entranceDelay + drawDuration + 0.2) * 1000);
       return () => clearTimeout(id);
     }
-  }, [play, onEntranceDone, entranceDelay, drawDuration]);
+  }, [play, onEntranceDone, entranceDelay, drawDuration, hold]);
 
   const keysMonth = result.milestones.find((m) => m.key === 'keys')?.month ?? 9;
   // Domain rounds up to 6 months so markers glide rather than rescale wildly.
-  const maxMonth = maxMonthFor(keysMonth);
+  const maxMonth = pinKeys ? Math.max(1, keysMonth) : maxMonthFor(keysMonth);
   const reserve = slot?.reserve ?? 0;
   const usable = w - PAD * 2 - reserve;
   const span = w - PAD * 2; // the road path's full length
@@ -473,7 +485,7 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
   const blocks = useMemo<{ above: Span; below: Span }>(() => {
     if (houseHalf) return { above: [keysX - houseHalf, keysX + houseHalf], below: null };
     // the slot covers the space above the road; the 3D house's plinth also dips below it right of Keys
-    if (slot) return { above: [keysX - slot.ax - 4, keysX - slot.ax + slot.sw], below: slotKind === 'house' ? [keysX - 4, keysX - slot.ax + slot.sw] : null };
+    if (slot) return { above: [keysX - slot.ax - 4, keysX - slot.ax + slot.sw], below: slotKind !== 'home' ? [keysX - 4, keysX - slot.ax + slot.sw] : null };
     return { above: null, below: null };
   }, [houseHalf, slot?.ax, slot?.sw, slotKind, keysX]); // eslint-disable-line react-hooks/exhaustive-deps
   const clusters = useMemo(
@@ -495,10 +507,10 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
   const drawIn = play && !trackDrawn && !reduce;
   const draw = useMotionValue(drawIn ? 0 : 1);
   useEffect(() => {
-    if (!measured || !drawIn) return;
+    if (!measured || !drawIn || hold) return;
     const c = animate(draw, 1, drawT);
     return () => c.stop();
-  }, [measured]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [measured, hold]); // eslint-disable-line react-hooks/exhaustive-deps
   const endFrac = Math.min(1, Math.max(0, (endX - PAD) / span));
   // a new width (first measure, resize) places things at once; a new month glides
   const lastW = useRef(0);
@@ -516,7 +528,7 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
   const prog = useMotionValue(play && !reduce ? 0 : progFrac);
   const progStarted = useRef(false);
   useEffect(() => {
-    if (!measured || progressTo === undefined) return;
+    if (!measured || progressTo === undefined || hold) return;
     // the first fill draws with the road; later changes glide with spring.gentle (keeping their velocity);
     // a new width places it at once
     const first = play && !progStarted.current;
@@ -527,7 +539,7 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
     }
     const c = animate(prog, progFrac, first && !entranceOver ? drawT : spring.gentle);
     return () => c.stop();
-  }, [progFrac, measured]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [progFrac, measured, hold]); // eslint-disable-line react-hooks/exhaustive-deps
   const slotX = useSpring(keysX - (slot?.ax ?? 0), spring.gentle);
   useEffect(() => {
     const to = keysX - (slot?.ax ?? 0);
@@ -560,6 +572,8 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
               {keysSlot}
             </motion.div>
           )}
+          {/* held: the slot and the box are laid out, the drawing (and its entrance clock) waits */}
+          {!hold && (
           <svg width={w} height={g.h} viewBox={`0 0 ${w} ${g.h}`} role="group" aria-label={t('result.roadTitle')} className="relative block select-none overflow-visible">
             <defs>
               <linearGradient id={`${uid}-surf`} gradientUnits="userSpaceOnUse" x1="0" y1={surfTop} x2="0" y2={surfTop + g.surf}>
@@ -675,6 +689,7 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
             )}
             </>)}
           </svg>
+          )}
           <AnimatePresence>
             {activeM && (
               <motion.div

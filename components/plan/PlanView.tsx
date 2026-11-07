@@ -105,7 +105,7 @@ export function PlanView({ code, createdAt, profile, initialPlan, initialCheckli
         {phase === 'pending' ? (
           // the Road's height with the house at its end (it scales with the panel's width)
           <div className="[container-type:inline-size]">
-            <div style={{ height: 'calc(0.648 * clamp(136px, 46cqw, 236px) + 44px)' }} />
+            <div style={{ height: 'calc(0.628 * clamp(136px, 46cqw, 236px) + 44px)' }} />
           </div>
         ) : (
           <Road

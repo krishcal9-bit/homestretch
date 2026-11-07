@@ -9,9 +9,14 @@ export type Pose = { az: number; el: number; dist: number; target: [number, numb
 export const FOV = 20;
 /** The product-shot framing used everywhere the house sits in a slot (hero, result, plan). */
 export const SLOT_ASPECT = 5 / 4;
-export const SLOT_POSE: Pose = { az: 36, el: 22, dist: 0, target: [0.1, 1.55, 0.7] };
-/** Scene extent (units) the slot framing must fit, at the slot's aspect. */
-const EXTENT = { w: 12.4, h: 9.6 };
+export const SLOT_POSE: Pose = { az: 36, el: 22, dist: 0, target: [-0.016, 1.496, 0.812] };
+/**
+ * Scene extent (units) the slot framing fits, at the slot's aspect. Calibrated on a 5:4 render: the house,
+ * its lawn and trees sit centred with ~9% air at the sides, the chimney ~11% below the top (its smoke rises
+ * into that air and fades), the plinth's base ~6% above the bottom. Keep SLOT.house/stage ax/ay in
+ * components/result/Road.tsx in step (the path's end projected through this camera).
+ */
+const EXTENT = { w: 13.3, h: 10.2 };
 export function fitDistance(aspect: number, fov = FOV, ext = EXTENT) {
   const t = Math.tan(((fov / 2) * Math.PI) / 180);
   return Math.max(ext.h / (2 * t), ext.w / (2 * t * aspect));
@@ -22,6 +27,15 @@ export function placeCamera(cam: THREE.PerspectiveCamera, p: Pose) {
   const [tx, ty, tz] = p.target;
   cam.position.set(tx + p.dist * Math.cos(el) * Math.sin(az), ty + p.dist * Math.sin(el), tz + p.dist * Math.cos(el) * Math.cos(az));
   cam.lookAt(tx, ty, tz);
+}
+
+/** The product-shot camera for a slot of this size; tilt (−1…1) leans it toward the cursor (≤4° / 2°). */
+export function slotCamera(cam: THREE.PerspectiveCamera, width: number, height: number, tx = 0, ty = 0) {
+  cam.clearViewOffset();
+  cam.fov = FOV;
+  cam.aspect = width / Math.max(1, height);
+  cam.updateProjectionMatrix();
+  placeCamera(cam, { ...SLOT_POSE, az: SLOT_POSE.az + tx * 4, el: SLOT_POSE.el - ty * 2, dist: fitDistance(width / Math.max(1, height)) });
 }
 
 /** Slot camera: the product-shot pose, with a slight tilt toward the cursor (≤4°) on fine pointers. */
@@ -42,10 +56,7 @@ function SlotRig({ tilt, active }: { tilt: boolean; active: boolean }) {
     const k = Math.min(1, delta * 4);
     cur.current.x += (want.current.x - cur.current.x) * k;
     cur.current.y += (want.current.y - cur.current.y) * k;
-    const cam = camera as THREE.PerspectiveCamera;
-    cam.fov = FOV;
-    cam.updateProjectionMatrix();
-    placeCamera(cam, { ...SLOT_POSE, az: SLOT_POSE.az + cur.current.x * 4, el: SLOT_POSE.el - cur.current.y * 2, dist: fitDistance(size.width / size.height) });
+    slotCamera(camera as THREE.PerspectiveCamera, size.width, size.height, cur.current.x, cur.current.y);
     if (Math.abs(want.current.x - cur.current.x) > 0.001 || Math.abs(want.current.y - cur.current.y) > 0.001) invalidate();
   });
   return null;

@@ -7,8 +7,8 @@ import { ease } from '@/lib/motion';
 import type { HouseBuild } from '@/components/three/houseModel';
 
 /** Where the Road's slot meets the road (keep in step with SLOT.house in components/result/Road.tsx). */
-const AX = 0.31;
-const AY = 0.81;
+const AX = 0.38;
+const AY = 0.785;
 /** The 2D house's lawn corner that should meet the end of the road (house units, see IsoHouse). */
 const ISO_FOOT = { x: -2, y: 4 };
 

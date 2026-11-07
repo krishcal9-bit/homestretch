@@ -17,13 +17,21 @@ import { PX } from '@/lib/illustrationPalette';
  */
 export type CostPart = 'mortgage' | 'tax' | 'insurance' | 'utilities' | 'repairs';
 /** in the order the layers separate */
-export const COST_PARTS: CostPart[] = ['mortgage', 'tax', 'insurance', 'utilities', 'repairs'];
+export const COST_PARTS: CostPart[] = ['insurance', 'tax', 'utilities', 'repairs', 'mortgage'];
 /** label columns: the lower layers on the left, the upper ones on the right */
 export const COST_SIDE: Record<CostPart, -1 | 1> = { mortgage: -1, repairs: -1, insurance: 1, tax: 1, utilities: 1 };
-/** when each layer starts to lift (s) */
-export const COST_AT: Record<CostPart, number> = { mortgage: 0.6, tax: 1.2, insurance: 1.8, utilities: 2.4, repairs: 3.0 };
-export const COST_GLOW = 3.8;
-export const COST_END = 4.6;
+/**
+ * When each layer starts to move (s). Top down, never two stacked layers at once: the roof first; the walls once
+ * the roof has risen further than the walls will travel (0.35s: the roof is 82% up, 1.89u, the walls only go
+ * 1.0u); the utility box (it rides on the walls) once the walls are clear; the toolbox on the lawn after it. The
+ * foundation never moves: its label (mortgage) comes last, once everything above it has settled.
+ */
+export const COST_AT: Record<CostPart, number> = { insurance: 0.6, tax: 0.95, utilities: 1.35, repairs: 1.7, mortgage: 2.25 };
+/** a label (and its leader line) arrives once its layer has settled (98% of the spring) */
+const SETTLE = 0.55;
+const LABEL_AT: Record<CostPart, number> = { insurance: 0.6 + SETTLE, tax: 0.95 + SETTLE, utilities: 1.35 + SETTLE, repairs: 1.7 + SETTLE, mortgage: 2.25 + SETTLE };
+export const COST_GLOW = 3.2;
+export const COST_END = 4.0;
 
 const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
 /** a critically damped spring from 0 to 1 (no bounce), `s` seconds after its start */
@@ -31,18 +39,20 @@ const lift = (s: number) => (s <= 0 ? 0 : 1 - (1 + 9 * s) * Math.exp(-9 * s));
 const easeOut = (x: number) => 1 - Math.pow(1 - clamp01(x), 3);
 /** The sequence at time t: shared with the DOM overlay (labels, caption). */
 export function costAt(t: number) {
+  // one spring for every layer: identical curves, later starts, smaller travel, so a lower layer can never catch
+  // the one above it
   const L = (k: CostPart) => lift(t - COST_AT[k]);
-  const pulse = Math.exp(-Math.pow((t - 4.25) / 0.14, 2));
+  const pulse = Math.exp(-Math.pow((t - (COST_GLOW + 0.45)) / 0.14, 2));
   return {
     turn: easeOut(t / 0.6),
-    foundation: L('mortgage'),
+    foundation: 0,
     walls: L('tax'),
     roof: L('insurance'),
     utilities: L('utilities'),
     repairs: L('repairs'),
     /** a label's arrival (slide in + number) and its leader line's draw, 0…1 */
-    label: (k: CostPart) => clamp01((t - COST_AT[k] - 0.12) / 0.35),
-    line: (k: CostPart) => clamp01((t - COST_AT[k] - 0.05) / 0.45),
+    label: (k: CostPart) => clamp01((t - LABEL_AT[k] - 0.1) / 0.35),
+    line: (k: CostPart) => clamp01((t - LABEL_AT[k]) / 0.4),
     glow: Math.min(1, 0.55 * easeOut((t - COST_GLOW) / 0.3) + 0.45 * pulse),
     caption: easeOut((t - COST_GLOW) / 0.6),
   };
@@ -53,7 +63,12 @@ const HW = 2.1;
 const HD = 1.6;
 const RIDGE = 4.04;
 /** fully apart: how far each layer travels (world units) */
-const APART = { foundation: -0.5, walls: 0.55, roof: 1.95 };
+/**
+ * Fully apart, offsets strictly increasing upward: foundation 0 (the base), walls 1.0, roof 2.3. The roof's eaves hang
+ * 0.15 below the wall top, so the clear gaps are 1.0 (walls over the slab) and 1.15 (roof over the walls): about
+ * 40px or more at desktop.
+ */
+const APART = { foundation: 0, walls: 1.0, roof: 2.3 };
 
 export type CostRefs = {
   labels: MutableRefObject<(HTMLDivElement | null)[]>;
@@ -78,7 +93,7 @@ function Rig({ t, ctl, refs, frame, floating }: { t: MotionValue<number>; ctl: H
     // the one ambient motion once finished: each layer floats 2–3px, slowly, a little out of phase
     const ft = (performance.now() - t0.current) / 1000;
     const fl = (ph: number) => (floating ? 0.028 * Math.sin((ft / 3.6) * Math.PI * 2 + ph) : 0);
-    const fy = APART.foundation * s.foundation + fl(0);
+    const fy = 0; // the foundation is the base: it never moves
     const wy = APART.walls * s.walls + fl(1.3);
     const ry = APART.roof * s.roof + fl(2.6);
     ctl.parts = { foundation: [0, fy, 0], walls: [0, wy, 0], roof: [0, ry, 0] };
@@ -101,13 +116,14 @@ function Rig({ t, ctl, refs, frame, floating }: { t: MotionValue<number>; ctl: H
     const aspect = W / H;
     const bandH = Math.max(120, H - f.top - f.bottom);
     const free = f.list ? W : Math.max(200, W - 2 * (f.col + f.margin + 24));
-    const ext = { w: 10.4 * (W / free), h: 10.4 * (H / bandH) };
+    const ext = { w: 10.4 * (W / free), h: 10.6 * (H / bandH) };
     cam.fov = FOV;
     cam.aspect = aspect;
     const shiftY = (f.top - f.bottom) / 2; // band centre below the canvas centre
     cam.setViewOffset(W, H, 0, -shiftY, W, H);
     cam.updateProjectionMatrix();
-    placeCamera(cam, { az: 12 + 20 * s.turn, el: 18, dist: fitDistance(aspect, FOV, ext), target: [0, 2.3, 0.6] });
+    // a low eye (12°) so the gaps between the layers read as space, not as the slab seen from above
+    placeCamera(cam, { az: 12 + 20 * s.turn, el: 12, dist: fitDistance(aspect, FOV, ext), target: [0, 2.7, 0.6] });
 
     // labels (desktop): project each anchor, place its label in its column at that height, keep the columns
     // apart, draw the leader line toward the anchor as the label arrives

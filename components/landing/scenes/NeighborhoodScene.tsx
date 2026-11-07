@@ -8,6 +8,7 @@ import { IsoHouse, isoPx, type HouseStage } from '@/components/illustrations/Iso
 import { NB, NeighborhoodMap, type Lot } from '@/components/illustrations/landing/NeighborhoodMap';
 import { Layer, SceneRoot, useDepthOffset, useSceneMount } from './Scene';
 import { StreetLamp } from './parts';
+import { ContactShadow, Kit, Tree, type TreeSpecies } from '@/components/illustrations/kit';
 
 /**
  * Section 4, "Habitat sees it first": Habitat's early-warning view of a neighbourhood of its homeowners, seen
@@ -17,11 +18,14 @@ import { StreetLamp } from './parts';
  * side under the text dissolves into a soft haze.
  *
  * Over every home floats a status marker: text with a coloured rule (Stable, Watch, Act now), no filled
- * badge. On each activation the markers rise in Stable, two turn to Watch and one to Act now, and an outreach
- * note ("Draft outreach") flies from the text side to that home and settles beside it. The markers travel a
- * little faster than the ground when the page moves, so they read as hovering.
+ * badge. Resting state (play 0): every marker at its status and the outreach note ("Draft outreach") settled
+ * beside the home marked Act now. On each activation the markers replay (they rise in Stable, two turn to
+ * Watch and one to Act now) and the note flies in from the text side; the homes and the ground never move.
+ * The markers travel a little faster than the ground when the page moves, so they read as hovering.
+ * Drawn with the shared kit (components/illustrations/kit.tsx): every home and tree stands in a soft
+ * contact shadow with occlusion at its base; street trees of four species; near tree crowns in the corners.
  * One stage in the block's projection (600×350 units, scaled to fill the screen beside the text).
- * Layers: ground, homes 1 · markers 1.14 · out-of-focus tree crowns near the camera 1.28. Night (dark
+ * Layers: ground, homes 1 · markers 1.14 · tree crowns near the camera 1.28. Night (dark
  * theme): windows and porch lights, five street lamps along the front street.
  */
 export const NeighborhoodScene = memo(function NeighborhoodScene({ play, reduce, lots, night = false }: { play: number; reduce: boolean; lots: Lot[]; night?: boolean }) {
@@ -37,8 +41,8 @@ export const NeighborhoodScene = memo(function NeighborhoodScene({ play, reduce,
             <div className="absolute inset-y-0 left-0 hidden w-[52cqw] lg:block" style={{ background: `linear-gradient(90deg, ${P.skyBottom} 0%, ${P.skyBottom} 58%, transparent 100%)`, opacity: 0.93 }} />
           </Layer>
           <Layer speed={1.28}>
-            <Canopy className="bottom-[-11cqh] left-[-6cqw] w-[clamp(120px,13cqw,230px)]" />
-            <Canopy className="bottom-[-13cqh] right-[-5cqw] w-[clamp(140px,15cqw,270px)]" flip />
+            <Canopy className="bottom-[-9cqh] left-[-7cqw] w-[clamp(130px,15cqw,260px)]" species="oak" />
+            <Canopy className="bottom-[-12cqh] right-[-6cqw] w-[clamp(150px,17cqw,300px)]" species="jacaranda" />
           </Layer>
         </>
       )}
@@ -61,11 +65,11 @@ function Site({ play, reduce, lots, night }: { play: number; reduce: boolean; lo
     >
       <HomesGround />
       <Neighbours where="back" night={night} />
-      <div className="absolute inset-0" key={play}>
-        {/* the homes stand; the markers rise (and turn) on each activation */}
-        <NeighborhoodMap lots={lots} reduce={reduce} plain badgeY={badgeY} night={night} site={false} built badges={play > 0 || reduce} />
+      <div className="absolute inset-0">
+        {/* the homes stand; the markers rest at their status, and rise (and turn) again on each activation */}
+        <NeighborhoodMap lots={lots} reduce={reduce} plain badgeY={badgeY} night={night} site={false} built settled={play === 0} badgeKey={play} />
       </div>
-      {(play > 0 || reduce) && <Outreach key={`note${play}`} lots={lots} reduce={reduce} />}
+      <Outreach key={`note${play}`} lots={lots} reduce={reduce || play === 0} />
       <Neighbours where="front" night={night} />
     </div>
   );
@@ -133,20 +137,31 @@ const Neighbours = memo(function Neighbours({ where, night }: { where: 'back' | 
   );
 });
 
-/** A tree crown close to the camera, seen from above and out of focus. */
-function Canopy({ className, flip = false }: { className: string; flip?: boolean }) {
+/** A tree close to the camera in a near corner (crisp, the kit's own tree, cut by the frame). */
+function Canopy({ className, species }: { className: string; species: TreeSpecies }) {
   return (
-    <svg viewBox="0 0 200 180" className={`absolute opacity-80 ${className}`} style={{ filter: 'blur(8px)', transform: flip ? 'scaleX(-1)' : undefined }}>
-      <circle cx={110} cy={110} r={74} fill={P.tree} />
-      <circle cx={84} cy={92} r={58} fill={P.treeLight} />
-      <circle cx={130} cy={70} r={44} fill={P.treeLight} />
-      <circle cx={66} cy={66} r={30} fill={P.pineLighter} />
-      <circle cx={58} cy={56} r={14} fill={P.sageLight} opacity={0.7} />
+    <svg viewBox="-70 -110 140 120" className={`absolute overflow-visible ${className}`}>
+      <Tree species={species} x={0} base={0} size={110} shadow={0} />
     </svg>
   );
 }
 
 const { at, STREET, SLAB, SLOTS, HOUSE_W, HOUSE_D, VB, ROWS } = NB;
+const TREE_MIX: TreeSpecies[] = ['oak', 'jacaranda', 'cypress', 'palm', 'oak', 'cypress'];
+
+/**
+ * Where a home meets its lot: a tight band of occlusion just around its footprint and a soft contact shadow
+ * leaning right, away from the top-left light.
+ */
+function HouseShadow({ u, w }: { u: number; w: number }) {
+  const c = at(u + HOUSE_W * 0.5, w + HOUSE_D * 0.5);
+  return (
+    <>
+      <ContactShadow cx={c.x + 10} cy={c.y + 4} rx={68} ry={20} strength={1.1} />
+      <path d={quad(u - 2.5, w - 2.5, u + HOUSE_W + 4, w + HOUSE_D + 3)} fill={P.ink} opacity={0.14} />
+    </>
+  );
+}
 const quad = (u0: number, w0: number, u1: number, w1: number) => {
   const a = at(u0, w0);
   const b = at(u1, w0);
@@ -197,6 +212,7 @@ export const HomesGround = memo(function HomesGround() {
   const streets = [...AVES.map(([u0, u1, w0, w1]) => ({ walk: quad(u0 - SIDEWALK, w0, u1 + SIDEWALK, w1), road: quad(u0, w0, u1, w1) })), ...CROSS.map(([u0, u1, w0, w1]) => ({ walk: quad(u0, w0 - SIDEWALK, u1, w1 + SIDEWALK), road: quad(u0, w0, u1, w1) }))];
   return (
     <svg viewBox={`0 0 ${VB.w} ${VB.h}`} className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" aria-hidden data-testid="homes-ground">
+      <Kit>
       <defs>
         {/* the haze: clear around the block, the sky's colour toward every edge (a little more on the left) */}
         <radialGradient id="sc-hm-vignette" gradientUnits="userSpaceOnUse" cx={360} cy={190} r={520} gradientTransform="translate(360 190) scale(1.5 0.78) translate(-360 -190)">
@@ -238,21 +254,14 @@ export const HomesGround = memo(function HomesGround() {
       {/* the block's own lot: driveways, front walks, the shadows its homes cast (falling right) */}
       <path d={drives} fill={P.stone} />
       <path d={walks} fill={P.stone} />
-      {SLOTS.map((s, i) => {
-        const c = at(s.u + HOUSE_W * 0.7, s.w + HOUSE_D * 0.5);
-        return <ellipse key={i} cx={c.x + 12} cy={c.y + 4} rx={58} ry={15} fill={P.ink} opacity={0.08} />;
-      })}
-      {/* street trees in the neighbouring blocks (round crowns, shadows falling right) */}
-      {trees.map(([u, w, r]) => {
+      {[...SLOTS, ...NEIGHBOURS].map((s, i) => (
+        <HouseShadow key={i} u={s.u} w={s.w} />
+      ))}
+      {/* street trees in the neighbouring blocks: four species, far to near, each in its contact shadow */}
+      {[...trees].sort((a, b) => b[1] - a[1]).map(([u, w, r], i) => {
         const p = at(u, w);
-        return (
-          <g key={`${u}-${w}`}>
-            <ellipse cx={p.x + r * 0.9} cy={p.y + 1} rx={r * 1.3} ry={r * 0.45} fill={P.ink} opacity={0.08} />
-            <rect x={p.x - 1} y={p.y - r} width={2} height={r} fill={P.bark} />
-            <circle cx={p.x} cy={p.y - r * 1.3} r={r} fill={P.tree} />
-            <circle cx={p.x - r * 0.3} cy={p.y - r * 1.55} r={r * 0.6} fill={P.treeLight} />
-          </g>
-        );
+        const species = TREE_MIX[i % TREE_MIX.length];
+        return <Tree key={`${u}-${w}`} species={species} x={p.x} base={p.y} size={r * (species === 'palm' ? 5.4 : species === 'cypress' ? 4.2 : 3.4)} lean={species === 'palm' ? (i % 2 ? 4 : -5) : undefined} />;
       })}
       {/* street lamps along the front cross street; night slot: their pools of light */}
       {lamps.map(([u, w], i) => {
@@ -262,6 +271,7 @@ export const HomesGround = memo(function HomesGround() {
       {/* haze toward every edge, a little more on the text's side */}
       <rect x={box.x} y={box.y} width={box.w} height={box.h} fill="url(#sc-hm-vignette)" />
       <rect x={box.x} y={box.y} width={-20 - box.x} height={box.h} fill="url(#sc-hm-side)" />
+      </Kit>
     </svg>
   );
 });

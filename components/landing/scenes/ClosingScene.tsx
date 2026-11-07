@@ -5,13 +5,20 @@ import { P, mix } from '@/lib/illustrationPalette';
 import { rng } from '@/components/illustrations/landing/kit';
 import { Layer, SceneRoot, useSceneMount } from './Scene';
 import { StreetLamp, nightStyle } from './parts';
+import { Hills, Tree } from '@/components/illustrations/kit';
 
 /**
  * Closing band: a street at dusk in one-point perspective, seen from a little above (as from the end of the
  * block). A hundred homes line it and the parallel rows behind, shrinking toward the vanishing point on the
- * right; the sky above the left half stays open for the sentence. The street lamps come on first, then the
- * windows light in a wave from the nearest homes to the farthest while the counter rolls to 100 (each band of
- * homes adds its count as it lights). Stars twinkle; now and then a car's headlights come up the street.
+ * right; the sky above the left half stays open for the sentence. Resting state (play 0): every lamp and
+ * window lit. On each activation the lights replay: the street lamps come on first, then the windows light in
+ * a wave from the nearest homes to the farthest while the counter rolls to 100 (each band of homes adds its
+ * count as it lights). The homes, street and sky never leave the screen. The one ambient motion: now and then
+ * a car's headlights come up the street.
+ *
+ * Drawn in the shared illustration language (components/illustrations/kit.tsx): layered hills on the horizon
+ * sinking into the dusk haze, palms along the parkway, yard trees in two tones on their trunks, occlusion
+ * where each home meets its yard, window glows as soft gradients (no filters).
  *
  * Built from one projection (camera 14m up, horizon at y 520 of a 1600×900 world, vanishing point x 1060);
  * each band's geometry is merged into a few paths per material at module load, and each band's lights are
@@ -26,8 +33,9 @@ const HC = 14; // camera height (m)
 const proj = (X: number, Y: number, z: number) => ({ x: VPX + (F * X) / z, y: H0 + (F * (HC - Y)) / z });
 const f1 = (v: number) => v.toFixed(1);
 
-type HouseGeo = { side: string; roof: string; front: string; trim: string; eave: string; wins: string; tree: string; shade: boolean };
-type Band = { houses: HouseGeo[]; win: string; glow: string; count: number };
+type HouseGeo = { side: string; roof: string; front: string; trim: string; eave: string; wins: string; tree: string; treeLit: string; trunk: string; shade: boolean };
+type Glow = { cx: number; cy: number; rx: number; ry: number };
+type Band = { houses: HouseGeo[]; win: string; glows: Glow[]; ao: string; ground: string; count: number };
 type HouseDef = { X0: number; X1: number; z0: number; z1: number; side: 1 | -1; hw: number; hr: number };
 
 /** The homes, nearest first, cut to the hundred the camera sees; grouped in bands by distance. */
@@ -57,7 +65,7 @@ const poly = (pts: { x: number; y: number }[]) => `M${pts.map((q) => `${f1(q.x)}
 const BANDS: Band[] = (() => {
   const out: Band[] = [];
   for (let k = 0; k < BAND_EDGES.length - 1; k++) {
-    const b: Band = { houses: [], win: '', glow: '', count: BAND_EDGES[k + 1] - BAND_EDGES[k] };
+    const b: Band = { houses: [], win: '', glows: [], ao: '', ground: '', count: BAND_EDGES[k + 1] - BAND_EDGES[k] };
     // painter's order inside the band: far to near, and each house whole (walls, roof, gable end, tree)
     const hs = HOMES.slice(BAND_EDGES[k], BAND_EDGES[k + 1]).sort((a, c) => c.z0 - a.z0 || Math.abs(c.X0) - Math.abs(a.X0));
     for (const h of hs) {
@@ -75,8 +83,15 @@ const BANDS: Band[] = (() => {
         front: poly([p(near + inw * 0.4, 0, h.z0), p(far - inw * 0.4, 0, h.z0), p(far - inw * 0.4, h.hw - 0.35, h.z0), p(mid, h.hr - 0.2, h.z0), p(near + inw * 0.4, h.hw - 0.35, h.z0)]),
         wins: '',
         tree: '',
+        treeLit: '',
+        trunk: '',
         shade: h.side < 0,
       };
+      // occlusion where the wall meets the yard, and the shadow it casts toward the street (the light is
+      // top-left, so the homes on the left throw theirs across their front yards)
+      b.ao += poly([p(near, 0, h.z0), p(near, 0, h.z1), p(near, 0.7, h.z1), p(near, 0.7, h.z0)]);
+      const reach = h.side < 0 ? 2 : 0.7;
+      b.ground += poly([p(near, 0, h.z0), p(near, 0, h.z1), p(near - h.side * reach, 0, h.z1 - 0.6), p(near - h.side * reach, 0, h.z0 + 0.4)]);
       // windows: two on the street-facing wall, one in the gable end
       const wins: string[] = [];
       for (const t of [0.2, 0.62]) {
@@ -91,13 +106,22 @@ const BANDS: Band[] = (() => {
       b.win += g.wins;
       const g0 = p(near, 0.8, h.z0);
       const g1 = p(near, 2.8, h.z1);
-      b.glow += `M${f1(Math.min(g0.x, g1.x) - 2)} ${f1(Math.min(g0.y, g1.y) - 2)}H${f1(Math.max(g0.x, g1.x) + 2)}V${f1(Math.max(g0.y, g1.y) + 2)}H${f1(Math.min(g0.x, g1.x) - 2)}Z`;
-      // a round tree in the yard toward the camera, now and then
+      b.glows.push({ cx: (g0.x + g1.x) / 2, cy: (g0.y + g1.y) / 2, rx: Math.abs(g1.x - g0.x) / 2 + 6, ry: Math.abs(g1.y - g0.y) / 2 + 6 });
+      // a round tree in the yard toward the camera, now and then: a trunk, a crown in two tones (lit
+      // top-left), its contact shadow on the yard
       if ((h.z0 * 7) % 3 < 1.1) {
         const tz = h.z0 - 2.5;
-        const c = p(near + h.side * 1.5, 3.4, tz);
+        const tx = near + h.side * 1.5;
+        const c = p(tx, 3.4, tz);
         const rr = (F * 1.9) / tz;
-        g.tree = `M${f1(c.x - rr)} ${f1(c.y)}a${f1(rr)} ${f1(rr)} 0 1 1 ${f1(rr * 2)} 0a${f1(rr)} ${f1(rr)} 0 1 1 ${f1(-rr * 2)} 0Z`;
+        const circle = (x: number, y: number, r: number) => `M${f1(x - r)} ${f1(y)}a${f1(r)} ${f1(r)} 0 1 1 ${f1(r * 2)} 0a${f1(r)} ${f1(r)} 0 1 1 ${f1(-r * 2)} 0Z`;
+        g.tree = circle(c.x, c.y, rr);
+        g.treeLit = circle(c.x - rr * 0.22, c.y - rr * 0.24, rr * 0.7);
+        const t0 = p(tx - 0.16, 0, tz);
+        const t1 = p(tx + 0.16, 1.8, tz);
+        g.trunk = `M${f1(t0.x)} ${f1(t0.y)}H${f1(t1.x)}V${f1(t1.y)}H${f1(t0.x)}Z`;
+        const sh = p(tx + 0.9, 0, tz);
+        b.ground += `M${f1(sh.x - rr)} ${f1(sh.y)}a${f1(rr)} ${f1(rr * 0.22)} 0 1 1 ${f1(rr * 2)} 0a${f1(rr)} ${f1(rr * 0.22)} 0 1 1 ${f1(-rr * 2)} 0Z`;
       }
       b.houses.push(g);
     }
@@ -133,6 +157,17 @@ const STREET = (() => {
     dashes,
     lamps,
   };
+})();
+
+/** Palms along the parkway, between the lamps, both sides of the street (nearest first). */
+const PALMS = (() => {
+  const out: { x: number; base: number; size: number; haze: number; lean: number }[] = [];
+  for (const side of [1, -1])
+    for (let z = side > 0 ? 37 : 50; z < 200; z += 26) {
+      const b = proj(side * 7.4, 0, z);
+      out.push({ x: b.x, base: b.y, size: (F * 11) / z, haze: Math.min(0.55, z / 260), lean: side > 0 ? 5 : -5 });
+    }
+  return out.sort((a, b) => a.size - b.size);
 })();
 
 export const ClosingScene = memo(function ClosingScene({ play, reduce, night = false }: { play: number; reduce: boolean; night?: boolean }) {
@@ -183,10 +218,7 @@ const STARS: [number, number, number, number][] = (() => {
   return Array.from({ length: 46 }, () => [Math.round(r() * 1600), Math.round(r() * 420), 0.8 + r() * 1.3, 0.3 + r() * 0.6] as [number, number, number, number]);
 })();
 
-/**
- * Stars; a few of the brightest twinkle (small HTML dots, so the twinkle is an opacity change on the
- * compositor, never a repaint of the sky). The afterglow is painted in the sky itself. The moon at night.
- */
+/** Stars (the brightest as small HTML dots); the afterglow is painted in the sky itself. The moon at night. */
 const Sky = memo(function Sky() {
   return (
     <>
@@ -198,22 +230,29 @@ const Sky = memo(function Sky() {
         </g>
       </svg>
       {STARS.map(([x, y], i) =>
-        i % 6 === 0 ? (
-          <span key={i} className="sc-amb sc-twinkle absolute block h-[3px] w-[3px] rounded-full" style={{ left: `${(x / W.w) * 100}%`, top: `${(y / W.h) * 100}%`, background: P.trim, animationDelay: `${-(i % 7) * 0.45}s` }} />
-        ) : null,
+        i % 6 === 0 ? <span key={i} className="absolute block h-[3px] w-[3px] rounded-full" style={{ left: `${(x / W.w) * 100}%`, top: `${(y / W.h) * 100}%`, background: P.trim }} /> : null,
       )}
     </>
   );
 });
 
-/** The hills on the horizon and the far town beyond the last row: a dotted line of lights. */
+/** Layered hills on the horizon, sinking into the dusk haze, and the far town beyond the last row: a dotted line of lights. */
+const DUSK_HILL: [string, string, string] = [mix(P.duskBottom, P.honey, 0.14), mix(P.duskBottom, P.duskTop, 0.4), mix(P.duskTop, P.ink, 0.25)];
 const Far = memo(function Far() {
   const r = rng(31);
   const dots = Array.from({ length: 70 }, () => [Math.round(r() * 1700 - 50), H0 + 2 + r() * 10, 0.7 + r() * 0.9] as [number, number, number]);
   return (
     <>
-      <path d={`M-400 ${H0 - 6}C-100 ${H0 - 20} 200 ${H0 - 24} 420 ${H0 - 12}C620 ${H0 - 2} 760 ${H0 - 30} 920 ${H0 - 44}C1040 ${H0 - 56} 1160 ${H0 - 40} 1300 ${H0 - 26}C1480 ${H0 - 10} 1700 ${H0 - 18} 2000 ${H0 - 8}V${H0 + 60}H-400Z`} fill={mix(P.duskBottom, P.duskTop, 0.55)} />
-      <path d={`M-400 ${H0 + 2}C0 ${H0 - 6} 400 ${H0 - 2} 900 ${H0 - 4}C1300 ${H0 - 6} 1700 ${H0} 2000 ${H0}V${H0 + 80}H-400Z`} fill={mix(P.duskBottom, P.sageDark, 0.25)} />
+      <Hills
+        x0={-400}
+        x1={2000}
+        bottom={H0 + 80}
+        hazeTo={P.duskBottom}
+        layers={[
+          { y: H0 - 30, haze: 0.45, waves: 3, tones: DUSK_HILL, points: [[-400, H0 - 6], [0, H0 - 22], [420, H0 - 12], [760, H0 - 30], [940, H0 - 46], [1160, H0 - 40], [1400, H0 - 20], [1700, H0 - 18], [2000, H0 - 8]] },
+          { y: H0 - 6, haze: 0.2, waves: 5, tones: DUSK_HILL, points: [[-400, H0 + 2], [200, H0 - 8], [600, H0 - 2], [1000, H0 - 10], [1400, H0 - 4], [2000, H0]] },
+        ]}
+      />
       {dots.map(([x, y, rr], i) => (
         <circle key={i} cx={x} cy={y} r={rr} fill={i % 3 ? P.honeyLight : P.glow} opacity={0.75} />
       ))}
@@ -224,7 +263,13 @@ const Far = memo(function Far() {
 const Street = memo(function Street() {
   return (
     <>
-      <rect x={-400} y={H0 + 6} width={2400} height={W.h} fill={mix(P.duskBottom, P.sageDark, 0.3)} />
+      <defs>
+        <linearGradient id="sc-dk-ground" x1="0" y1={H0} x2="0" y2={W.h} gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor={mix(P.duskBottom, P.sageDark, 0.2)} />
+          <stop offset="1" stopColor={mix(P.sageDark, P.duskTop, 0.45)} />
+        </linearGradient>
+      </defs>
+      <rect x={-400} y={H0 + 6} width={2400} height={W.h} fill="url(#sc-dk-ground)" />
       <path d={STREET.yards} fill={mix(P.sageDark, P.duskTop, 0.5)} />
       <path d={STREET.walk} fill={mix(P.stone, P.duskTop, 0.62)} />
       <path d={STREET.curb} fill={mix(P.stoneShade, P.duskTop, 0.55)} />
@@ -250,29 +295,55 @@ const HomesBand = memo(function HomesBand({ k }: { k: number }) {
     trim: tone(mix(P.trim, P.duskTop, 0.52)),
     front: tone(mix(P.wall, P.duskTop, 0.48)),
     glass: tone(mix(P.glass, P.duskTop, 0.55)),
-    tree: tone(mix(P.treeDark, P.duskTop, 0.3)),
+    tree: tone(mix(P.foliageDeep, P.duskTop, 0.3)),
+    treeLit: tone(mix(P.foliageLight, P.duskTop, 0.4)),
+    trunk: tone(mix(P.bark, P.duskTop, 0.55)),
   };
+  // each face is its own element, so an objectBoundingBox gradient models its light: walls darken toward
+  // the ground (occlusion), the gable end is lit from the top-left, roofs catch the sky at the ridge
+  const g = (name: string) => `url(#sc-dk-${name}${k})`;
+  const grad = (name: string, a: string, b: string, x2 = 0, y2 = 1) => (
+    <linearGradient id={`sc-dk-${name}${k}`} x1="0" y1="0" x2={x2} y2={y2}>
+      <stop offset="0" stopColor={a} />
+      <stop offset="1" stopColor={b} />
+    </linearGradient>
+  );
   return (
     <svg viewBox={`0 0 ${W.w} ${W.h}`} className="absolute inset-0 h-full w-full overflow-visible">
+      <defs>
+        {grad('sl', mix(c.sideLit, P.trim, 0.08), mix(c.sideLit, P.ink, 0.16))}
+        {grad('ss', c.sideShade, mix(c.sideShade, P.ink, 0.2))}
+        {grad('rl', mix(c.roofLit, P.trim, 0.12), mix(c.roofLit, P.ink, 0.12))}
+        {grad('rs', mix(c.roofShade, P.slateLight, 0.25), c.roofShade)}
+        {grad('fr', mix(c.front, P.trim, 0.12), mix(c.front, P.ink, 0.14), 1, 1)}
+      </defs>
+      <path d={BANDS[k].ground} fill={P.ink} opacity={0.22 * (1 - haze)} />
       {BANDS[k].houses.map((h, i) => (
         <g key={i}>
-          <path d={h.side} fill={h.shade ? c.sideShade : c.sideLit} />
-          <path d={h.roof} fill={h.shade ? c.roofShade : c.roofLit} />
+          <path d={h.side} fill={g(h.shade ? 'ss' : 'sl')} />
+          <path d={h.roof} fill={g(h.shade ? 'rs' : 'rl')} />
           <path d={h.eave} fill={c.eave} />
           <path d={h.trim} fill={c.trim} />
-          <path d={h.front} fill={c.front} />
+          <path d={h.front} fill={g('fr')} />
           <path d={h.wins} fill={c.glass} />
-          {h.tree && <path d={h.tree} fill={c.tree} />}
+          {h.tree && (
+            <>
+              <path d={h.trunk} fill={c.trunk} />
+              <path d={h.tree} fill={c.tree} />
+              <path d={h.treeLit} fill={c.treeLit} />
+            </>
+          )}
         </g>
       ))}
+      <path d={BANDS[k].ao} fill={P.ink} opacity={0.3 * (1 - haze)} />
     </svg>
   );
 });
 
 /** Starts dark and turns on `delay` seconds after the section activates (CSS opacity, compositor). */
 function lightProps(play: number, reduce: boolean, delay: number) {
-  if (reduce) return { className: '', style: undefined };
-  if (play === 0) return { className: '', style: { opacity: 0 } };
+  // at rest (play 0) and under reduced motion every light is on; a replay switches them on again in turn
+  if (reduce || play === 0) return { className: '', style: undefined };
   return { className: 'sc-on', style: { animationDelay: `${delay}s` } };
 }
 
@@ -283,11 +354,16 @@ function BandLights({ k, play, reduce }: { k: number; play: number; reduce: bool
   return (
     <svg viewBox={`0 0 ${W.w} ${W.h}`} className={`absolute inset-0 h-full w-full overflow-visible ${l.className}`} style={l.style}>
       <defs>
-        <filter id={`sc-dk-b${k}`} x="-20%" y="-50%" width="140%" height="200%">
-          <feGaussianBlur stdDeviation={Math.max(1.2, 5 - k * 0.6)} />
-        </filter>
+        <radialGradient id={`sc-dk-g${k}`}>
+          <stop offset="0" stopColor={P.honey} stopOpacity="0.5" />
+          <stop offset="1" stopColor={P.honey} stopOpacity="0" />
+        </radialGradient>
       </defs>
-      <path d={b.glow} fill={P.honey} opacity={0.3 - k * 0.025} filter={`url(#sc-dk-b${k})`} />
+      <g opacity={0.8 - k * 0.06}>
+        {b.glows.map((g, i) => (
+          <ellipse key={i} cx={f1(g.cx)} cy={f1(g.cy)} rx={f1(g.rx)} ry={f1(g.ry)} fill={`url(#sc-dk-g${k})`} />
+        ))}
+      </g>
       <path d={b.win} fill={P.honeyLight} opacity={1 - k * 0.06} />
     </svg>
   );
@@ -369,11 +445,23 @@ function Town({ play, reduce }: { play: number; reduce: boolean }) {
           </div>
         );
       })}
+      <Palms />
       <LampPosts />
       <LampLights key={`lamps${play}`} play={play} reduce={reduce} />
     </>
   );
 }
+
+/** The parkway palms (the kit's palm), farther ones deeper in the dusk haze. */
+const Palms = memo(function Palms() {
+  return (
+    <svg viewBox={`0 0 ${W.w} ${W.h}`} className="absolute inset-0 h-full w-full overflow-visible">
+      {PALMS.map((m, i) => (
+        <Tree key={i} species="palm" x={m.x} base={m.base} size={m.size} lean={m.lean} haze={Math.min(0.75, 0.35 + m.haze)} hazeTo={P.duskTop} shadow={0.8} />
+      ))}
+    </svg>
+  );
+});
 
 /** Now and then, a car's headlights come up the street toward the camera (CSS; ambient). */
 function Headlights() {

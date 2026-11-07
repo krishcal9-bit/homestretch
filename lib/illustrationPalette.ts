@@ -113,6 +113,20 @@ const DAY = {
   hair2: '#7A5536',
   hair3: '#B88E5C',
   hair4: '#3B3B3B',
+  // foliage (round 7: the shared illustration kit). Four tones per leaf mass, deepest to sunlit, so every
+  // tree and bush reads as clusters with a lit top-left and a shaded underside.
+  foliageDeep: '#2B5442',
+  foliage: '#3E6F53',
+  foliageLight: '#5A8C60',
+  foliageSun: '#8DB476',
+  // palm fronds (a yellower green than the broadleaf trees)
+  frondDeep: '#3B5F3A',
+  frond: '#5A8550',
+  frondLight: '#82AA68',
+  // sunlit hill crests and the lit faces of terrain
+  meadow: '#CFDFBC',
+  // mulch in planting beds
+  mulch: '#8E7860',
   // shadow
   shadow: 'rgba(24,36,32,0.18)',
   shadowSoft: 'rgba(24,36,32,0.10)',
@@ -195,6 +209,15 @@ const NIGHT: Record<PaletteKey, string> = {
   hair2: '#533A25',
   hair3: '#7D603E',
   hair4: '#282828',
+  foliageDeep: '#0E1F18',
+  foliage: '#16301F',
+  foliageLight: '#20402F',
+  foliageSun: '#36574B',
+  frondDeep: '#122419',
+  frond: '#1C3424',
+  frondLight: '#2A4834',
+  meadow: '#38493F',
+  mulch: '#2E2721',
   shadow: 'rgba(0,0,0,0.42)',
   shadowSoft: 'rgba(0,0,0,0.26)',
 };

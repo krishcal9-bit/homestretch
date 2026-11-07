@@ -104,3 +104,27 @@ Ambiguities resolved during the build, with the choice made.
   - **Night scenery** (components/scenery): stars and a moon (`.il-night`), moonlit clouds, most windows and porch lamps lit, the corner street lamp plus two lamps along the far sidewalk with pools of light; framing and roofing houses get a work light. Birds roost.
   - **The header's staff link hides below 640px** to make room for the switch. The staff console needs ≥1024px anyway, and the landing footer keeps the link.
   - **PDFs and the share card stay light**: they are drawn with their own hex and never read CSS variables.
+
+## HomeStretch: get the keys, keep the keys (Keep mode)
+- **Engine (lib/forecast.ts)**: escrow is re-analyzed at each insurance renewal (new premium/12 + the shortage —
+  the premium jump, tax growth not yet collected, any supplemental bill — spread over 12 months); property tax +2%
+  each July (CA fiscal year); HOA +5% each January; maintenance set-aside from the home's systems (sinking fund to
+  each replacement + $40 small repairs; age-based default without systems).
+- **Basic living** (non-housing needs, OC): $1,400 + $520 per extra person — an estimate, shown as such.
+  **Tight** (amber) = breathing room below max($150, 4% of take-home); **short** (red) = below zero.
+- **The set-aside jar**: the Shock Shield set-aside goes into a jar every month; the jar pays any rise above today's
+  cost while it has money. Flattening is therefore monotonic by construction. It's honest: a permanently higher
+  premium can't be saved away, so the band improves only as far as the family's margin allows (the spec's "band
+  turns green" happens for families with room; for the tight Ramirez demo family the red month goes away).
+  Recommended set-aside = the smallest amount that keeps every rise in the coming 12 months under $5.
+- **Risk (staff)**: act now = breathing room below zero within 6 months, or tight plus a repair shortfall or missed
+  check-in; watch = tight, a shock that cuts into the cushion (post-shock breathing < 1.5× tight line), or a system
+  due within a year that savings can't cover. A missed check-in (>45 days) escalates but never flags alone.
+- **Stress test**: missed payments a year assumed 3 (act now), 1 (watch), 0 (stable); dollars protected = avoided
+  misses × the household's mortgage (the money that funds the next homes). A matched repair fund lowers the
+  maintenance set-aside and covers repair shortfalls; a hardship fund starts the jar. Insurance up never makes
+  anyone safer (tested). The headline is computed from the data, not hard-coded.
+- **Sample homeowners live in code** (lib/seedHomeowners.ts, deterministic, renewals anchored to the current month):
+  no new table, so production (Turso) needs no migration. A family's own Keep data stays on their device.
+- **Tokens**: the spec's light `--signal-amber` #9A6B12 is 4.2:1 on paper (fails AA for body text); kept #8A5F0E.
+- **Down payment** already 1% of the financeable price + $1,500 closing; 2026 tiers already in lib/incomeTiers.ts.

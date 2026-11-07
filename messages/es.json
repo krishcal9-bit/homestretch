@@ -407,5 +407,8 @@
       "savings": "Ahorros"
     },
     "more": "+{n} más"
+  },
+  "brand": {
+    "tagline": "Su camino hacia un hogar de Habitat."
   }
 }

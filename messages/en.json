@@ -407,5 +407,8 @@
       "savings": "Savings"
     },
     "more": "+{n} more"
+  },
+  "brand": {
+    "tagline": "Your road to a Habitat home."
   }
 }

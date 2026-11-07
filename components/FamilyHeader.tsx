@@ -5,18 +5,17 @@ import { useLang } from '@/lib/i18n';
 import { useVTRouter } from '@/lib/vt';
 import { LanguageToggle } from './LanguageToggle';
 import { Wordmark as BrandWordmark } from './brand/Wordmark';
-import { BRAND_LAYOUT_ID, useBrand } from '@/lib/brand';
+import { useBrand } from '@/lib/brand';
 
 /** The HomeStretch wordmark (static): footer, staff console, login. */
 export function Wordmark({ height = 24 }: { height?: number }) {
   return <BrandWordmark height={height} />;
 }
 
-/** The header wordmark. On the landing page it receives the title card's wordmark in flight. */
-function HeaderWordmark({ height = 24 }: { height?: number }) {
+/** The header wordmark (28px). On the landing page it is the slot the title card flies onto. */
+function HeaderWordmark({ height = 28 }: { height?: number }) {
   const b = useBrand();
-  if (b.stage === 'title') return <BrandWordmark height={height} className="invisible" />;
-  return <BrandWordmark height={height} layoutId={b.fly ? BRAND_LAYOUT_ID : undefined} />;
+  return <BrandWordmark height={height} svgClassName="h-[24px] w-auto sm:h-[28px]" slot className={b.stage === 'title' ? 'invisible' : undefined} />;
 }
 
 /** Quiet "Staff sign in" link; navigates with the crisp staff fade. */
@@ -31,7 +30,7 @@ export function StaffLink({ className = '' }: { className?: string }) {
         e.preventDefault();
         router.push('/staff/login', 'fade');
       }}
-      className={`hit inline-flex min-h-[36px] items-center text-[13px] font-medium text-ink-2 underline-offset-4 transition-colors duration-[120ms] hover:text-pine hover:underline ${className}`}
+      className={`hit inline-flex min-h-[36px] items-center whitespace-nowrap text-[13px] font-medium text-ink-2 underline-offset-4 transition-colors duration-[120ms] hover:text-pine hover:underline ${className}`}
       data-testid="staff-link"
     >
       {t('welcome.staff')}

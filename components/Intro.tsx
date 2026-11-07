@@ -1,10 +1,11 @@
 'use client';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import { motion } from 'motion/react';
+import { animate, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { P } from '@/lib/illustrationPalette';
-import { brand, BRAND_LAYOUT_ID } from '@/lib/brand';
+import { brand } from '@/lib/brand';
+import { useLang } from '@/lib/i18n';
 import { WordmarkTitle, TITLE_T } from '@/components/brand/Wordmark';
 import { HOUSE_SIZES, HOUSE_STILL, hasWebGL } from '@/components/three/HouseCanvas';
 import { INTRO, INTRO_STILL, INTRO_WAIT_MS } from './introTimeline';
@@ -27,7 +28,10 @@ const heroSlot = () => document.querySelector('[data-testid=hero-house]')?.getBo
 export function Intro({ live = true, onStart, onHandoff, onDone, onSkip }: { live?: boolean; onStart?: (mode: '3d' | 'still') => void; onHandoff?: () => void; onDone: () => void; onSkip: () => void }) {
   const [vp, setVp] = useState<{ w: number; h: number } | null>(null);
   const [mode, setMode] = useState<Mode>('pending');
-  const [beat, setBeat] = useState<'film' | 'title' | 'exit'>('film');
+  const [beat, setBeat] = useState<'film' | 'title' | 'exit' | 'landed'>('film');
+  const { t } = useLang();
+  const titleRef = useRef<HTMLDivElement>(null);
+  const titleSvg = useRef<SVGSVGElement>(null);
   const [pulse, setPulse] = useState(0);
   const [stillTo, setStillTo] = useState<DOMRect | null>(null);
   const finished = useRef(false);
@@ -58,8 +62,24 @@ export function Intro({ live = true, onStart, onHandoff, onDone, onSkip }: { liv
       at(T.exit, () => {
         if (m === 'still') setStillTo(heroSlot());
         setBeat('exit');
-        brand.set({ stage: 'header', fly: true });
+        brand.set({ stage: 'title', fly: true });
         onHandoff?.();
+        // The title flies onto the header's slot: one vector element shrinking (crisp all the way), then the
+        // header's own wordmark takes over at the same size and place.
+        const el = titleRef.current;
+        const from = titleSvg.current?.getBoundingClientRect();
+        const to = document.querySelector('[data-brand-slot] svg')?.getBoundingClientRect();
+        if (el && from && to) {
+          el.style.transformOrigin = '0 0';
+          animate(el, { x: to.left - from.left, y: to.top - from.top, scale: to.width / from.width }, { type: 'spring', duration: 0.7, bounce: 0 }).then(() => {
+            if (finished.current) return;
+            brand.set({ stage: 'header', fly: true });
+            setBeat('landed');
+          });
+        } else {
+          brand.set({ stage: 'header', fly: true });
+          setBeat('landed');
+        }
       });
       at(T.total, () => end(false));
     },
@@ -96,7 +116,8 @@ export function Intro({ live = true, onStart, onHandoff, onDone, onSkip }: { liv
 
   if (!vp) return <div className="fixed inset-0 z-[70]" style={{ background: P.skyBottom }} aria-hidden />;
 
-  const titleW = vp.w < 640 ? Math.round(vp.w * 0.7) : Math.min(600, Math.round(vp.w * 0.42));
+  // big: ~85% of a phone's width, ~68% of a desktop's (cap height ≈ 105px at 1440)
+  const titleW = vp.w < 640 ? Math.round(vp.w * 0.85) : Math.round(Math.min(1120, Math.max(560, vp.w * 0.68)));
   const dim = beat === 'title';
   const exiting = beat === 'exit';
   // the still version: a large centred house that moves onto the hero slot at the end
@@ -111,7 +132,7 @@ export function Intro({ live = true, onStart, onHandoff, onDone, onSkip }: { liv
       <motion.div className="absolute inset-0" style={{ background: `linear-gradient(180deg, ${P.skyTop} 0%, ${P.skyBottom} 72%)` }} initial={{ opacity: 0 }} animate={{ opacity: exiting ? 0 : 1 }} transition={{ duration: exiting ? 0.45 : 0.35, ease: EASE }} />
 
       {/* the stage: blurs and dims behind the title (CSS filter + overlay; the scene isn't re-rendered for it) */}
-      <div className="absolute inset-0" style={{ filter: dim ? 'blur(6px)' : 'blur(0px)', transition: `filter ${dim ? 400 : 300}ms cubic-bezier(0.23,1,0.32,1)` }}>
+      <div className="absolute inset-0" style={{ filter: dim ? 'blur(8px)' : 'blur(0px)', transition: `filter ${dim ? 400 : 300}ms cubic-bezier(0.23,1,0.32,1)` }}>
         {(mode === 'pending' || mode === '3d') && (
           <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: mode === '3d' ? 1 : 0 }} transition={{ duration: 0.45, ease: EASE }}>
             <IntroScene slot={heroSlot} paused={!live} onFirstFrame={() => !finished.current && run('3d')} />
@@ -129,19 +150,20 @@ export function Intro({ live = true, onStart, onHandoff, onDone, onSkip }: { liv
           </motion.div>
         )}
       </div>
-      {/* dim to ~40% for the title, with a gentle brightness pulse when the mark's window lights */}
+      {/* dim to ~30% for the title, with a gentle brightness pulse when the mark's window lights */}
       <motion.div
         className="pointer-events-none absolute inset-0"
         style={{ background: P.skyBottom }}
         initial={{ opacity: 0 }}
-        animate={{ opacity: dim ? (pulse ? [0.6, 0.42, 0.6] : 0.6) : 0 }}
+        animate={{ opacity: dim ? (pulse ? [0.7, 0.55, 0.7] : 0.7) : 0 }}
         transition={dim && pulse ? { duration: 0.7, times: [0, 0.35, 1], ease: 'easeInOut' } : { duration: dim ? 0.4 : 0.35, ease: EASE }}
       />
 
-      {/* the title card */}
-      <div className="pointer-events-none absolute inset-x-0 flex justify-center" style={{ top: vp.h * 0.44 - titleW / 5.6 / 2 }}>
-        {/* unmounts as the header copy mounts: the header copy flies from here (shared layoutId, no crossfade) */}
-        {beat === 'title' && <WordmarkTitle width={titleW} layoutId={BRAND_LAYOUT_ID} onMarkLit={() => setPulse((p) => p + 1)} />}
+      {/* the title card: dead centre, the hero of the intro */}
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        {(beat === 'title' || beat === 'exit') && (
+          <WordmarkTitle ref={titleRef} svgRef={titleSvg} width={titleW} tagline={t('brand.tagline')} leaving={beat === 'exit'} onMarkLit={() => setPulse((p) => p + 1)} />
+        )}
       </div>
     </div>
   );

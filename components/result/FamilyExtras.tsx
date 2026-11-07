@@ -1,10 +1,10 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { RefreshCw, Copy, MessageSquare, Download } from 'lucide-react';
 import { useLang } from '@/lib/i18n';
 import { useStored } from '@/lib/useStored';
-import { spring } from '@/lib/motion';
+import { exit as exitT, spring } from '@/lib/motion';
 import { useToast } from '@/components/Toast';
 import { Button } from '@/components/ui/Button';
 import type { PlanOutput } from '@/lib/plan';
@@ -14,6 +14,7 @@ import { Section } from './Panels';
 import { PlanChecklist, PlanSkeleton, UnderwritersEye } from './PlanChecklist';
 import { LetterEditor } from './LetterEditor';
 import { CounselorHandoff } from '@/components/CounselorHandoff';
+import { SplitFlapCode } from '@/components/illustrations/result/SplitFlapCode';
 
 type StoredPlan = { lang: Lang | null; plan: PlanOutput | null; source?: string; key?: string };
 
@@ -58,7 +59,7 @@ export function usePlan(profile: ResultExtrasProps['profile'], lang: Lang) {
   return { plan: stored.lang === lang ? stored.plan : null, source: stored.source, loading, slow, regenerate: () => fetchPlan(true), ready };
 }
 
-export function FamilyExtras({ profile }: ResultExtrasProps) {
+export const FamilyExtras = memo(function FamilyExtras({ profile }: ResultExtrasProps) {
   const { t, lang } = useLang();
   const toast = useToast();
   const { plan, source, loading, slow, regenerate } = usePlan(profile, lang);
@@ -66,6 +67,8 @@ export function FamilyExtras({ profile }: ResultExtrasProps) {
   const [code, setCode] = useStored<string | null>('hs.code', null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
+  // The code flips in like a split-flap board only when it was just saved (not when restored on load).
+  const [justSaved, setJustSaved] = useState(false);
   const [phoneOpen, setPhoneOpen] = useState(false);
   const [phone, setPhone] = useState('');
 
@@ -85,6 +88,7 @@ export function FamilyExtras({ profile }: ResultExtrasProps) {
       const res = await fetch('/api/plans', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ profile, lang, plan, checklist, code: code ?? undefined }) });
       const data = await res.json();
       if (!res.ok || !data.code) throw new Error();
+      setJustSaved(true);
       setCode(data.code);
       toast(t('plan.saved'));
     } catch {
@@ -125,7 +129,7 @@ export function FamilyExtras({ profile }: ResultExtrasProps) {
         <div className="panel !p-5">
           <AnimatePresence mode="popLayout" initial={false}>
             {!code ? (
-              <motion.div key="unsaved" exit={{ opacity: 0 }} transition={spring.smooth}>
+              <motion.div key="unsaved" exit={{ opacity: 0, scale: 0.98, transition: exitT }}>
                 <p className="mb-4 text-[15px] text-ink-2">{t('plan.saveHelp')}</p>
                 <Button onClick={save} loading={saving} full size="lg">
                   {t('plan.save')}
@@ -137,11 +141,10 @@ export function FamilyExtras({ profile }: ResultExtrasProps) {
                 )}
               </motion.div>
             ) : (
-              <motion.div key="saved" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={spring.smooth}>
+              <motion.div key="saved" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }}>
                 <p className="text-[15px] text-ink-2">{t('plan.yourCode')}</p>
-                <p className="tnum mt-1 text-[28px] font-semibold leading-[34px] tracking-[0.12em] text-ink" data-testid="plan-code">
-                  {code}
-                </p>
+                {/* the Save button becomes the code: each character flips down into place */}
+                <SplitFlapCode code={code} play={justSaved} />
                 <p className="mt-4 text-[15px] text-ink-2">{t('plan.link')}</p>
                 <a href={`/plan/${code}`} className="mt-1 block break-all text-[15px] font-medium text-pine underline-offset-4 hover:underline" data-testid="plan-link">
                   {link}
@@ -224,4 +227,4 @@ export function FamilyExtras({ profile }: ResultExtrasProps) {
       )}
     </>
   );
-}
+});

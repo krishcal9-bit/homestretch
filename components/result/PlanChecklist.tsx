@@ -1,9 +1,9 @@
 'use client';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useInView } from 'motion/react';
 import { useLang } from '@/lib/i18n';
 import { addMonths } from '@/lib/engine';
 import { monthName } from '@/lib/format';
-import { spring, stagger } from '@/lib/motion';
+import { ease, spring, stagger } from '@/lib/motion';
 import { CheckMark } from '@/components/ui/Checkbox';
 import type { PlanOutput } from '@/lib/plan';
 import { ExternalLink } from 'lucide-react';
@@ -34,16 +34,19 @@ export function PlanChecklist({ plan, checklist, onToggle, today = new Date() }:
   const firstPlan = useRef(plan);
   const animateIn = firstPlan.current === plan;
   const done = plan.actions.filter((_, i) => checklist[String(i)]).length;
+  // Rows fade up when the list first scrolls into view (not at mount, below the fold).
+  const listRef = useRef<HTMLUListElement>(null);
+  const inView = useInView(listRef, { once: true, amount: 0.15 });
   return (
-    <motion.div layout transition={spring.smooth} className="panel !p-0" data-testid="checklist">
+    <div className="panel !p-0" data-testid="checklist">
       <p className="t-helper tnum border-b border-line px-5 py-3 text-ink-2">{t('plan.progress', { done, total: plan.actions.length })}</p>
-      <ul className="divide-y divide-line">
+      <ul ref={listRef} className="divide-y divide-line">
         <AnimatePresence initial={true}>
           {plan.actions.map((a, i) => {
             const checked = !!checklist[String(i)];
             const id = `action-${i}`;
             return (
-              <motion.li key={a.title + i} initial={animateIn ? { opacity: 0, y: 12 } : false} animate={{ opacity: 1, y: 0 }} transition={{ ...spring.smooth, delay: Math.min(i, 5) * stagger }}>
+              <motion.li key={a.title + i} initial={animateIn ? { opacity: 0, y: 12 } : false} animate={inView ? { opacity: 1, y: 0 } : undefined} transition={{ ...spring.smooth, delay: Math.min(i, 5) * stagger }}>
                 <div className="flex gap-3 px-5 py-4">
                   <label htmlFor={id} className="flex min-h-[44px] min-w-[44px] -translate-x-[11px] -translate-y-[11px] cursor-pointer items-center justify-center self-start">
                     <input id={id} type="checkbox" className="peer sr-only" disabled={!ready} checked={checked} onChange={(e) => onToggle(String(i), e.target.checked)} />
@@ -52,8 +55,18 @@ export function PlanChecklist({ plan, checklist, onToggle, today = new Date() }:
                     </span>
                   </label>
                   <div className="-ml-[22px] min-w-0 flex-1">
-                    <label htmlFor={id} className={`block cursor-pointer text-[16px] font-medium leading-[22px] transition-colors duration-200 ${checked ? 'text-ink-2' : 'text-ink'}`}>
+                    <label htmlFor={id} className={`relative block cursor-pointer text-[16px] font-medium leading-[22px] transition-colors duration-200 ${checked ? 'text-ink-2' : 'text-ink'}`}>
                       {a.title}
+                      {/* ticking strikes the title: a pine line grows from the left over every line of it (250ms) */}
+                      <motion.span
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 text-transparent line-through decoration-pine decoration-[1.5px]"
+                        initial={false}
+                        animate={{ clipPath: checked ? 'inset(0% 0% 0% 0%)' : 'inset(0% 100% 0% 0%)' }}
+                        transition={{ duration: checked ? 0.25 : 0.15, ease: ease.out }}
+                      >
+                        {a.title}
+                      </motion.span>
                     </label>
                     <p className={`mt-1 text-[15px] leading-[22px] transition-colors duration-200 ${'text-ink-2'}`}>{a.detail}</p>
                     <p className="t-helper tnum mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-ink-2">
@@ -77,7 +90,7 @@ export function PlanChecklist({ plan, checklist, onToggle, today = new Date() }:
           })}
         </AnimatePresence>
       </ul>
-    </motion.div>
+    </div>
   );
 }
 

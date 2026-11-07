@@ -1,9 +1,10 @@
 'use client';
-import { motion } from 'motion/react';
+import { motion, useInView } from 'motion/react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { useLang } from '@/lib/i18n';
 import { money } from '@/lib/format';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
-import { spring, ease } from '@/lib/motion';
+import { ease } from '@/lib/motion';
 import type { ReadinessResult } from '@/lib/types';
 import type { ReactNode } from 'react';
 
@@ -21,23 +22,69 @@ export function Section({ title, children, id, action }: { title: string; childr
   );
 }
 
-export function WhyThisDate({ sentences }: { sentences: string[] }) {
-  const { t } = useLang();
+/** Money, percentages and month counts: the numbers each sentence turns on. */
+const NUMBERS = /(\$[\d,]+|\d+\s?%|\d+ (?:months?|meses|mes)\b|\b(?:month|mes) \d+)/;
+
+/** A sentence whose numbers get a pine-soft wash that fades out over 600ms once the sentence has risen in. */
+function Washed({ text, wash, go, delay }: { text: string; wash: boolean; go: boolean; delay: number }) {
+  const parts = text.split(NUMBERS);
   return (
-    <Section title={t('result.whyTitle')} id="why">
-      <motion.ul layout transition={spring.smooth} className="panel flex flex-col gap-3 !p-5" data-testid="why">
-        {sentences.map((s, i) => (
-          <motion.li key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: ease.out, delay: i * 0.05 }} className="flex gap-3 text-[16px] leading-[24px] text-ink">
-            <span className="mt-[10px] h-[5px] w-[5px] shrink-0 rounded-full bg-pine" aria-hidden />
-            <span className="tnum">{s}</span>
-          </motion.li>
-        ))}
-      </motion.ul>
-    </Section>
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 1 ? (
+          <span key={i} className="relative isolate whitespace-nowrap">
+            <motion.span
+              aria-hidden
+              className="absolute -inset-x-[3px] inset-y-0 -z-10 rounded-[4px] bg-pine-soft"
+              initial={{ opacity: wash ? 1 : 0 }}
+              animate={go ? { opacity: 0 } : undefined}
+              transition={{ duration: 0.6, ease: ease.out, delay }}
+            />
+            {part}
+          </span>
+        ) : (
+          part
+        ),
+      )}
+    </>
   );
 }
 
-export function FinancePanel({ result, rent }: { result: ReadinessResult; rent: number }) {
+export const WhyThisDate = memo(function WhyThisDate({ sentences }: { sentences: string[] }) {
+  const { t } = useLang();
+  const ref = useRef<HTMLUListElement>(null);
+  const inView = useInView(ref, { once: true, amount: 0.25 });
+  // Sentences rise (50ms apart) when the list first scrolls into view; numbers wash only during that beat,
+  // never again while a slider rewrites them.
+  const [washing, setWashing] = useState(true);
+  useEffect(() => {
+    if (!inView) return;
+    const id = setTimeout(() => setWashing(false), 2000);
+    return () => clearTimeout(id);
+  }, [inView]);
+  return (
+    <Section title={t('result.whyTitle')} id="why">
+      <ul ref={ref} className="panel flex flex-col gap-3 !p-5" data-testid="why">
+        {sentences.map((s, i) => (
+          <motion.li
+            key={i}
+            initial={{ opacity: 0, y: 8 }}
+            animate={inView ? { opacity: 1, y: 0 } : undefined}
+            transition={{ duration: 0.3, ease: ease.out, delay: washing ? i * 0.05 : 0 }}
+            className="flex gap-3 text-[16px] leading-[24px] text-ink"
+          >
+            <span className="mt-[10px] h-[5px] w-[5px] shrink-0 rounded-full bg-pine" aria-hidden />
+            <span className="tnum">
+              <Washed text={s} wash={washing} go={inView} delay={i * 0.05 + 0.25} />
+            </span>
+          </motion.li>
+        ))}
+      </ul>
+    </Section>
+  );
+});
+
+export const FinancePanel = memo(function FinancePanel({ result, rent }: { result: ReadinessResult; rent: number }) {
   const { t, lang } = useLang();
   const fmt = (n: number) => money(n, lang);
   const diff = rent - result.maxPayment;
@@ -76,4 +123,4 @@ export function FinancePanel({ result, rent }: { result: ReadinessResult; rent: 
       </div>
     </Section>
   );
-}
+});

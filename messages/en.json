@@ -162,6 +162,12 @@
     "year": "Year {n}",
     "tenPlus": "10+ years"
   },
+  "resultArt": {
+    "sooner": "{n} months sooner",
+    "sooner1": "1 month sooner",
+    "later": "{n} months later",
+    "later1": "1 month later"
+  },
   "road": {
     "labels": {
       "collections": "Collections cleared",

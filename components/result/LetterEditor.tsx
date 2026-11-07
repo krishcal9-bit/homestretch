@@ -1,25 +1,34 @@
 'use client';
 import { useLayoutEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { useAnimate } from 'motion/react';
 import { Download, FileText } from 'lucide-react';
 import { useLang } from '@/lib/i18n';
-import { spring } from '@/lib/motion';
+import { ease } from '@/lib/motion';
 import { Button } from '@/components/ui/Button';
+import { PaperSheet, PAD_BOTTOM, PAD_TOP, RULE } from '@/components/illustrations/result/PaperSheet';
 
 type Finding = { finding: string; whatToDo?: string; kind?: string | null };
 
-/** D4: drafts a letter of explanation, streaming into an editable text area; downloads as PDF. */
+/**
+ * D4: drafts a letter of explanation. A sheet of paper slides up, the letter is written onto it line by
+ * line (it stays an editable text area on the paper), and "Download letter" pulses once when it's done.
+ */
 export function LetterEditor({ finding }: { finding: Finding }) {
   const { t, lang } = useLang();
   const [text, setText] = useState('');
   const [open, setOpen] = useState(false);
   const [streaming, setStreaming] = useState(false);
+  const [written, setWritten] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const area = useRef<HTMLTextAreaElement>(null);
+  const [textLines, setTextLines] = useState(0);
+  const [pulseScope, pulse] = useAnimate<HTMLSpanElement>();
+  const id = `letter-${finding.finding.slice(0, 12).replace(/[^a-zA-Z0-9]/g, '')}`;
 
   const write = async () => {
     setOpen(true);
     setStreaming(true);
+    setWritten(false);
     setText('');
     try {
       const res = await fetch('/api/letter', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ finding, lang }) });
@@ -54,13 +63,21 @@ export function LetterEditor({ finding }: { finding: Finding }) {
     }
   };
 
-  // Auto-grow the text area as text streams in (no inner scroll).
+  // Auto-grow the text area with its text (no inner scroll), always a whole number of ruled lines.
   useLayoutEffect(() => {
     const el = area.current;
     if (!el) return;
     el.style.height = 'auto';
-    el.style.height = `${Math.max(176, el.scrollHeight + 2)}px`;
+    const used = text ? Math.ceil((el.scrollHeight - PAD_TOP - PAD_BOTTOM) / RULE) : 0;
+    setTextLines(used);
+    el.style.height = `${PAD_TOP + Math.max(10, used) * RULE + PAD_BOTTOM}px`;
   }, [text, open]);
+
+  const onWritten = () => {
+    setWritten(true);
+    if (pulseScope.current) pulse(pulseScope.current, { scale: [1, 1.04, 1] }, { duration: 0.4, ease: ease.out });
+  };
+  const busy = streaming || !written;
 
   return (
     <div className="mt-4">
@@ -70,31 +87,39 @@ export function LetterEditor({ finding }: { finding: Finding }) {
           {t('letter.write')}
         </Button>
       )}
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div layout initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} transition={spring.smooth} className="overflow-hidden px-[2px] pb-[2px]">
-            <label htmlFor={`letter-${finding.finding.slice(0, 12)}`} className="mb-2 mt-1 block text-[15px] font-medium text-ink">
-              {t('letter.label')}
-            </label>
+      {open && (
+        <div>
+          <label htmlFor={id} className="mb-2 mt-1 block text-[15px] font-medium text-ink">
+            {t('letter.label')}
+          </label>
+          <PaperSheet streaming={streaming} minLines={10} lineCount={textLines} onWritten={onWritten}>
             <textarea
               ref={area}
-              id={`letter-${finding.finding.slice(0, 12)}`}
+              id={id}
               data-testid="letter-text"
               value={text}
+              rows={1}
+              readOnly={busy}
               onChange={(e) => setText(e.target.value)}
-              aria-busy={streaming}
-              className="field tnum block w-full resize-none py-3 text-[15px] leading-[22px]"
+              aria-busy={busy}
+              spellCheck={!busy}
+              className="tnum block w-full resize-none overflow-hidden bg-transparent px-5 text-[15px] leading-[24px] text-ink outline-none"
+              style={{ paddingTop: PAD_TOP, paddingBottom: PAD_BOTTOM, outline: 'none' }}
             />
-            <p className="t-helper mt-2 text-ink-2">{streaming ? t('letter.writing') : t('letter.editHelp')}</p>
-            <div className="mt-3">
-              <Button variant="secondary" onClick={download} loading={downloading} disabled={streaming || !text}>
+          </PaperSheet>
+          <p className="t-helper mt-3 text-ink-2" aria-live="polite">
+            {busy ? t('letter.writing') : t('letter.editHelp')}
+          </p>
+          <div className="mt-3">
+            <span ref={pulseScope} className="inline-block">
+              <Button variant="secondary" onClick={download} loading={downloading} disabled={busy || !text}>
                 <Download size={18} strokeWidth={1.75} aria-hidden />
                 {t('letter.download')}
               </Button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

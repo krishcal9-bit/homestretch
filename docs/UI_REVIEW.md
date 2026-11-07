@@ -86,3 +86,39 @@ Volume order kept: landing > result and plan > intake > staff. Only one thing mo
 | Result Road at 390 (found in screenshots) | Keys marker clipped (min width 340 > panel) | Min width 280; labels merge as needed | Keys always visible |
 | Plan page | Full 900ms draw | 600ms draw (families revisit it), same street with windows per ticked item | Shorter for return visits |
 | Staff (merged from the staff pass) | Hard cuts between tabs | 12px slide + crossfade (200ms in, 140ms out); Pipeline rows stagger on first load only (20ms, max 8); filtering fades/reflows; drawer Road draws in 400ms; Homes rows get line-drawn houses and counts that roll up when visible; nothing moves on its own | The calmest surface |
+
+## Round 4 — Blueprint to keys, sections, illustrations, every page (Part 5 pass)
+
+Volume order kept: landing > result and plan > intake > staff. One ambient animation per view (hero: the walking window light; scene 3: the ticker; scenes 1–2: the arrow bob). Only transform, opacity, clip-path and SVG pathLength animate; hover and focus colour feedback (120ms) is the one exception, kept as state feedback. Measured at 4× CPU throttle on an idle machine: landing intro and section pass median/p95 16.7ms (the only long tasks are hydration, before the first visible beat); intake steppers and typing 0 frames over 34ms; result lever drag median 16.7ms, 0–1 frames over 34ms per drag. Lighthouse mobile: `/` 93 (CLS 0), `/start` 87 (CLS 0.009), `/plan/[code]` 91 (CLS 0.007); accessibility 100 on all three. Screenshots: `docs/screenshots/r4-landing-*` (every section) and `r4-page-*` (every page) at 1440, 1024 and 390. Videos: `docs/motion/r4-intro-load{1,2,3}-1440.webm`, `r4-sections.webm`, `r4-flow-390.webm` (landing → intake → result with a lever drag), `r4-intake.webm`, `r4-result.webm`, `r4-staff.webm`, reviewed frame by frame.
+
+| Where | Before | After | Why |
+|---|---|---|---|
+| Landing intro (frame 1) | The house's window light showed before anything was built | Light group starts at opacity 0 and turns on after the build | The light is the payoff, not the opening |
+| Intro handoff | `layoutId` can't cross from the overlay into the Road's SVG | Measured move: the ground line and house transform onto the hero's track and Keys house | The house becomes Keys with no pop |
+| Intro end (4× throttle) | Ending the intro re-rendered every section (67ms task) | Sections memoized; the intro's end is a fade with nothing re-rendering | 60fps through the handoff |
+| Section activation (4×) | Mounting an illustration was one 68–89ms task, sometimes mid-scroll | Waits for the scroll to settle; text commits first, the illustration one frame later, the 100 houses a frame after that | No long task after load |
+| Returning to a section | Finished content popped to blank, then replayed | Content clears once fully out of view, so a return slides in clean and animates | Same as the first visit |
+| Keys house label (390) | "Keys" sat on the roof; other labels crossed the house | Keys labelled above the roof, outside the label lanes; above-track labels avoid the house's box | Nothing overlaps |
+| Dot rail (1024) | Overlapped the hero date | Shown from 1280px; arrows and keys do the job below | No collisions |
+| Closing arrow | Invisible over the light footer | Sits in the pine band, white outline | Visible, 44px |
+| Neighborhood map | Dots animated `cx`/`cy`; badges appeared at their final count | Dots move by transform; badges roll up from 0 | Transform only; numbers count |
+| Hundred houses | Each icon animated `fill` | Outline + fill layer that fades in (opacity, 8ms stagger, CSS) | Off the main thread |
+| Arrow bob | Bobbed on every section | Only on sections with no other ambient motion | One ambient animation at a time |
+| Intake stepper (4×) | `popLayout` injected a stylesheet on every tap: 5–7 slow frames per 16 taps before the pass, 14–20 with the first illustrated version | Number rolls on the Web Animations API; ± press is a CSS `:active` scale; screens memoized | 0 slow frames |
+| Intake illustrations | Pivots off; coins read as a database icon; cramped floor plan; upload button wrapped | Fixed on video review; household house has a pine door | Brass stays for Keys |
+| Result street | Cropped at both ends, so lit windows and the Keys door never showed | Sized to its own aspect ratio | The payoff is visible |
+| Road marker pulse | `key={pulse}` remounted the marker (and the Keys house) every month the date got earlier | Pulse animates in place (motion value) | The drag's remaining long frames |
+| Keys house build timing | Each screen copied the Road's spacing to time the build | The Road exports `keysReachAt`; the build defaults to the marker's own delay | One source of truth |
+| Keys house light | Every later light waited ~1s (the build delay) | Only the first light waits; later ones are immediate | Feedback is instant |
+| Date and pill during a drag | Exiting copies stacked ("August 2028" over "January 2030") | Changes within 180ms of each other swap instantly; single changes keep the 200ms vertical swap | No ghosting |
+| `monthName` / `money` | New `Intl` formatter per call (hot in the drag profile) | One cached formatter per language and style | Less work per frame |
+| Disclosures (income, voice, aim, text-me, notes) | Animated `height: auto` | Unroll by clip-path with a 4px rise; clip removed afterwards so focus rings show | Transform / opacity / clip-path only |
+| Date swaps | Blur filter and `popLayout` | Opacity + 8px move in one grid cell | Cheaper, same look |
+| Road progress fill | Animated the `x2` attribute | Animates `pathLength` | Allowed property |
+| Progress door, skeletons, filled wash | Animated fill, background position, background colour | Opacity on an overlay | Allowed property |
+| Counselor packet | Static send, toast only | A paper sheet slides up and its text streams in; the toast and one Download pulse wait for the send to succeed | Says what happened |
+| Staff pipeline filter | Groups slid ~640px from off screen | Rows clip out, rows below slide up (200ms); long moves fade out and back in at their new place | Short, readable motion |
+| Staff numbers | Rolled with the gentle spring (~600ms) | Snappy spring (~250ms) | Staff stays under 300ms |
+| Staff Homes | Brass door on every row's house | Pine door | Brass is for Keys |
+| Insights chart (1024) | Home labels overlapped | Labels take the lowest lane that clears their neighbour | Readable |
+| Staff at 390 | Console is a 1024px canvas | Kept: the spec makes the console desktop-only; phones can pan | Spec §2.B |

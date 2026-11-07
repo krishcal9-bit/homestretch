@@ -58,6 +58,20 @@ export function Insights({ homes, families }: { homes: Home[]; families: Fam[] }
     const m = monthsUntil(h.completion, today);
     return m >= 0 && m < HORIZON;
   });
+  // Completion labels sit in lanes above the chart so neighbours never overlap: each takes the lowest lane
+  // where it clears the previous label (judged at a narrow 30px per month, ~6px per character).
+  const PX_PER_MONTH = 30;
+  const laneOf = new Map<string, number>();
+  const lanes: { m: number; w: number }[] = [];
+  for (const h of [...homeLines].sort((a, b) => monthsUntil(a.completion, today) - monthsUntil(b.completion, today))) {
+    const m = monthsUntil(h.completion, today);
+    const w = homeTitle(h).length * 6;
+    let lane = lanes.findIndex((prev) => (m - prev.m) * PX_PER_MONTH >= (prev.w + w) / 2 + 8);
+    if (lane < 0) lane = lanes.length < 3 ? lanes.length : 0;
+    lanes[lane] = { m, w };
+    laneOf.set(h.id, lane);
+  }
+  const laneCount = Math.max(1, lanes.length);
 
   if (families.length === 0) {
     return (
@@ -96,7 +110,7 @@ export function Insights({ homes, families }: { homes: Home[]; families: Fam[] }
         </div>
         <div className="mt-4 h-[340px]" role="img" aria-label={`Bar chart of eligible families by projected-ready month over the next 24 months${anyOn ? ', with the program projection beside the baseline' : ''}.`}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 28, right: 48, bottom: 0, left: -20 }} barGap={2} barCategoryGap="18%">
+            <BarChart data={data} margin={{ top: 14 + laneCount * 14, right: 48, bottom: 0, left: -20 }} barGap={2} barCategoryGap="18%">
               <CartesianGrid vertical={false} stroke="var(--line)" />
               <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: 'var(--line)' }} tick={{ fill: 'var(--ink-2)', fontSize: 12 }} interval={2} />
               <YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={{ fill: 'var(--ink-2)', fontSize: 12 }} />
@@ -113,7 +127,11 @@ export function Insights({ homes, families }: { homes: Home[]; families: Fam[] }
                   stroke="var(--ink-2)"
                   strokeDasharray="2 3"
                   strokeWidth={1}
-                  label={{ value: homeTitle(h), position: 'top', fill: 'var(--ink-2)', fontSize: 11 }}
+                  label={({ viewBox }: { viewBox?: { x?: number; y?: number } }) => (
+                    <text x={viewBox?.x ?? 0} y={(viewBox?.y ?? 0) - 6 - (laneOf.get(h.id) ?? 0) * 14} textAnchor="middle" fill="var(--ink-2)" fontSize={11}>
+                      {homeTitle(h)}
+                    </text>
+                  )}
                 />
               ))}
               <Bar dataKey="baseline" fill={anyOn ? BASE : PINE} radius={[4, 4, 0, 0]} animationDuration={BAR_MS} animationEasing="ease-out" isAnimationActive={!reduce} />

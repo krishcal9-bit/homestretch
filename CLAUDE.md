@@ -19,7 +19,7 @@
 - brass #B8862B ONLY for ready date, Keys marker, current road position. signal-red/amber as text + 2px left rule.
 - Public Sans 400/500/600 (self-hosted via @fontsource). Tabular nums for money/dates. Scale 13/16/20/28/56.
 - Radius 8 controls, 14 panels. No shadows (except staff drawer). No dark mode, glass, gradients, emoji, caps eyebrows, "→" in buttons.
-- Motion: only `motion/react` with tokens from lib/motion.ts; MotionConfig reducedMotion="user". Volume: landing > result/plan > intake > staff. Landing: first-session opening (line → house → pull-back into the Road/Keys), else the 1.4s hero sequence; living Skyline (one glowing window at a time, every 2.5s); scroll story. Inner pages reuse the language (Road, line houses, brass keys) quietly; staff never moves on its own. Animate only transform, opacity, pathLength.
+- Motion: only `motion/react` with tokens from lib/motion.ts; MotionConfig reducedMotion="user". Volume: landing > result/plan > intake > staff. Landing: the "Blueprint to keys" intro on every load (components/Intro.tsx; `?nointro` / sessionStorage `hs.nointro` skip it in tests), full-viewport sections with keyboard/arrow/dot navigation (components/landing/SectionNav.tsx) and one illustration per section (components/illustrations/). Inner pages reuse the language (Road, isometric house, brass keys) quietly; staff never moves on its own. Animate only transform, opacity, clip-path, pathLength (disclosures use the `reveal` preset, never height).
 - Copy: sentence case, verbs that say what happens. All UI strings in messages/{en,es}.json.
 - Load the apple-design skill before UI work (steps 1, 4, 7, 13).
 

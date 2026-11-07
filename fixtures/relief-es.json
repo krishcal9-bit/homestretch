@@ -1,0 +1,9 @@
+{
+  "items": [
+    { "id": "exemption", "why": "Usted es dueño de su casa en Santa Ana y vive en ella, así que puede pedirla. Muchas familias de Habitat nunca la piden.", "worth": "Quita $7,000 del valor tasado: unos $70 menos de impuesto a la propiedad cada año.", "nextStep": "Llene el formulario BOE-266 con la Oficina del Tasador del Condado de Orange esta semana. Se pide una sola vez." },
+    { "id": "careFera", "why": "Su hogar de 4 personas gana menos del límite de FERA de $80,400 al año, así que probablemente califica.", "worth": "Cerca de $220 al año menos en su cuenta de Southern California Edison.", "nextStep": "Pídalo en el sitio de Southern California Edison. Toma unos 5 minutos y no pide documentos." },
+    { "id": "wildfire", "why": "Usted tiene el FAIR Plan de California, que debe dar un descuento por mejoras contra incendios.", "worth": "Al menos $71 al año menos en su prima, muchas veces más.", "nextStep": "Limpie 1.5 metros alrededor de la casa y ponga malla en las rejillas; luego llame al FAIR Plan y pida el descuento Safer from Wildfires." },
+    { "id": "habitatRepair", "why": "Como propietario de Habitat, puede pedir ayuda antes de que una reparación se vuelva una emergencia.", "worth": "Reparaciones a bajo costo o sin costo, según el programa y su ingreso.", "nextStep": "Llame a Habitat OC y pregunte qué programas de reparación están abiertos ahora." },
+    { "id": "oc211", "why": "Cualquier persona en el Condado de Orange puede llamar, de día o de noche, en inglés o español.", "worth": "Ayuda con su hipoteca, servicios o comida si llega una cuenta grande o pierde el trabajo.", "nextStep": "Guarde el 211 en su teléfono, o visite 211oc.org para ver qué hay cerca de usted." }
+  ]
+}

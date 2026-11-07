@@ -1,6 +1,6 @@
 'use client';
 import { useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform, type MotionValue } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { Sky } from './Sky';
 import { Horizon, HZ } from './Horizon';
 
@@ -23,7 +23,7 @@ function useLayer(d: number, cx: MotionValue<number>, cy: MotionValue<number>, l
   return { x, y };
 }
 
-export function World({ variant = 'landing', warmth = 0 }: { variant?: 'landing' | 'result'; /** result/plan: 0–1, the sky warms as the date improves */ warmth?: number }) {
+export const World = memo(function World({ variant = 'landing', warmth = 0 }: { variant?: 'landing' | 'result'; /** result/plan: 0–1, the sky warms as the date improves */ warmth?: number }) {
   const reduce = !!useReducedMotion();
   const landing = variant === 'landing';
   const { scrollY, scrollYProgress } = useScroll();
@@ -82,4 +82,4 @@ export function World({ variant = 'landing', warmth = 0 }: { variant?: 'landing'
       </div>
     </div>
   );
-}
+});

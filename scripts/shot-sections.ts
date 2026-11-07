@@ -13,7 +13,7 @@ import { chromium } from 'playwright';
         else await p.evaluate((id) => document.getElementById(id)!.scrollIntoView(), ids[i]);
         await p.waitForTimeout(3200); // let the section's animation finish
       }
-      await p.screenshot({ path: `docs/screenshots/r4-landing-${ids[i]}-${w}.png` });
+      await p.screenshot({ path: `docs/screenshots/r5-landing-${ids[i]}-${w}.png` });
     }
     await p.close();
   }

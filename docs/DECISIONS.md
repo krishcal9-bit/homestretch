@@ -49,3 +49,13 @@ Ambiguities resolved during the build, with the choice made.
   - **The wordmark's flight is a single Motion `layoutId` element.** The title copy unmounts in the same render as the header copy mounts, with no `AnimatePresence`. With a crossfade, the exiting copy flew back to the centre once the header dropped its `layoutId`.
   - **Brand name is "HomeStretch"** in titles, the footer, the closing band, referral packets and PDFs.
   - **The hero loses the line street.** The 3D house is the hero's visual now, and its chimney smoke is the one ambient loop. The slider warms the sun toward golden hour and lights windows as the date gets earlier.
+- **Round 5 add-ons (owner, Nov 7): environments and a bigger title.**
+  - **One fixed landing world.** The sky and horizon sit fixed behind every section rather than repeating per section, so it reads as one continuous place while sections slide over it. The horizon is richest at the edges and low in the middle, so content stays calm.
+  - **Time of day without repainting.** It's a crossfade between an afternoon sky and a golden-hour sky (opacity only), driven by scroll progress.
+  - **Parallax.** The layers lag mid-scroll and settle at rest (a triangle wave per section), then lean away from the cursor, capped at 16px at depth 1. They are compositor layers, and nothing moves under reduced motion.
+  - **The hero's 3D house moved to stand on the world's street** (bottom of the first screen, slightly right of centre) instead of sitting beside the date. That's what makes it "belong to a place". It is positioned from the top of the first screen so its plinth always lands on the street.
+  - **Phones crop the horizon to its calm centre.** That's the "reduced side scenery" without a separate artwork.
+  - **The intake panel moved onto `--surface`.** The per-step neighborhood sits behind it at about 35% in the bottom third. Its blur is computed once; the one ambient cloud sits outside the blurred layer.
+  - **On result and plan the scenery lives inside the Road panel (`RoadScene`), not page-wide.** The owner asked for the neighborhood behind the Road, and it keeps the rest of the page calm.
+  - **Title card.** A 700-weight glyph set is generated alongside the 600 header set. The title itself flies onto the header's placeholder (a manual FLIP on one vector element) rather than using a Motion `layoutId`, because the two weights differ and a `layoutId` morph would snap from 700 to 600 mid-flight.
+  - **The intro is now about 5.0s with 3D and 3.6s in the still version.** The owner's longer hold and flight supersede the earlier ~4.2s limit.

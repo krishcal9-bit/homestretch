@@ -122,3 +122,47 @@ Volume order kept: landing > result and plan > intake > staff. One ambient anima
 | Staff Homes | Brass door on every row's house | Pine door | Brass is for Keys |
 | Insights chart (1024) | Home labels overlapped | Labels take the lowest lane that clears their neighbour | Readable |
 | Staff at 390 | Console is a 1024px canvas | Kept: the spec makes the console desktop-only; phones can pan | Spec §2.B |
+
+## Round 5 — rendered, dimensional objects; the world behind every page; the HomeStretch title card (Part 5 pass)
+
+Measured on a quiet machine:
+- **4× CPU throttle:**
+  - Landing section pass: median 16.7ms, p95 16.8ms. The only slow frames are hydration and one mount per scene.
+  - Result lever drag: 0 frames over 34ms in 3 drags.
+  - Intake stepper taps: 1 frame over 34ms each. Rent typing: 4 frames over 34ms, all on the first keystroke.
+  - Intro, still version: p95 33ms, with one-time frames at the hand-off.
+- **Lighthouse mobile:** `/` 86–90 (CLS 0.002), `/start` 83 (CLS 0), `/plan/[code]` 91 (CLS 0.011). Accessibility 100 on all three.
+- **three.js:** about 237–242 KB gzipped in its own chunks. It loads only on landing, result and plan, and only with hardware WebGL; staff pages load none.
+- **Screenshots:** `docs/screenshots/r5-*` covers every page at 1440 and 390, plus every landing section.
+- **Videos (`docs/motion/r5-*`):**
+  - three fresh landing loads at 1440 and at 390 (3D forced on)
+  - the still version
+  - a Down-arrow pass
+  - intake → result
+  - the intake, result and staff passes
+- **Caveat:** the 3D recordings use software WebGL here, so their pacing is choppy. Choreography and end states were reviewed frame by frame; smoothness was checked through main-thread traces.
+
+| Where | Before | After | Why |
+|---|---|---|---|
+| 3D house, first render | Grey, dim walls; brown blotches on the lawn | Brighter, neutral sun with a stronger sky light. The soil base was z-fighting the lawn; it now sits below it. A baked contact shadow under the house | Looks lit and sits on its lot |
+| Chimney smoke | Big white balls | Six small, faint puffs rising 1.15 units | Smoke, not snowballs |
+| Intro, first frames | The hero showed through before the sky was up | An opaque base layer under the sky | Starts as one clean stage |
+| Intro → hero hand-off | Unmounting the intro canvas was a 1.46s long task (software GL) exactly at the hand-off | The intro canvas pauses and is torn down later, when the page is idle. The hero canvas compiles under the overlay and then holds | No stall at the money moment |
+| 3D on software WebGL | Lighthouse 36: two live canvases on SwiftShader, 132s of blocking time | 3D only with hardware WebGL; software renderers get the still render and the 2D title card, and three.js isn't fetched | Every visitor gets something smooth |
+| Largest contentful paint | The hero still faded in late; the intro used a different still | One preloaded still at one `sizes`, painted at once; only the live canvas hides during a 3D intro | LCP is the house, early |
+| Title card (owner) | Wordmark ~42% of the width, easy to miss | 700 weight, dead centre, ~68% of desktop and 85% of phone width, paper glow, 1.2s hold, tagline, 700ms flight into a 28px header | The name is the first thing seen |
+| Title letters (4×) | Each rising letter re-filtered a blur every frame | Blur-to-sharp is now a faint wide stroke that fades (no filter) | Fewer slow frames |
+| Wordmark hand-off | A ghost copy flew back to the centre | One vector element shrinks onto the header slot, then the header copy takes over | One object, crisp all the way |
+| Header at 390 | The 28px wordmark wrapped "Staff sign in" | 24px on phones, 28px from 640px; the link never wraps | One line |
+| Landing background | Flat paper, large empty areas | One continuous neighborhood behind every section: sky shifting to golden hour, clouds, ridgeline, house rows, palms, jacarandas, street, edge details, small life, depth parallax ≤16px | A place, not a page |
+| Hero house | Floating diorama | Stands on the world's street; neighbours softer and desaturated | It belongs somewhere |
+| Scenery invisible (found) | `body` painted paper over the scenery layer | `html` paints the paper; `body` is transparent | Layers behind content can show |
+| Hero house at 1024 | Plinth cut at the bottom | Positioned from the first screen's bottom, slightly smaller | Always fully on the street |
+| Rebuild on scroll-back (found by the result pass) | R3F's clock restarted after a pause and replayed the build | Timelines use wall-clock time | Builds once |
+| IsoHouse | Mullions and porch light showed before the walls rose | They build in with the house | No floating details |
+| Merge | A CSS media block lost its closing brace | Restored | Build green |
+| Intake | Form text over the scenery | Panel on `--surface`; the neighborhood at ~35% behind, changing per step (family, workplace, apartment building, credit union), 400ms crossfade, one cloud | Calm text, living edges |
+| Result and plan | White Road panel | The Road on a scene: sky warming as the date improves, a cloud, the street, the 3D house at the end | Same world, quieter |
+| Staff | Flat background | Paper texture and a faint static skyline of build stages in the header (9%); nothing moves on its own | Calm work tool |
+| Landing scenes | Outline drawings | A phone in front of a kitchen table; the family car driving to the house past popping signs; an isometric block with a crane and a worker; a dusk street lighting row by row | Objects with form and light |
+| Closing | Fireflies or lamps? | Street lamps only, static glow | One effect, not two |

@@ -175,9 +175,6 @@ export const WordmarkTitle = forwardRef<HTMLDivElement, TitleProps>(function Wor
       <svg ref={svgRef} width={width} height={height} viewBox={G.viewBox} role="img" aria-label="HomeStretch" className="relative block overflow-visible">
         <Defs id={id} />
         <defs>
-          <filter id={`lb${id}`} x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation={blurU} />
-          </filter>
           <clipPath id={`clip${id}`}>
             <rect x={G.vb.x} y={G.vb.y} width={G.g.width + 10} height={-G.vb.y + 3} />
           </clipPath>
@@ -205,7 +202,8 @@ export const WordmarkTitle = forwardRef<HTMLDivElement, TitleProps>(function Wor
             const fill = i < HOME_END ? P.ink : P.pine;
             return (
               <motion.g key={i} initial={reduce ? false : { y: 88 }} animate={{ y: 0 }} transition={{ duration: TITLE_T.letter, ease: EASE, delay: at }}>
-                <motion.path d={g.d} fill={fill} filter={`url(#lb${id})`} initial={reduce ? { opacity: 0 } : { opacity: 1 }} animate={{ opacity: 0 }} transition={{ duration: TITLE_T.letter * 0.8, ease: EASE, delay: at + 0.08 }} />
+                {/* the soft ghost (blur → sharp without a per-frame filter): a wide, faint stroke of the glyph */}
+                <motion.path d={g.d} fill={fill} stroke={fill} strokeWidth={blurU * 2.2} strokeLinejoin="round" initial={reduce ? { opacity: 0 } : { opacity: 0.38 }} animate={{ opacity: 0 }} transition={{ duration: TITLE_T.letter * 0.8, ease: EASE, delay: at + 0.08 }} />
                 <motion.path d={g.d} fill={fill} initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: TITLE_T.letter * 0.8, ease: EASE, delay: at + 0.08 }} />
               </motion.g>
             );

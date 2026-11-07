@@ -694,7 +694,9 @@
     "costMoves": "Esta es la parte que cambia.",
     "costMovesSub": "El seguro del FAIR Plan se renueva un 29 % más caro: unos $69 más al mes, sin aviso en la factura.",
     "costEnd": "Todo junto, es un solo pago.",
-    "costEndSub": "Unos {total} al mes. Keystone vigila las partes que cambian, meses antes de que cambien."
+    "costEndSub": "Unos {total} al mes. Keystone vigila las partes que cambian, meses antes de que cambien.",
+    "costNext": "Siguiente",
+    "costReplay": "Repetir"
   },
   "intakeArt": {
     "rentShare": "La renta es el {pct} de su ingreso",

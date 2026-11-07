@@ -14,37 +14,50 @@ test('the intro plays on every load; any key skips straight to the hero', async 
   await expect(page.getByTestId('intro')).toHaveCount(0, { timeout: 2000 });
 });
 
-test('Down arrow moves section by section (the cost scene one stage per press); the last arrow returns to the top', async ({ page }) => {
+test('the cost scene plays by itself, holds, and Down finishes it before moving on; the last arrow returns to the top', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/?nointro');
   await page.waitForTimeout(1600);
   const top = async (id: string) => page.evaluate((i) => Math.round(document.getElementById(i)!.getBoundingClientRect().top), id);
   const y = async () => page.evaluate(() => Math.round(window.scrollY));
   const header = async () => page.evaluate(() => Math.round(document.querySelector('header')!.getBoundingClientRect().top));
+  const phase = async () => page.getByTestId('scene-cost').getAttribute('data-phase');
+  const labelsOut = async () =>
+    page.evaluate(() => ['mortgage', 'tax', 'insurance', 'utilities', 'repairs'].every((k) => Number(getComputedStyle(document.querySelector(`[data-testid="cost-${k}"]`)!).opacity) > 0.95));
+  // arrive and touch nothing: it plays, every label comes out, and it stays
   await page.keyboard.press('ArrowDown');
   await page.waitForTimeout(950);
   expect(Math.abs((await top('scene-cost')) - 64)).toBeLessThan(4);
-  // four more presses walk the pinned scene's stages; the section stays pinned and the header never moves
-  let last = await y();
-  for (let k = 0; k < 4; k++) {
-    await page.keyboard.press('ArrowDown');
-    await page.waitForTimeout(950);
-    const now = await y();
-    expect(now).toBeGreaterThan(last + 100);
-    expect(await header()).toBe(0);
-    last = now;
-  }
+  expect(await phase()).toBe('playing');
+  await expect.poll(phase, { timeout: 8000 }).toBe('done');
+  expect(await labelsOut()).toBe(true);
+  await page.waitForTimeout(1500);
+  expect(Math.abs((await top('scene-cost')) - 64)).toBeLessThan(4);
+  await expect(page.getByTestId('section-arrow-1')).toBeVisible();
+  // the next press moves on
+  await page.keyboard.press('ArrowDown');
+  await page.waitForTimeout(950);
+  expect(Math.abs((await top('scene-intake')) - 64)).toBeLessThan(4);
+  // back up: finished at once, with Replay; Replay plays it again
+  await page.keyboard.press('ArrowUp');
+  await page.waitForTimeout(950);
+  expect(await phase()).toBe('done');
+  expect(await labelsOut()).toBe(true);
+  await page.getByTestId('cost-replay').click();
+  expect(await phase()).toBe('playing');
+  // Down while it plays finishes it instead of leaving
+  const before = await y();
+  await page.keyboard.press('ArrowDown');
+  await page.waitForTimeout(300);
+  expect(await phase()).toBe('done');
+  expect(await y()).toBe(before);
+  expect(await labelsOut()).toBe(true);
   for (const id of ['scene-intake', 'scene-road', 'scene-homes', 'closing']) {
     await page.keyboard.press('ArrowDown');
     await page.waitForTimeout(950);
     expect(Math.abs((await top(id)) - 64)).toBeLessThan(4);
     expect(await header()).toBe(0);
   }
-  await page.keyboard.press('ArrowUp');
-  await page.waitForTimeout(950);
-  expect(Math.abs((await top('scene-homes')) - 64)).toBeLessThan(4);
-  await page.getByTestId('section-dots').getByRole('button').last().click();
-  await page.waitForTimeout(950);
   await page.getByTestId('section-arrow-5').click();
   await page.waitForTimeout(950);
   expect(await y()).toBeLessThan(4);

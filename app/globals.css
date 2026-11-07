@@ -539,3 +539,8 @@ html[data-theme='dark'] .grain { opacity: 0.045; filter: invert(1); }
 /* calm zone behind section text over a busy scene */
 .text-scrim { position: relative; isolation: isolate; }
 .text-scrim::before { content: ''; position: absolute; inset: -56px -72px; z-index: -1; pointer-events: none; background: radial-gradient(closest-side, color-mix(in srgb, var(--paper) 82%, transparent), color-mix(in srgb, var(--paper) 0%, transparent)); }
+
+/* the cost scene's "Next": a soft pulse (twice) when it fades in */
+@keyframes cost-ring { 0% { opacity: 0.55; transform: scale(1); } 100% { opacity: 0; transform: scale(1.32, 1.6); } }
+.cost-next-in::after { content: ''; position: absolute; inset: -1px; border-radius: 999px; border: 2px solid var(--pine); opacity: 0; pointer-events: none; animation: cost-ring 1.4s cubic-bezier(0.23, 1, 0.32, 1) 0.3s 2; }
+@media (prefers-reduced-motion: reduce) { .cost-next-in::after { animation: none; } }

@@ -694,7 +694,9 @@
     "costMoves": "This is the part that moves.",
     "costMovesSub": "Insurance on the FAIR Plan renews 29% higher: about $69 more a month, with no warning on the bill.",
     "costEnd": "Back together, it's one payment.",
-    "costEndSub": "About {total} a month. Keystone watches the parts that move, months before they do."
+    "costEndSub": "About {total} a month. Keystone watches the parts that move, months before they do.",
+    "costNext": "Next",
+    "costReplay": "Replay"
   },
   "intakeArt": {
     "rentShare": "Rent is {pct} of your income",

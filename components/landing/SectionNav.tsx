@@ -16,7 +16,15 @@ import { motion } from 'motion/react';
  *    crossfades and its scenes' ambient motion start and stop on the target (its own context, so only
  *    the few components that follow it re-render).
  */
-type Ctx = { ids: string[]; active: number; activations: number[]; goTo: (i: number) => void; next: () => void };
+type Ctx = {
+  ids: string[];
+  active: number;
+  activations: number[];
+  goTo: (i: number) => void;
+  next: () => void;
+  /** a section can hold a press of Down (return true to keep the camera where it is, e.g. to finish its own animation) */
+  setHold: (index: number, hold: (() => boolean) | null) => void;
+};
 const NavCtx = createContext<Ctx | null>(null);
 export const useSectionNav = () => useContext(NavCtx)!;
 const TargetCtx = createContext(0);
@@ -84,6 +92,11 @@ export function SectionNavProvider({ ids, children, enabled = true }: { ids: str
     setActivations((a) => a.map((n, k) => (k === i ? n + 1 : n)));
   }, []);
   const moving = useRef(false);
+  const holds = useRef(new Map<number, () => boolean>());
+  const setHold = useCallback((index: number, hold: (() => boolean) | null) => {
+    if (hold) holds.current.set(index, hold);
+    else holds.current.delete(index);
+  }, []);
   const enabledRef = useRef(enabled);
   enabledRef.current = enabled;
 
@@ -199,6 +212,8 @@ export function SectionNavProvider({ ids, children, enabled = true }: { ids: str
   /** Down / Up: the next stop (a pinned scene's next stage, else the next section). */
   const step = useCallback(
     (dir: 1 | -1) => {
+      // the section on screen may hold the press (it finishes its own sequence first)
+      if (dir > 0 && holds.current.get(activeRef.current)?.()) return;
       const stops = readStops(ids);
       const y = window.scrollY;
       const s = dir > 0 ? stops.find((p) => p.y > y + 4) : [...stops].reverse().find((p) => p.y < y - 4);
@@ -231,7 +246,7 @@ export function SectionNavProvider({ ids, children, enabled = true }: { ids: str
     return () => window.removeEventListener('keydown', onKey);
   }, [enabled, step]);
 
-  const value = useMemo(() => ({ ids, active, activations, goTo, next }), [ids, active, activations, goTo, next]);
+  const value = useMemo(() => ({ ids, active, activations, goTo, next, setHold }), [ids, active, activations, goTo, next, setHold]);
   return (
     <NavCtx.Provider value={value}>
       <TargetCtx.Provider value={target}>{children}</TargetCtx.Provider>

@@ -7,6 +7,7 @@ import { useRef, useState } from 'react';
 import { Wordmark } from '@/components/FamilyHeader';
 import { Button } from '@/components/ui/Button';
 import { dur, ease } from '@/lib/motion';
+import { BuildStreet } from './BuildStreet';
 import { markConsoleArrival } from './handoff';
 
 // Wrong password: the field shakes 6px twice (~360ms) and the error stays. Reduced motion: no shake.
@@ -74,7 +75,8 @@ export function LoginForm() {
           Family site
         </Link>
       </div>
-      <h1 className="t-title mt-10">Staff console</h1>
+      <BuildStreet className="mt-12" />
+      <h1 className="t-title mt-8">Staff console</h1>
       <p className="mt-2 text-[15px] text-ink-2">Habitat OC family services. Sign in to see the plans families have shared.</p>
       <label htmlFor="staff-pw" className="mt-8 block text-[15px] font-medium">
         Password

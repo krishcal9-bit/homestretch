@@ -3,13 +3,19 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'motion/react';
 import { ChevronLeft } from 'lucide-react';
-import { dur, ease, spring } from '@/lib/motion';
+import { dur, ease, spring, stagger } from '@/lib/motion';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/Toast';
 import type { Change } from '@/lib/checkin';
 
-type Item = { familyId: string; name: string; language: 'en' | 'es'; change: Change[]; digest: string[]; nudge: string };
+type Item = { familyId: string; name: string; language: 'en' | 'es'; change: Change[]; digest: string[]; nudge: string; enter: number | null };
+
+// Rows rise in as they stream: opacity and 8px, 200ms ease-out, at least 40ms apart when several arrive at
+// once. The first six of a run animate; later ones (below the fold by then) appear at once. Reduced motion:
+// MotionConfig drops the rise, and the fade is all that's left.
+const RISE = 8;
+const RISE_CAP = 6;
 
 /** D7: runs the Monday check-in, streaming families in as the server finishes each one. */
 export function CheckinRunner() {
@@ -22,12 +28,15 @@ export function CheckinRunner() {
   const [edits, setEdits] = useState<Record<string, string>>({});
   const [runId, setRunId] = useState(0);
   const started = useRef(false);
+  // Entrance schedule for this run: how many rows have risen, and when the next may start (ms).
+  const rise = useRef({ count: 0, next: 0 });
 
   const run = async () => {
     setRunId((n) => n + 1); // a fresh progress line per run, starting from the left
     setItems([]);
     setDone(0);
     setStatus('running');
+    rise.current = { count: 0, next: 0 };
     try {
       const res = await fetch('/api/checkin', { method: 'POST' });
       if (!res.body) throw new Error();
@@ -45,7 +54,18 @@ export function CheckinRunner() {
           const ev = JSON.parse(line);
           if (ev.type === 'start') setTotal(ev.total);
           else if (ev.type === 'progress') setDone(ev.done);
-          else if (ev.type === 'family') setItems((xs) => [...xs, ev]);
+          else if (ev.type === 'family') {
+            const r = rise.current;
+            const now = performance.now();
+            let enter: number | null = null;
+            if (r.count < RISE_CAP) {
+              const at = Math.max(now, r.next);
+              enter = (at - now) / 1000;
+              r.next = at + stagger * 1000;
+            }
+            r.count++;
+            setItems((xs) => [...xs, { ...ev, enter }]);
+          }
           else if (ev.type === 'error') setStatus('error');
           else if (ev.type === 'done') setStatus('done');
         }
@@ -109,7 +129,14 @@ export function CheckinRunner() {
       <ul className="mt-8 flex flex-col gap-4" data-testid="checkin-list">
         <AnimatePresence initial={false}>
           {items.map((it) => (
-            <motion.li key={it.familyId} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={spring.smooth} className="panel grid grid-cols-1 gap-6 !p-5 lg:grid-cols-[1fr_1.2fr]" data-testid="checkin-item">
+            <motion.li
+              key={it.familyId}
+              initial={it.enter === null ? false : { opacity: 0, y: RISE }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: dur.short, ease: ease.out, delay: it.enter ?? 0 }}
+              className="panel grid grid-cols-1 gap-6 !p-5 lg:grid-cols-[1fr_1.2fr]"
+              data-testid="checkin-item"
+            >
               <div>
                 <p className="text-[16px] font-semibold text-ink">
                   {it.name} <span className="t-helper tnum font-normal text-ink-2">· {it.familyId} · {it.language === 'es' ? 'Spanish' : 'English'}</span>

@@ -73,3 +73,43 @@ export function archIconSvg({ pine = '#1E5C47', brass = '#B8862B', nightPine = '
 </svg>
 `;
 }
+
+/** Each stone as a polygon (arch units, y up = negative in SVG terms is flipped here: y grows upward), for 3D extrusion. */
+export type StonePoly = { pts: [number, number][]; key: boolean; side: -1 | 0 | 1; step: number; tone: number; centroid: [number, number] };
+export const STONE_POLYS: StonePoly[] = (() => {
+  const span = 180 / VOUSSOIRS;
+  const g = (GAP / ((R1 + R2) / 2)) * (180 / Math.PI) * 0.5;
+  const arc = (r: number, a0: number, a1: number, n = 10) => Array.from({ length: n + 1 }, (_, i) => {
+    const a = rad(a0 + ((a1 - a0) * i) / n);
+    return [CX + r * Math.cos(a), -SPRING + r * Math.sin(a)] as [number, number];
+  });
+  const out: StonePoly[] = [];
+  const rect = (x0: number, y0: number, x1: number, y1: number, side: -1 | 1, step: number, tone: number) => out.push({ pts: [[x0, y0], [x1, y0], [x1, y1], [x0, y1]], key: false, side, step, tone, centroid: [(x0 + x1) / 2, (y0 + y1) / 2] });
+  // piers (y up from the base): two stones a side
+  rect(CX - R2, 0.2, CX - R1, 12.2, -1, 0, 0.62);
+  rect(CX + R1, 0.2, CX + R2, 12.2, 1, 0, 0.36);
+  rect(CX - R2, 13.8, CX - R1, -SPRING - 0.8, -1, 1, 0.66);
+  rect(CX + R1, 13.8, CX + R2, -SPRING - 0.8, 1, 1, 0.4);
+  for (let i = 0; i < VOUSSOIRS; i++) {
+    const key = i === KEY;
+    let hi = 180 - i * span - g;
+    let lo = 180 - (i + 1) * span + g;
+    let r1 = R1;
+    let r2 = R2;
+    if (key) {
+      lo -= 1.2;
+      hi += 1.2;
+      r1 -= 1.5;
+      r2 += 5;
+    }
+    const pts = [...arc(r2, hi, lo), ...arc(r1, lo, hi)];
+    const mid = rad((lo + hi) / 2);
+    const left = i < KEY;
+    out.push({ pts, key, side: key ? 0 : left ? -1 : 1, step: key ? 5 : left ? 2 + i : 2 + (VOUSSOIRS - 1 - i), tone: key ? 0.5 : left ? 0.72 - i * 0.04 : 0.3 + (VOUSSOIRS - 1 - i) * 0.04, centroid: [CX + ((r1 + r2) / 2) * Math.cos(mid), -SPRING + ((r1 + r2) / 2) * Math.sin(mid)] });
+  }
+  return out;
+})();
+/** The keyhole in the keystone, as a circle + slot (arch units, y up). */
+/** The keyhole (y up): a round hole near the top and a tapered slot beneath it, as in KEYHOLE (radius trimmed so it clears the edge). */
+export const KEYHOLE_UP = { cx: KX, cy: -KY + 9.4, r: 3.0, slot: { top: -KY + 3.6, bottom: -KY - 4.6, halfTop: 1.6, halfBottom: 2.6 } };
+export const ARCH_GEO = { VOUSSOIRS, KEY, GAP };

@@ -937,5 +937,9 @@
       "exemption": "Homeowners' Exemption (OC Assessor)",
       "care": "CARE and FERA discounts"
     }
+  },
+  "intro": {
+    "span": "span 4.2m",
+    "keystone": "keystone"
   }
 }

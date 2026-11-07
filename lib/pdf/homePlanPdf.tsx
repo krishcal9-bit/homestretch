@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, Svg, Rect, Line, renderToBuffer } from '@react-pdf/renderer';
 import { registerFonts } from './fonts';
+import { PdfLockup } from './lockup';
 import { translate } from '../i18n-core';
 import { money, monthName } from '../format';
 import { forecast } from '../forecast';
@@ -52,7 +53,10 @@ export async function renderHomePlanPdf(o: { profile: KeepProfile; movesDone: st
   return renderToBuffer(
     <Document title={t('title')} language={lang}>
       <Page size="LETTER" style={s.page}>
-        <Text style={{ fontSize: 11, fontWeight: 600, color: C.pine }}>Keystone · Habitat for Humanity of Orange County</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <PdfLockup height={26} family={family} tagline={translate(lang, 'brand.tagline')} />
+          <Text style={[s.small, { marginTop: 6 }]}>Habitat for Humanity of Orange County</Text>
+        </View>
         <Text style={{ fontSize: 22, fontWeight: 600, marginTop: 14, lineHeight: 1.25 }}>{t('title')}</Text>
         <Text style={[s.small, { marginTop: 2 }]}>{t('made', { date: new Intl.DateTimeFormat(lang === 'es' ? 'es-US' : 'en-US', { dateStyle: 'long' }).format(now) })}</Text>
 

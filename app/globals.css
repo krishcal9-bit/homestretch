@@ -243,7 +243,7 @@ html[data-vt="fade"]::view-transition-new(root) { animation: 200ms ease both vt-
 }
 
 /* Opening veil (see app/layout.tsx): blank --paper until the landing opening takes over. */
-html.hs-veil::after { content: ''; position: fixed; inset: 0; background: var(--paper); z-index: 69; }
+html.hs-veil::after { content: ''; position: fixed; inset: 0; background: linear-gradient(180deg, #0b1622 0%, #13263a 52%, #24384a 100%); z-index: 69; }
 
 /* Intake: the question rises from its mask, the fields fade up just behind it (under 400ms total). */
 @keyframes mask-rise { from { transform: translateY(100%); } to { transform: none; } }
@@ -472,3 +472,25 @@ html[data-vt='theme']::view-transition-new(theme-toggle) { animation: none; }
   .sc-lamp-flicker { animation: none !important; }
 }
 /* /r6:scenes */
+
+/* brand: the intro's live title lockup (components/brand/Wordmark.tsx LockupTitle) — CSS-timed, no per-frame JS */
+@keyframes ks-solidify { from { font-weight: 300; opacity: 0; transform: translateY(112px); } 60% { opacity: 1; } to { font-weight: 600; opacity: 1; transform: none; } }
+@keyframes ks-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes ks-glint { from { transform: translateX(0); } to { transform: translateX(26px); } }
+.ks-letter { font-weight: 600; animation: ks-solidify 0.5s cubic-bezier(0.23, 1, 0.32, 1) both; }
+.ks-notch { animation: ks-fade 0.3s cubic-bezier(0.23, 1, 0.32, 1) both; }
+.ks-tagline { animation: ks-fade 0.4s cubic-bezier(0.23, 1, 0.32, 1) both; }
+.ks-tagline.ks-leaving { opacity: 0; transition: opacity 150ms ease; animation: none; }
+.ks-glint { animation: ks-glint 0.55s cubic-bezier(0.45, 0, 0.55, 1) both; }
+.ks-still .ks-letter, .ks-still .ks-notch, .ks-still .ks-tagline, .ks-still .ks-glint { animation: none; }
+@media (prefers-reduced-motion: reduce) { .ks-letter, .ks-notch, .ks-tagline, .ks-glint { animation: none; } }
+
+/* the intro's sky (components/Intro.tsx): deep ink-blue twilight that lifts toward the page, a warm horizon glow rising */
+.ks-twilight { background: linear-gradient(180deg, #0b1622 0%, #13263a 52%, #24384a 100%); }
+.ks-play .ks-twilight { animation: ks-lift 1.9s cubic-bezier(0.65, 0, 0.35, 1) both; }
+.ks-horizon { background: radial-gradient(130% 58% at 50% 100%, rgba(240, 168, 92, 0.8) 0%, rgba(227, 184, 102, 0.38) 40%, rgba(227, 184, 102, 0) 74%); opacity: 0; transform: translateY(30%); }
+.ks-play .ks-horizon { animation: ks-rise 2.6s cubic-bezier(0.23, 1, 0.32, 1) both; }
+html[data-theme='dark'] .ks-play .ks-horizon { animation-name: ks-rise-night; }
+@keyframes ks-lift { to { opacity: 0; } }
+@keyframes ks-rise { 0% { opacity: 0; transform: translateY(30%); } 30% { opacity: 1; transform: none; } 100% { opacity: 0.2; transform: none; } }
+@keyframes ks-rise-night { 0% { opacity: 0; transform: translateY(30%); } 30% { opacity: 0.75; transform: none; } 100% { opacity: 0.12; transform: none; } }

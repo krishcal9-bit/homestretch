@@ -260,6 +260,10 @@ export type HouseHandle = {
   speed?: number;
   /** set by the intro's camera while it lands: the plinth retracts exactly as the house reaches the street */
   groundOverride?: number;
+  /** set by the intro film (components/three/introFilm.tsx): where the sun points (it follows the action) and how much dusk is left */
+  film?: { focus: THREE.Vector3; dusk: number };
+  /** the intro film hides the house until its beat */
+  hidden?: boolean;
   /** HOUSE_VARIANTS index (0 = the family's house) */
   variant?: number;
 };
@@ -307,6 +311,7 @@ export function House({ ctl, onBuilt }: { ctl: HouseHandle; onBuilt?: () => void
 
   useFrame((_, delta) => {
     const R = r.current;
+    if (R.root) R.root.visible = !ctl.hidden;
     const b = ctl.build;
     let moving = false;
     // wall-clock time (R3F's clock restarts when the canvas pauses off screen, which would replay the build)
@@ -554,7 +559,7 @@ export function House({ ctl, onBuilt }: { ctl: HouseHandle; onBuilt?: () => void
   ];
   return (
     // a mirrored neighbour keeps the light where it is (only the model flips)
-    <group scale={[variant?.mirror ? -1 : 1, 1, 1]}>
+    <group ref={set('root')} scale={[variant?.mirror ? -1 : 1, 1, 1]}>
       {/* soft shadow the whole model casts on the page */}
       <mesh ref={set('plinthShadow')} position={[0, -PLINTH.base - 0.36, PLINTH.z + 0.25]} rotation={[-Math.PI / 2, 0, 0]} material={m.shadow} renderOrder={-1}>
         <planeGeometry args={[PLINTH.w * 1.45, PLINTH.d * 1.45]} />
@@ -761,6 +766,8 @@ export function Lights({ ctl }: { ctl: HouseHandle }) {
   const gndD = useMemo(() => new THREE.Color('#B9C9AE'), []);
   const gndN = useMemo(() => new THREE.Color('#26332B'), []);
   const tmp = useMemo(() => new THREE.Color(), []);
+  const dusky = useMemo(() => new THREE.Color('#FFB27A'), []);
+  const twilight = useMemo(() => new THREE.Color('#3A4F6B'), []);
   useFrame((_, delta) => {
     const target = ctl.state.sun;
     const v = cur.current + (target - cur.current) * Math.min(1, delta * 2.5);
@@ -770,15 +777,24 @@ export function Lights({ ctl }: { ctl: HouseHandle }) {
     curN.current = Math.abs(w - nt) < 0.003 ? nt : w;
     const s = cur.current * (1 - curN.current);
     const n = curN.current;
+    // the intro film: the light follows the action (the arch, then the house) and starts at dusk
+    const f = ctl.film;
+    const dusk = f?.dusk ?? 0;
     if (dir.current) {
       // afternoon: high and from the front-left; golden hour: lower and warmer (longer shadows); night: the moon
-      dir.current.position.set(-5.5 - 1.5 * s, 11 - 4.5 * s + 1.5 * n, 9 - 1.5 * s);
-      dir.current.color.copy(tmp.copy(cA).lerp(cB, s).lerp(moon, n));
-      dir.current.intensity = (3.25 - 0.25 * s) * (1 - n) + 1.2 * n;
+      const fx = f?.focus.x ?? 0;
+      const fz = f?.focus.z ?? 0;
+      dir.current.position.set(fx - 5.5 - 1.5 * s, 11 - 4.5 * s + 1.5 * n, fz + 9 - 1.5 * s);
+      if (dir.current.target.position.x !== fx || dir.current.target.position.z !== fz) {
+        dir.current.target.position.set(fx, 0, fz);
+        dir.current.target.updateMatrixWorld();
+      }
+      dir.current.color.copy(tmp.copy(cA).lerp(cB, s).lerp(moon, n)).lerp(dusky, 0.55 * dusk * (1 - n));
+      dir.current.intensity = ((3.25 - 0.25 * s) * (1 - n) + 1.2 * n) * (1 - 0.5 * dusk);
     }
     if (hemi.current) {
-      hemi.current.intensity = (1.85 - 0.3 * s) * (1 - n) + 0.85 * n;
-      hemi.current.color.copy(tmp.copy(skyD).lerp(skyN, n));
+      hemi.current.intensity = ((1.85 - 0.3 * s) * (1 - n) + 0.85 * n) * (1 - 0.55 * dusk);
+      hemi.current.color.copy(tmp.copy(skyD).lerp(skyN, n)).lerp(twilight, 0.6 * dusk);
       hemi.current.groundColor.copy(tmp.copy(gndD).lerp(gndN, n));
     }
     if (lamp.current) lamp.current.intensity = 5 * n;

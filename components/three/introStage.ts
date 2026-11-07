@@ -15,6 +15,8 @@ let state: State = { stage: null, mode: 'none', firstFrame: false };
 const SERVER: State = state;
 const subs = new Set<() => void>();
 let docker: (() => void) | null = null;
+export type ArchRect = { left: number; top: number; width: number; height: number };
+const archSubs = new Set<(r: ArchRect) => void>();
 
 export const introStage = {
   get: () => state,
@@ -31,6 +33,16 @@ export const introStage = {
   /** The hero house registers how it docks (move the canvas into its slot, resize, render — one task). */
   setDocker(f: (() => void) | null) {
     docker = f;
+  },
+  /** The film's arch has left the frame (the camera is in its opening): its projected rect, for the 2D arch. */
+  archOut(r: ArchRect) {
+    archSubs.forEach((f) => f(r));
+  },
+  onArchOut(f: (r: ArchRect) => void) {
+    archSubs.add(f);
+    return () => {
+      archSubs.delete(f);
+    };
   },
   /** Called by the intro at the end of the film, synchronously, before the overlay goes away. */
   dock() {

@@ -6,6 +6,10 @@ import { translate } from '@/lib/i18n-core';
 import { monthName } from '@/lib/format';
 import { MAX_MONTHS } from '@/lib/engine';
 import { apiError } from '@/lib/api';
+import { LOCKUP_EM_SHARE, LOCKUP_TEXT_SHARE, LOCKUP_VB, lockupSvg } from '@/lib/brandLockup';
+
+const LOCK_H = 96;
+const LOCK_W = Math.round((LOCK_H * LOCKUP_VB.w) / LOCKUP_VB.h);
 
 export const runtime = 'nodejs';
 
@@ -30,14 +34,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ code: st
   return new ImageResponse(
     (
       <div style={{ width: 1080, height: 1920, background: '#F6F7F5', display: 'flex', flexDirection: 'column', padding: 100, fontFamily: 'Public Sans', color: '#182420' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20, fontSize: 40, fontWeight: 600 }}>
-          <svg width="48" height="48" viewBox="0 0 20 20">
-            <path d="M3 9.5 10 3l7 6.5V17H3z" fill="none" stroke="#1E5C47" strokeWidth="1.75" strokeLinejoin="round" />
-            <path d="M3 14h14" stroke="#1E5C47" strokeWidth="1.75" />
-          </svg>
-          Keystone
+        {/* the lockup: arch + wordmark as vector paths, the tagline beneath in Public Sans at 22% of the wordmark */}
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={`data:image/svg+xml;base64,${Buffer.from(lockupSvg(LOCK_H, { paper: '#F6F7F5' })).toString('base64')}`} width={LOCK_W} height={LOCK_H} alt="Keystone" />
+          <div style={{ display: 'flex', fontSize: Math.round(LOCK_H * LOCKUP_EM_SHARE * 0.22), color: '#4A5753', marginLeft: Math.round(LOCK_W * LOCKUP_TEXT_SHARE), marginTop: 4 }}>{t('brand.tagline')}</div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', marginTop: 360 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', marginTop: 300 }}>
           <div style={{ fontSize: 96, fontWeight: 600, lineHeight: 1.08, letterSpacing: -1, color: '#182420' }}>{headline}</div>
           {ready ? <div style={{ fontSize: 52, fontWeight: 600, marginTop: 40, color: '#B8862B' }}>{ready}</div> : null}
         </div>

@@ -16,7 +16,7 @@ export function Wordmark({ height = 24 }: { height?: number }) {
 /** The header wordmark (28px). On the landing page it is the slot the title card flies onto. */
 function HeaderWordmark({ height = 28 }: { height?: number }) {
   const b = useBrand();
-  return <BrandWordmark height={height} svgClassName="h-[26px] w-auto sm:h-[31px]" slot className={b.stage === 'title' ? 'invisible' : undefined} />;
+  return <BrandWordmark height={height} svgClassName="h-[24px] w-auto sm:h-[28px]" slot className={b.stage === 'title' ? 'invisible' : undefined} />;
 }
 
 /** Quiet "Staff sign in" link; navigates with the crisp staff fade. */

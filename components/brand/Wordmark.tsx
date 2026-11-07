@@ -1,15 +1,16 @@
 'use client';
-import { motion, useReducedMotion } from 'motion/react';
-import { forwardRef, useEffect, useId } from 'react';
-import { P } from '@/lib/illustrationPalette';
-import { GLYPHS_BOLD } from './wordmarkGlyphs';
+import { forwardRef, useId } from 'react';
+import { WORDMARK as G } from './wordmarkGlyphs';
+import { fraunces, WORDMARK_FVS } from './fraunces';
 
 /**
- * Keystone: the brand. A stone arch — pine stones shaded like the houses (light from the top-left), with a brass
- * keystone at the top centre that has a small keyhole cut into it — and "Keystone" in Public Sans 700 at -0.03em,
- * ink, as outlines (crisp at any size). The keystone glows softly at night. Units: em = 100, baseline y = 0.
+ * Keystone: the brand lockup. A stone arch — pine stones shaded like the houses (light from the top-left), with a
+ * brass keystone at the top centre that has a small keyhole cut into it — then "Keystone" in Fraunces (opsz 144,
+ * wght 600, SOFT 30, WONK 0, −0.02em; the display serif is for the wordmark only) in ink, with one flourish: a tiny
+ * brass keystone wedge set into the top of the K's stem. Optional tagline beneath in Public Sans at 22% of the
+ * wordmark's size. Static places draw the letters as outlines; the intro's title card sets them as live text.
+ * The keystone glows softly at night. Units: em = 100, baseline y = 0.
  */
-const G = GLYPHS_BOLD;
 const INK = 'var(--ink)';
 const PINE = 'var(--pine)';
 const BRASS = 'var(--brass)';
@@ -17,11 +18,14 @@ const BRASS = 'var(--brass)';
 import { CX, R1, R2, SPRING, STONES, KEYHOLE, type Stone } from './arch';
 
 const ARCH_W = CX + R2; // the arch's right edge (it starts at x = 2)
-const TEXT_X = ARCH_W + 22;
-const VB = { x: -4, y: -84, w: TEXT_X + G.width + 8, h: 84 + 24 };
+const TEXT_X = ARCH_W + 20;
+const VB = { x: -4, y: -84, w: TEXT_X + G.width + 6, h: 84 + 24 };
+/** the tagline's size as a share of the wordmark's (em) */
+export const TAGLINE_SCALE = 0.22;
+/** layout facts for callers that place things relative to the lockup (the intro) */
+export const LOCKUP = { vb: VB, textX: TEXT_X, archW: ARCH_W, glyphs: G };
 const VIEWBOX = `${VB.x} ${VB.y} ${VB.w} ${VB.h}`;
 export const WM_ASPECT = VB.w / VB.h;
-export const WM_TITLE_ASPECT = WM_ASPECT;
 
 /** Stone fills: one gradient per tone, lit top-left → shaded bottom-right; the keystone in brass. */
 function Defs({ id }: { id: string }) {
@@ -71,13 +75,56 @@ export function ArchMark({ size = 32, className = '', title }: { size?: number; 
   );
 }
 
-/** The wordmark: the arch, then "Keystone". `height` in px; width follows the aspect ratio. */
+/** The arch's own box (arch units): the intro's 2D arch is drawn in exactly this box so it lands on the lockup's. */
+export const ARCH_BOX = { x: CX - R2, y: SPRING - R2 - 5, w: 2 * R2, h: R2 + 5 - SPRING };
+/** The arch alone, stretched to fill its box exactly (the intro's shrinking arch). */
+export function ArchBox({ className = '' }: { className?: string }) {
+  const id = useId().replace(/:/g, '');
+  return (
+    <svg viewBox={`${ARCH_BOX.x} ${ARCH_BOX.y} ${ARCH_BOX.w} ${ARCH_BOX.h}`} preserveAspectRatio="none" className={`block h-full w-full overflow-visible ${className}`} aria-hidden>
+      <Defs id={id} />
+      <KeyGlow id={id} />
+      {STONES.map((s, i) => (
+        <StonePath key={i} s={s} i={i} id={id} />
+      ))}
+    </svg>
+  );
+}
+
+/** The K's brass notch (a keystone wedge set into the top of its stem). */
+function Notch({ glint = false, id }: { glint?: boolean; id: string }) {
+  return (
+    <g transform={`translate(${TEXT_X} 0)`}>
+      <path d={G.notch} fill={BRASS} />
+      {glint && (
+        <>
+          <defs>
+            <clipPath id={`nc${id}`}>
+              <path d={G.notch} />
+            </clipPath>
+            <linearGradient id={`ng${id}`} x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stopColor="#fff" stopOpacity="0" />
+              <stop offset="0.5" stopColor="#fff" stopOpacity="0.85" />
+              <stop offset="1" stopColor="#fff" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <g clipPath={`url(#nc${id})`}>
+            <rect className="ks-glint" x={G.notchBox.x - 10} y={G.notchBox.y - 2} width={7} height={G.notchBox.h + 4} fill={`url(#ng${id})`} />
+          </g>
+        </>
+      )}
+    </g>
+  );
+}
+
+/** The lockup (arch + wordmark, outlines). `height` in px is the mark's; the tagline (optional) sits beneath. */
 export function Wordmark({
   height = 28,
   className = '',
   svgClassName,
   title = 'Keystone',
   slot = false,
+  tagline,
 }: {
   height?: number;
   className?: string;
@@ -86,10 +133,13 @@ export function Wordmark({
   title?: string;
   /** the header slot the title card lands on */
   slot?: boolean;
+  /** the tagline beneath, in Public Sans at 22% of the wordmark's size (only where it stays legible) */
+  tagline?: string;
 }) {
   const id = useId().replace(/:/g, '');
+  const em = (height / VB.h) * 100; // the wordmark's font size, px
   return (
-    <span className={`inline-block ${className}`} data-brand-slot={slot || undefined}>
+    <span className={`inline-flex flex-col ${className}`} data-brand-slot={slot || undefined}>
       <svg width={svgClassName ? undefined : height * WM_ASPECT} height={svgClassName ? undefined : height} viewBox={VIEWBOX} role="img" aria-label={title} className={`block overflow-visible ${svgClassName ?? ''}`} style={svgClassName ? { aspectRatio: String(WM_ASPECT) } : undefined}>
         <Defs id={id} />
         <KeyGlow id={id} />
@@ -101,105 +151,62 @@ export function Wordmark({
             <path key={i} d={g.d} fill={INK} />
           ))}
         </g>
+        <Notch id={id} />
       </svg>
+      {tagline && (
+        <span className="block whitespace-nowrap font-normal text-ink-2" style={{ fontSize: Math.max(11, em * TAGLINE_SCALE), marginLeft: ((TEXT_X - VB.x) / VB.w) * height * WM_ASPECT, marginTop: em * 0.04, lineHeight: 1.2 }}>
+          {tagline}
+        </span>
+      )}
     </span>
   );
 }
 
 /**
- * The intro's title card, from mount (seconds): the arch builds stone by stone from both sides (60ms stagger,
- * spring, no bounce) · the brass keystone drops in last and locks it with a small settle (0.42) · it glows
- * (0.64) · "Keystone" rises letter by letter from a mask (0.66 + i×0.035) · the tagline fades in (1.1) · hold
- * 1.2s · done 2.6 (the intro then flies it to the header).
+ * The intro's title lockup, live: the same box as the static lockup, with "Keystone" set as SVG text in the variable
+ * Fraunces so each letter can solidify (weight 300 → 600, opacity 0 → 1, rising from a mask, 40ms apart); the K's
+ * notch catches a glint; the tagline fades in beneath. The arch is drawn here too (the intro shrinks the 3D arch into
+ * it). Timing is CSS (start = `revealAt` seconds after mount), so it costs nothing per frame in React.
  */
-export const TITLE_T = { stones: 0.05, stagger: 0.06, key: 0.42, light: 0.64, letters: 0.66, letterStagger: 0.035, letter: 0.45, tagline: 1.1, done: 2.6 };
-const EASE = [0.23, 1, 0.32, 1] as const;
-
-type TitleProps = { width: number; tagline?: string; leaving?: boolean; onMarkLit?: () => void; svgRef?: React.Ref<SVGSVGElement> };
-export const WordmarkTitle = forwardRef<HTMLDivElement, TitleProps>(function WordmarkTitle({ width, tagline, leaving = false, onMarkLit, svgRef }, ref) {
+export const LOCKUP_T = { letter: 0.5, stagger: 0.04, glint: 0.62, tagline: 0.5 };
+type TitleProps = { width: number; tagline?: string; revealAt?: number; leaving?: boolean; svgRef?: React.Ref<SVGSVGElement>; archRef?: React.Ref<SVGGElement>; still?: boolean; /** the arch starts hidden (the intro's 2D arch lands on it, then shows it) */ archHidden?: boolean };
+export const LockupTitle = forwardRef<HTMLDivElement, TitleProps>(function LockupTitle({ width, tagline, revealAt = 0, leaving = false, svgRef, archRef, still = false, archHidden = false }, ref) {
   const id = useId().replace(/:/g, '');
-  const reduce = useReducedMotion();
-  useEffect(() => {
-    if (reduce) return;
-    const t = setTimeout(() => onMarkLit?.(), TITLE_T.light * 1000);
-    return () => clearTimeout(t);
-  }, [reduce, onMarkLit]);
+  const k = width / VB.w;
   const height = width / WM_ASPECT;
+  const d = (s: number) => `${(revealAt + s).toFixed(3)}s`;
   return (
-    <div ref={ref} className="relative inline-block" style={{ width }}>
-      {/* a soft paper-coloured glow behind the mark keeps it crisp over the blurred scene */}
-      <motion.div
-        aria-hidden
-        className="pointer-events-none absolute"
-        style={{ left: '-14%', right: '-14%', top: '-60%', bottom: tagline ? '-110%' : '-60%', background: P.skyBottom, borderRadius: '50%', filter: 'blur(56px)' }}
-        initial={reduce ? false : { opacity: 0 }}
-        animate={{ opacity: leaving ? 0 : 0.7 }}
-        transition={{ duration: leaving ? 0.2 : 0.5, ease: EASE }}
-      />
+    <div ref={ref} className={`ks-title relative inline-block ${still ? 'ks-still' : ''}`} style={{ width }}>
       <svg ref={svgRef} width={width} height={height} viewBox={VIEWBOX} role="img" aria-label="Keystone" className="relative block overflow-visible">
         <Defs id={id} />
         <defs>
-          <clipPath id={`clip${id}`}>
-            <rect x={TEXT_X - 6} y={VB.y} width={G.width + 14} height={-VB.y + 26} />
+          <clipPath id={`tc${id}`}>
+            <rect x={TEXT_X - 8} y={VB.y} width={G.width + 16} height={-VB.y + 26} />
           </clipPath>
         </defs>
-        {/* the keystone's glow when it locks (a warm bloom), and its quiet night glow */}
-        <motion.circle
-          cx={CX}
-          cy={SPRING - (R1 + R2) / 2 - 2}
-          r={18}
-          fill={BRASS}
-          filter={`url(#kg${id})`}
-          initial={reduce ? { opacity: 0.35 } : { opacity: 0 }}
-          animate={reduce ? { opacity: 0.35 } : { opacity: [0, 0.75, 0.35] }}
-          transition={reduce ? undefined : { duration: 0.9, times: [0, 0.35, 1], ease: 'easeOut', delay: TITLE_T.light }}
-        />
-        {/* the arch: stones rise into place from both sides, the keystone drops in last and settles */}
-        {STONES.map((s, i) => {
-          const at = s.key ? TITLE_T.key : TITLE_T.stones + s.step * TITLE_T.stagger;
-          const from = s.key ? { y: -46, opacity: 0 } : { x: s.side * 9, y: 16, opacity: 0 };
-          return (
-            <motion.g
-              key={i}
-              initial={reduce ? false : from}
-              animate={{ x: 0, y: 0, opacity: 1 }}
-              transition={
-                s.key
-                  ? { y: { type: 'spring', duration: 0.45, bounce: 0.22, delay: at }, opacity: { duration: 0.1, delay: at } }
-                  : { type: 'spring', duration: 0.45, bounce: 0, delay: at, opacity: { duration: 0.15, delay: at } }
-              }
-            >
-              <StonePath s={s} i={i} id={id} />
-            </motion.g>
-          );
-        })}
-        {/* "Keystone" rises letter by letter */}
-        <g clipPath={`url(#clip${id})`}>
-          <g transform={`translate(${TEXT_X} 0)`}>
-            {G.letters.map((g, i) => (
-              <motion.path
-                key={i}
-                d={g.d}
-                fill={INK}
-                initial={reduce ? false : { y: 90, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ y: { duration: TITLE_T.letter, ease: EASE, delay: TITLE_T.letters + i * TITLE_T.letterStagger }, opacity: { duration: 0.2, delay: TITLE_T.letters + i * TITLE_T.letterStagger } }}
-              />
-            ))}
-          </g>
+        <g ref={archRef} style={archHidden ? { opacity: 0 } : undefined}>
+          <KeyGlow id={id} />
+          {STONES.map((s, i) => (
+            <StonePath key={i} s={s} i={i} id={id} />
+          ))}
+        </g>
+        <g clipPath={`url(#tc${id})`} className={fraunces.className} style={{ fontVariationSettings: WORDMARK_FVS }}>
+          {G.letters.map((g, i) => (
+            <text key={i} x={TEXT_X + g.x} y={0} fontSize={100} fill={INK} className="ks-letter" style={{ animationDelay: d(i * LOCKUP_T.stagger) }}>
+              {g.ch}
+            </text>
+          ))}
+        </g>
+        <g className="ks-notch" style={{ animationDelay: d(LOCKUP_T.stagger) }}>
+          <Notch id={id} glint />
         </g>
       </svg>
       {tagline && (
-        <motion.p
-          className="relative mt-[0.6em] text-center font-normal text-ink-2"
-          style={{ fontSize: 'clamp(17px, 1.55vw, 22px)', lineHeight: 1.3 }}
-          initial={reduce ? false : { opacity: 0, y: 6 }}
-          animate={leaving ? { opacity: 0, y: 0 } : { opacity: 1, y: 0 }}
-          transition={leaving ? { duration: 0.15 } : { duration: 0.3, ease: EASE, delay: TITLE_T.tagline }}
-        >
+        <p className={`ks-tagline relative whitespace-nowrap font-normal text-ink-2 ${leaving ? 'ks-leaving' : ''}`} style={{ fontSize: 100 * k * TAGLINE_SCALE, marginLeft: (TEXT_X - VB.x) * k, marginTop: 100 * k * 0.06, lineHeight: 1.25, animationDelay: d(LOCKUP_T.tagline) }}>
           {tagline}
-        </motion.p>
+        </p>
       )}
+      <style>{`.ks-title .ks-glint{animation-delay:${d(LOCKUP_T.glint)}}`}</style>
     </div>
   );
 });

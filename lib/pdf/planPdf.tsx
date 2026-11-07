@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, Svg, Line, Circle, renderToBuffer } from '@react-pdf/renderer';
 import { registerFonts } from './fonts';
+import { PdfLockup } from './lockup';
 import { translate } from '../i18n-core';
 import { addMonths, MAX_MONTHS } from '../engine';
 import { monthName } from '../format';
@@ -27,7 +28,10 @@ export async function renderPlanPdf(o: { code: string; result: ReadinessResult; 
   return renderToBuffer(
     <Document title={t('pdf.title')} language={o.lang}>
       <Page size="LETTER" style={s.page}>
-        <Text style={{ fontSize: 12, fontWeight: 600, color: '#1E5C47' }}>Keystone · Habitat for Humanity of Orange County</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <PdfLockup height={26} family={family} tagline={t('brand.tagline')} />
+          <Text style={[s.small, { marginTop: 6 }]}>Habitat for Humanity of Orange County</Text>
+        </View>
         <Text style={[s.small, { marginTop: 2 }]}>{t('pdf.code', { code: o.code })}</Text>
         <Text style={{ fontSize: 11, marginTop: 24, color: '#4A5753' }}>{t('pdf.ready')}</Text>
         <Text style={s.date}>{o.result.monthsToReady >= MAX_MONTHS ? t('result.tenPlus') : monthName(o.result.readyDate, o.lang)}</Text>

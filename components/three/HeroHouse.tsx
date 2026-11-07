@@ -10,12 +10,14 @@ import { useNight } from './useNight';
 import { introStage, useIntroStage } from './introStage';
 import type { StageApi } from './StageScene';
 import type { HouseState } from './houseModel';
+import { useLang } from '@/lib/i18n';
 
 const Scene = dynamic(() => import('./StageScene'), { ssr: false });
 /** Start fetching the hero house's three.js chunk early (the landing calls this on load). */
 export const preloadStage = () => import('./StageScene');
 
-const FILM: HouseState = { lit: 0, porch: false, doorOpen: false, sun: 0, smoke: true, night: 0, ground: 1 };
+/** the house as the film arrives at it: dusk, the porch lamp and two windows on, door still shut */
+const FILM: HouseState = { lit: 2, porch: true, doorOpen: false, sun: 1, smoke: true, night: 0, ground: 0 };
 /** The landing street's stills (no plinth, STREET_FRAME); see scripts/render-street.ts. */
 export const STREET_STILL = '/house/street.png';
 export const STREET_STILL_NIGHT = '/house/street-night.png';
@@ -47,6 +49,8 @@ export function HeroHouse({ intro, lit, sun, frame = 'slot' }: { intro: boolean 
   const [ready, setReady] = useState(false);
   const [docked, setDocked] = useState(false);
   const visible = useInView(slotRef);
+  const { t } = useLang();
+  const labels = useMemo(() => ({ span: t('intro.span'), key: t('intro.keystone') }), [t]);
 
   useEffect(() => setGl(hasWebGL()), []);
   useEffect(() => {
@@ -133,7 +137,7 @@ export function HeroHouse({ intro, lit, sun, frame = 'slot' }: { intro: boolean 
       />
       {live && host &&
         createPortal(
-          <Scene intro={born === true} state={state} tilt active={onStage || filming || visible} slot={slot} api={api} onFirstFrame={onFirstFrame} frame={frame} />,
+          <Scene intro={born === true} state={state} tilt active={onStage || filming || visible} slot={slot} api={api} onFirstFrame={onFirstFrame} frame={frame} labels={labels} />,
           host,
         )}
     </div>

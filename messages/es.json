@@ -937,5 +937,9 @@
       "exemption": "Exención para Propietarios (Tasador del Condado de Orange)",
       "care": "Descuentos CARE y FERA"
     }
+  },
+  "intro": {
+    "span": "luz 4,2 m",
+    "keystone": "clave"
   }
 }

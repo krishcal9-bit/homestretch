@@ -2,6 +2,7 @@
 import { Document, Font, Page, StyleSheet, Text, View, renderToBuffer } from '@react-pdf/renderer';
 import path from 'path';
 import type { ReferralPacket } from './referral';
+import { PdfLockup } from './pdf/lockup';
 
 let fontFamily = 'Helvetica';
 let fontBold = 'Helvetica-Bold';
@@ -30,7 +31,6 @@ const BRASS = '#B8862B';
 const s = StyleSheet.create({
   page: { padding: 40, fontFamily, fontSize: 10, color: INK, lineHeight: 1.4 },
   top: { flexDirection: 'row', justifyContent: 'space-between', borderBottom: `1 solid ${LINE}`, paddingBottom: 10 },
-  brand: { fontSize: 10, color: PINE, fontFamily: fontBold, fontWeight: 600 },
   muted: { color: INK2 },
   h1: { fontSize: 20, fontFamily: fontBold, fontWeight: 600, marginTop: 18 },
   readyRow: { flexDirection: 'row', alignItems: 'baseline', marginTop: 6 },
@@ -54,7 +54,10 @@ function Packet({ p }: { p: ReferralPacket }) {
     <Document title={`${p.title} · ${p.familyName}`} author="Keystone" language={p.lang}>
       <Page size="LETTER" style={s.page}>
         <View style={s.top}>
-          <Text style={s.brand}>Keystone · Habitat for Humanity of Orange County</Text>
+          <View>
+            <PdfLockup height={22} family={fontFamily} />
+            <Text style={[s.muted, { fontSize: 8.5, marginTop: 3 }]}>Habitat for Humanity of Orange County</Text>
+          </View>
           <Text style={s.muted}>
             {p.generated}
             {p.code ? `  ·  ${p.code}` : ''}

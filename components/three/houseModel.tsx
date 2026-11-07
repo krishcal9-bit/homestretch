@@ -2,7 +2,7 @@
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { P } from '@/lib/illustrationPalette';
+import { PX as P } from '@/lib/illustrationPalette';
 
 /**
  * The Homestretch house: a stylized two-story craftsman with a front porch gable, built from primitives.
@@ -23,7 +23,22 @@ export type HouseState = {
   /** 0 = afternoon, 1 = golden hour */
   sun: number;
   smoke: boolean;
+  /** 0 = day, 1 = night (dark theme): moonlight, every window and the porch lamp glowing warm; tweens ~600ms */
+  night?: number;
+  /**
+   * 1 = the diorama plinth (lawn slab on a soil base); 0 = no plinth: the house, trees and path stand on the
+   * page's own illustrated ground (the landing street), casting their shadows onto it. Tweens.
+   */
+  ground?: number;
 };
+
+/** Neighbours on the landing street: the same house in other colours (and mirrored), never the brass door. */
+export const HOUSE_VARIANTS = [
+  null,
+  { wall: '#DCE4E6', roof: '#47525A', door: '#5E707B', mirror: true, trees: [true, false] },
+  { wall: '#EEE2CB', roof: '#5C5048', door: '#7A6650', mirror: false, trees: [false, true] },
+  { wall: '#E9D9CF', roof: '#3A4740', door: '#4E6B5E', mirror: true, trees: [true, true] },
+] as const;
 
 // ---- timeline (seconds, intro scale) ----
 const TL = {
@@ -152,21 +167,23 @@ function softShadowTexture() {
 }
 
 type Mats = ReturnType<typeof useMaterials>;
-function useMaterials() {
+function useMaterials(variant = 0) {
   return useMemo(() => {
+    const v = HOUSE_VARIANTS[variant] ?? null;
     const std = (color: string, roughness = 0.9, extra: Partial<THREE.MeshStandardMaterialParameters> = {}) => new THREE.MeshStandardMaterial({ color, roughness, metalness: 0, ...extra });
     const glass = () => std(P.glass, 0.35, { emissive: new THREE.Color(P.honey), emissiveIntensity: 0 });
     return {
       lawn: std(P.sage, 0.95),
+      catcher: new THREE.ShadowMaterial({ opacity: 0, color: '#1C2A24', depthWrite: false }),
       soil: std(P.soil, 1),
       slab: std(P.stoneShade, 0.95),
-      wall: std(P.wall, 0.88),
-      wallSide: std(P.wall, 0.92),
+      wall: std(v?.wall ?? P.wall, 0.88),
+      wallSide: std(v?.wall ?? P.wall, 0.92),
       trim: std(P.trim, 0.7),
-      roof: std(P.slate, 0.78),
+      roof: std(v?.roof ?? P.slate, 0.78),
       roofEdge: std(P.slateDark, 0.8),
       chimney: std(P.stoneShade, 0.95),
-      door: std(P.brass, 0.55, { metalness: 0.15 }),
+      door: std(v?.door ?? P.brass, 0.55, { metalness: v ? 0 : 0.15 }),
       doorInset: std(P.brassDark, 0.6, { metalness: 0.1 }),
       knob: std(P.honey, 0.3, { metalness: 0.6 }),
       stone: std(P.stone, 0.95),
@@ -186,7 +203,7 @@ function useMaterials() {
       smoke: new THREE.MeshStandardMaterial({ color: '#FFFFFF', roughness: 1, transparent: true, opacity: 0, depthWrite: false }),
       glass: [glass(), glass(), glass(), glass(), glass()],
     };
-  }, []);
+  }, [variant]);
 }
 
 function Box({ size, pos, mat, rot }: { size: [number, number, number]; pos: [number, number, number]; mat: THREE.Material; rot?: [number, number, number] }) {
@@ -241,6 +258,10 @@ export type HouseHandle = {
   key: boolean;
   /** timeline speed for the intro (1 = as authored) */
   speed?: number;
+  /** set by the intro's camera while it lands: the plinth retracts exactly as the house reaches the street */
+  groundOverride?: number;
+  /** HOUSE_VARIANTS index (0 = the family's house) */
+  variant?: number;
 };
 
 /** Mutable controller shared between the scene and its React wrapper (no re-renders). */
@@ -249,7 +270,8 @@ export function makeHouseController(build: HouseBuild, state: HouseState): House
 }
 
 export function House({ ctl, onBuilt }: { ctl: HouseHandle; onBuilt?: () => void }) {
-  const m = useMaterials();
+  const m = useMaterials(ctl.variant ?? 0);
+  const variant = HOUSE_VARIANTS[ctl.variant ?? 0] ?? null;
   const { invalidate } = useThree();
   const geo = useMemo(
     () => ({
@@ -275,6 +297,8 @@ export function House({ ctl, onBuilt }: { ctl: HouseHandle; onBuilt?: () => void
   };
   const glassI = useRef([0, 0, 0, 0, 0]);
   const porchI = useRef(0);
+  const nightI = useRef(ctl.state.night ?? 0);
+  const groundI = useRef(ctl.groundOverride ?? ctl.state.ground ?? 1);
   const smokeT = useRef(0);
   const built = useRef(false);
 
@@ -315,6 +339,30 @@ export function House({ ctl, onBuilt }: { ctl: HouseHandle; onBuilt?: () => void
     const pp = spring(prog(t, TL.plinth, 0.45), 0.85);
     if (R.plinth) R.plinth.position.y = -1.4 * (1 - pp);
     m.shadow.opacity = 0.85 * pp;
+    // the plinth itself (lawn slab + soil base) retracts and fades when the house stands on the page's ground;
+    // a shadow catcher then puts the house's and trees' shadows on that ground
+    const gT = ctl.groundOverride ?? ctl.state.ground ?? 1;
+    if (ctl.groundOverride !== undefined) groundI.current = gT;
+    else {
+      groundI.current += (gT - groundI.current) * Math.min(1, delta * 4);
+      if (Math.abs(groundI.current - gT) < 0.003) groundI.current = gT;
+      else moving = true;
+    }
+    const g = groundI.current;
+    if (R.lot) {
+      R.lot.position.y = -0.9 * (1 - g);
+      R.lot.visible = g > 0.005;
+      for (const mat of [m.lawn, m.soil]) {
+        const tr = g < 0.999;
+        if (mat.transparent !== tr) {
+          mat.transparent = tr;
+          mat.needsUpdate = true;
+        }
+        mat.opacity = g;
+      }
+    }
+    if (R.plinthShadow) R.plinthShadow.visible = g > 0.005;
+    m.catcher.opacity = 0.26 * (1 - g) * pp;
     if (R.slab) {
       const s = spring(prog(t, TL.slab, 0.36), 0.9);
       R.slab.position.z = 2.2 * (1 - s);
@@ -406,17 +454,25 @@ export function House({ ctl, onBuilt }: { ctl: HouseHandle; onBuilt?: () => void
 
     // window lights: the intro lights the first window; afterwards, `state.lit` decides
     const st = ctl.state;
+    // night (dark theme): every window comes on, in a quick stagger, the lit ones brighter
+    const nightT = st.night ?? 0;
+    const nk = Math.min(1, delta * 5);
+    nightI.current += (nightT - nightI.current) * nk;
+    if (Math.abs(nightI.current - nightT) < 0.003) nightI.current = nightT;
+    else moving = true;
+    const n = nightI.current;
     const introLit = intro && t >= TL.firstLight ? 1 : 0;
     const want = Math.max(st.lit, introLit);
     for (let i = 0; i < 5; i++) {
-      const target = i < want ? 1.35 : 0;
+      const ni = clamp01((n - i * 0.07) / 0.72);
+      const target = i < want ? 1.35 + 0.45 * ni : 1.0 * ni * (intro && t < TL.firstLight ? 0 : 1);
       const cur = glassI.current[i];
       const next = cur + (target - cur) * Math.min(1, delta * 7);
       glassI.current[i] = Math.abs(next - target) < 0.004 ? target : next;
       m.glass[i].emissiveIntensity = glassI.current[i];
       if (glassI.current[i] !== target) moving = true;
     }
-    const porchTarget = st.porch || (intro && t >= TL.door) ? 2.2 : 0;
+    const porchTarget = Math.max(st.porch || (intro && t >= TL.door) ? 2.2 : 0, intro && t < TL.door ? 0 : 2.8 * clamp01((n - 0.3) / 0.7));
     porchI.current += (porchTarget - porchI.current) * Math.min(1, delta * 6);
     if (Math.abs(porchI.current - porchTarget) < 0.005) porchI.current = porchTarget;
     else moving = true;
@@ -449,7 +505,7 @@ export function House({ ctl, onBuilt }: { ctl: HouseHandle; onBuilt?: () => void
       const p = intro ? prog(t, TL.door, 0.55) : doorTarget;
       const s = intro ? spring(p, 0.5) : p;
       door.rotation.y = -1.15 * s * doorTarget;
-      m.spill.opacity = 0.42 * easeOut(prog(t, TL.door + 0.04, 0.35)) * doorTarget;
+      m.spill.opacity = (0.42 + 0.22 * n) * easeOut(prog(t, TL.door + 0.04, 0.35)) * doorTarget;
       m.glow.opacity = Math.min(1, s * 1.4) * doorTarget;
     }
 
@@ -466,7 +522,8 @@ export function House({ ctl, onBuilt }: { ctl: HouseHandle; onBuilt?: () => void
         const ph = ((smokeT.current / 7 + i / sm.children.length) % 1 + 1) % 1;
         c.position.set(Math.sin(ph * Math.PI * 2 + i * 1.7) * 0.1 + ph * 0.2, ph * 0.55, -ph * 0.06);
         c.scale.setScalar(0.09 + ph * 0.18);
-        ((c as THREE.Mesh).material as THREE.MeshStandardMaterial).opacity = (on ? 1 : 0) * 0.32 * Math.sin(ph * Math.PI) * clamp01((t - TL.smoke) * 2 + (intro ? 0 : 1));
+        // at night the smoke is barely there (moonlit grey puffs read as soot)
+        ((c as THREE.Mesh).material as THREE.MeshStandardMaterial).opacity = (on ? 1 : 0) * 0.32 * (1 - 0.85 * n) * Math.sin(ph * Math.PI) * clamp01((t - TL.smoke) * 2 + (intro ? 0 : 1));
       });
     }
 
@@ -496,9 +553,10 @@ export function House({ ctl, onBuilt }: { ctl: HouseHandle; onBuilt?: () => void
     { len: W + 1.6, pos: [-W / 2 - 0.8, RIDGE, 0], axis: 0 },
   ];
   return (
-    <group>
+    // a mirrored neighbour keeps the light where it is (only the model flips)
+    <group scale={[variant?.mirror ? -1 : 1, 1, 1]}>
       {/* soft shadow the whole model casts on the page */}
-      <mesh position={[0, -PLINTH.base - 0.36, PLINTH.z + 0.25]} rotation={[-Math.PI / 2, 0, 0]} material={m.shadow} renderOrder={-1}>
+      <mesh ref={set('plinthShadow')} position={[0, -PLINTH.base - 0.36, PLINTH.z + 0.25]} rotation={[-Math.PI / 2, 0, 0]} material={m.shadow} renderOrder={-1}>
         <planeGeometry args={[PLINTH.w * 1.45, PLINTH.d * 1.45]} />
       </mesh>
 
@@ -523,9 +581,15 @@ export function House({ ctl, onBuilt }: { ctl: HouseHandle; onBuilt?: () => void
       </group>
 
       <group ref={set('plinth')}>
-        {/* lawn plinth: sage top on a soil base */}
-        <mesh geometry={geo.plinthBase} material={m.soil} position={[0, -PLINTH.base - 0.26, PLINTH.z]} receiveShadow />
-        <mesh geometry={geo.plinthLawn} material={m.lawn} position={[0, -PLINTH.lawn - 0.06, PLINTH.z]} receiveShadow />
+        {/* lawn plinth: sage top on a soil base (retracts when the house stands on the page's ground) */}
+        <group ref={set('lot')}>
+          <mesh geometry={geo.plinthBase} material={m.soil} position={[0, -PLINTH.base - 0.26, PLINTH.z]} receiveShadow />
+          <mesh geometry={geo.plinthLawn} material={m.lawn} position={[0, -PLINTH.lawn - 0.06, PLINTH.z]} receiveShadow />
+        </group>
+        {/* without the plinth: an invisible ground that only shows the shadows falling on it */}
+        <mesh position={[0, -0.055, PLINTH.z]} rotation={[-Math.PI / 2, 0, 0]} material={m.catcher} receiveShadow renderOrder={0}>
+          <planeGeometry args={[16, 14]} />
+        </mesh>
 
         {/* path to the porch */}
         {[0, 1, 2].map((i) => (
@@ -636,8 +700,8 @@ export function House({ ctl, onBuilt }: { ctl: HouseHandle; onBuilt?: () => void
         <Window m={m} glass={m.glass[4]} pos={[W / 2 + 0.03, SLAB + 2.15, 0.15]} rotY={Math.PI / 2} h={0.78} refCb={set('open5')} />
 
         {/* garden */}
-        <Tree m={m} pos={[-3.15, 0, 0.35]} refCb={set('tree0')} />
-        <Tree m={m} pos={[3.05, 0, -2.25]} s={0.78} refCb={set('tree1')} />
+        {(variant?.trees[0] ?? true) && <Tree m={m} pos={[-3.15, 0, 0.35]} refCb={set('tree0')} />}
+        {(variant?.trees[1] ?? true) && <Tree m={m} pos={[3.05, 0, -2.25]} s={0.78} refCb={set('tree1')} />}
         <group ref={set('bush')} position={[-1.55, 0, D / 2 + 0.55]}>
           <mesh position={[0, 0.3, 0]} material={m.bush} castShadow receiveShadow>
             <sphereGeometry args={[0.42, 16, 12]} />
@@ -677,31 +741,52 @@ export function House({ ctl, onBuilt }: { ctl: HouseHandle; onBuilt?: () => void
   );
 }
 
-/** Sun + sky. `sun` 0 = clear afternoon, 1 = golden hour (lower, warmer, longer shadows). */
+/**
+ * Sun + sky. `sun` 0 = clear afternoon, 1 = golden hour (lower, warmer, longer shadows). `night` (dark theme)
+ * turns the sun into a cool moon from the same top-left direction, drops the sky light to a blue-grey, and
+ * lights a warm lamp at the porch so the windows' glow reads on the walls and the path. Both tween (~600ms).
+ */
 export function Lights({ ctl }: { ctl: HouseHandle }) {
   const dir = useRef<THREE.DirectionalLight>(null);
   const hemi = useRef<THREE.HemisphereLight>(null);
+  const lamp = useRef<THREE.PointLight>(null);
   const cur = useRef(ctl.state.sun);
+  const curN = useRef(ctl.state.night ?? 0);
   const { invalidate } = useThree();
   const cA = useMemo(() => new THREE.Color('#FFFBF6'), []);
   const cB = useMemo(() => new THREE.Color('#FFD08A'), []);
+  const moon = useMemo(() => new THREE.Color('#C6D0E4'), []);
+  const skyD = useMemo(() => new THREE.Color('#EEF4F7'), []);
+  const skyN = useMemo(() => new THREE.Color('#7F92B4'), []);
+  const gndD = useMemo(() => new THREE.Color('#B9C9AE'), []);
+  const gndN = useMemo(() => new THREE.Color('#26332B'), []);
   const tmp = useMemo(() => new THREE.Color(), []);
   useFrame((_, delta) => {
     const target = ctl.state.sun;
     const v = cur.current + (target - cur.current) * Math.min(1, delta * 2.5);
     cur.current = Math.abs(v - target) < 0.002 ? target : v;
-    const s = cur.current;
+    const nt = ctl.state.night ?? 0;
+    const w = curN.current + (nt - curN.current) * Math.min(1, delta * 5);
+    curN.current = Math.abs(w - nt) < 0.003 ? nt : w;
+    const s = cur.current * (1 - curN.current);
+    const n = curN.current;
     if (dir.current) {
-      // afternoon: high and from the front-left; golden hour: lower and warmer (longer shadows)
-      dir.current.position.set(-5.5 - 1.5 * s, 11 - 4.5 * s, 9 - 1.5 * s);
-      dir.current.color.copy(tmp.copy(cA).lerp(cB, s));
-      dir.current.intensity = 3.25 - 0.25 * s;
+      // afternoon: high and from the front-left; golden hour: lower and warmer (longer shadows); night: the moon
+      dir.current.position.set(-5.5 - 1.5 * s, 11 - 4.5 * s + 1.5 * n, 9 - 1.5 * s);
+      dir.current.color.copy(tmp.copy(cA).lerp(cB, s).lerp(moon, n));
+      dir.current.intensity = (3.25 - 0.25 * s) * (1 - n) + 1.2 * n;
     }
-    if (hemi.current) hemi.current.intensity = 1.85 - 0.3 * s;
-    if (cur.current !== target) invalidate();
+    if (hemi.current) {
+      hemi.current.intensity = (1.85 - 0.3 * s) * (1 - n) + 0.85 * n;
+      hemi.current.color.copy(tmp.copy(skyD).lerp(skyN, n));
+      hemi.current.groundColor.copy(tmp.copy(gndD).lerp(gndN, n));
+    }
+    if (lamp.current) lamp.current.intensity = 5 * n;
+    if (cur.current !== target || curN.current !== nt) invalidate();
   });
   return (
     <>
+      <pointLight ref={lamp} color="#FFC56E" intensity={0} distance={6} decay={1.8} position={[PORCH_X, SLAB + 1.4, D / 2 + 1.9]} />
       <hemisphereLight ref={hemi} args={['#EEF4F7', '#B9C9AE', 1.85]} />
       <directionalLight
         ref={dir}

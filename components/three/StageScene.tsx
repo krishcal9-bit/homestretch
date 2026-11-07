@@ -3,7 +3,7 @@ import { Canvas, useFrame, useThree, type RootState } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import * as THREE from 'three';
 import { House, Lights, makeHouseController, type HouseState } from './houseModel';
-import { FOV, SLOT_POSE, fitDistance, placeCamera, slotCamera } from './HouseScene';
+import { FOV, FRAMES, SLOT_POSE, fitDistance, placeCamera, slotCamera, type FrameName } from './HouseScene';
 import { INTRO } from '@/components/introTimeline';
 
 /**
@@ -25,7 +25,8 @@ const inOut = (p: number) => {
 };
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-function Rig({ mode, slot, tilt, active, start }: { mode: MutableRefObject<Mode>; slot: () => DOMRect | null; tilt: boolean; active: boolean; start: { t: number | null } }) {
+function Rig({ mode, slot, tilt, active, start, frame, ctl, ground }: { mode: MutableRefObject<Mode>; slot: () => DOMRect | null; tilt: boolean; active: boolean; start: { t: number | null }; frame: FrameName; ctl: ReturnType<typeof makeHouseController>; ground: number }) {
+  const F = FRAMES[frame];
   // camera and size are read from the live state inside the frame (a synchronous dock resizes mid-task)
   const invalidate = useThree((s) => s.invalidate);
   const want = useRef({ x: 0, y: 0 });
@@ -48,7 +49,7 @@ function Rig({ mode, slot, tilt, active, start }: { mode: MutableRefObject<Mode>
       const k = Math.min(1, delta * 4);
       cur.current.x += (want.current.x - cur.current.x) * k;
       cur.current.y += (want.current.y - cur.current.y) * k;
-      slotCamera(cam, size.width, size.height, cur.current.x, cur.current.y);
+      slotCamera(cam, size.width, size.height, cur.current.x, cur.current.y, F);
       if (Math.abs(want.current.x - cur.current.x) > 0.001 || Math.abs(want.current.y - cur.current.y) > 0.001) invalidate();
       return;
     }
@@ -68,21 +69,25 @@ function Rig({ mode, slot, tilt, active, start }: { mode: MutableRefObject<Mode>
     const pb = ease((t - INTRO.title) / (INTRO.exit - INTRO.title));
     dist *= lerp(1, 1.14, pb);
     let el = lerp(18, SLOT_POSE.el, pb);
-    // land on the hero slot (measured every frame: the hero lays out underneath)
+    // land on the hero slot (measured every frame: the hero lays out underneath), with the slot's own framing;
+    // the plinth retracts as the house reaches the street
     let view = { x: 0, y: 0, w: W, h: H };
     const h = ease((t - INTRO.exit) / (INTRO.total - INTRO.exit));
     const r = h > 0 ? slot() : null;
+    let target = SLOT_POSE.target;
     if (r && r.width > 0) {
-      dist = lerp(dist, fitDistance(r.width / r.height), h);
-      az = lerp(az, SLOT_POSE.az, h);
-      el = lerp(el, SLOT_POSE.el, h);
+      dist = lerp(dist, fitDistance(r.width / r.height, FOV, F.extent), h);
+      az = lerp(az, F.pose.az, h);
+      el = lerp(el, F.pose.el, h);
+      target = SLOT_POSE.target.map((v, i) => lerp(v, F.pose.target[i], h)) as [number, number, number];
       view = { x: lerp(0, r.left, h), y: lerp(0, r.top, h), w: lerp(W, r.width, h), h: lerp(H, r.height, h) };
     }
+    ctl.groundOverride = 1 + (ground - 1) * h;
     cam.fov = FOV;
     cam.aspect = view.w / view.h;
     cam.setViewOffset(view.w, view.h, -view.x, -view.y, W, H);
     cam.updateProjectionMatrix();
-    placeCamera(cam, { az, el, dist, target: SLOT_POSE.target });
+    placeCamera(cam, { az, el, dist, target });
     if (t < INTRO.total + 0.3) invalidate();
   });
   return null;
@@ -125,6 +130,7 @@ export default function StageScene({
   slot,
   api,
   onFirstFrame,
+  frame = 'slot',
 }: {
   /** born on the intro's stage */
   intro: boolean;
@@ -135,6 +141,8 @@ export default function StageScene({
   slot: () => DOMRect | null;
   api: MutableRefObject<StageApi | null>;
   onFirstFrame?: () => void;
+  /** the slot's framing (the landing hero: 'street') */
+  frame?: FrameName;
 }) {
   const ctl = useMemo(() => {
     const c = makeHouseController(intro ? 'intro' : 'none', state);
@@ -150,6 +158,7 @@ export default function StageScene({
         const s = root.current;
         const r = slot();
         mode.current = 'slot';
+        ctl.groundOverride = undefined;
         if (!s || !r) return;
         // the canvas now sits in the slot: give it the slot's size and draw the slot's frame right now
         s.setSize(r.width, r.height, r.top, r.left);
@@ -160,6 +169,7 @@ export default function StageScene({
         mode.current = 'slot';
         ctl.build = 'none';
         ctl.key = false;
+        ctl.groundOverride = undefined;
         root.current?.invalidate();
       },
     };
@@ -179,7 +189,7 @@ export default function StageScene({
     >
       <Root root={root} />
       <Sync ctl={ctl} state={state} active={active} />
-      <Rig mode={mode} slot={slot} tilt={tilt} active={active} start={start} />
+      <Rig mode={mode} slot={slot} tilt={tilt} active={active} start={start} frame={frame} ctl={ctl} ground={state.ground ?? 1} />
       <Lights ctl={ctl} />
       <House ctl={ctl} />
       <FirstFrame onFirstFrame={onFirstFrame} />

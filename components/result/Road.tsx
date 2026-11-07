@@ -30,7 +30,7 @@ const GEOM: Record<Size, { trackY: number; h: number; r: number; keysR: number; 
  * (the 3D house: where its stepping-stone path meets the lawn's front edge). The Road reserves room on the
  * right so the object always fits, and the road surface ends under it.
  */
-export type SlotKind = 'house' | 'home' | 'stage';
+export type SlotKind = 'house' | 'home' | 'stage' | 'street';
 /**
  * house: the 3D house on the result and plan pages; stage: the same house as the landing hero's centerpiece
  * (larger: ~64% of the road); home: a chosen home's 2D house.
@@ -40,12 +40,14 @@ export type SlotKind = 'house' | 'home' | 'stage';
 const SLOT: Record<SlotKind, { frac: number; min: number; max: number; aspect: number; ax: number; ay: number; labelGap: number }> = {
   house: { frac: 0.46, min: 136, max: 236, aspect: 0.8, ax: 0.38, ay: 0.785, labelGap: 6 },
   stage: { frac: 0.64, min: 220, max: 420, aspect: 0.8, ax: 0.38, ay: 0.785, labelGap: 6 },
+  // the landing street (STREET_FRAME: no plinth, nearly front-on): the path's end at the sidewalk
+  street: { frac: 0.3, min: 200, max: 440, aspect: 0.8, ax: 0.427, ay: 0.935, labelGap: 6 },
   home: { frac: 0.22, min: 72, max: 96, aspect: 94 / 92, ax: 0.03, ay: 0.99, labelGap: -6 },
 };
-export function slotBox(kind: SlotKind, roadWidth: number) {
+export function slotBox(kind: SlotKind, roadWidth: number, width?: number) {
   const s = SLOT[kind];
   const w = Math.max(MIN_W, Math.round(roadWidth));
-  const sw = Math.round(Math.min(s.max, Math.max(s.min, w * s.frac)));
+  const sw = width !== undefined ? Math.round(width) : Math.round(Math.min(s.max, Math.max(s.min, w * s.frac)));
   const sh = Math.round(sw * s.aspect);
   const ax = Math.round(s.ax * sw);
   const ay = Math.round(s.ay * sh);
@@ -378,7 +380,21 @@ type RoadProps = {
   pinKeys?: boolean;
   /** Lay everything out (the slot included) but hold the drawing and its entrance until this turns false. */
   hold?: boolean;
+  /** With keysVariant 'slot': the slot's width in px (instead of a share of the road). */
+  slotWidth?: number;
+  /** Labels only above the road (below it is a dark street), each with a halo of this colour for legibility. */
+  labelsAbove?: boolean;
+  labelHalo?: string;
+  /** With keysVariant 'slot': draw no label over the slot (the object speaks for itself). */
+  noSlotLabel?: boolean;
 };
+
+/** Where the track runs inside the Road's box (px from its top), for placing a Road on a drawn street. */
+export function roadTrackY(size: 'md' | 'lg', kind: SlotKind, roadWidth: number, slotWidth?: number) {
+  const g0 = GEOM[size];
+  const slot = slotBox(kind, roadWidth, slotWidth);
+  return Math.max(g0.trackY, Math.ceil(slot.ay + 2 + g0.font * 0.75 - slot.labelGap));
+}
 
 /**
  * The Road: Today → Keys with milestone signposts placed proportionally by month. An illustrated path: a
@@ -387,7 +403,7 @@ type RoadProps = {
  * medallion, the small house, or a slot for the caller's object (the 3D house) where the road ends.
  * Markers follow lever changes with spring.gentle; nothing in it moves on its own.
  */
-export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, entrance = 'session', entranceDelay = 0, drawDuration = dur.long, drawEase = 'out', size = 'md', highlight = [], vtName, className = '', progressTo, keysGlow = 0, trackDrawn = false, keysAt, keysVariant = 'dot', keysBuild = 'none', keysBuildDelay, keysSlot, slotKind = 'house', keysLabel, pinKeys = false, hold = false }: RoadProps) {
+export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, entrance = 'session', entranceDelay = 0, drawDuration = dur.long, drawEase = 'out', size = 'md', highlight = [], vtName, className = '', progressTo, keysGlow = 0, trackDrawn = false, keysAt, keysVariant = 'dot', keysBuild = 'none', keysBuildDelay, keysSlot, slotKind = 'house', keysLabel, pinKeys = false, hold = false, slotWidth, labelsAbove = false, labelHalo, noSlotLabel = false }: RoadProps) {
   const { t, lang } = useLang();
   const uid = `rd${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const reduce = useReducedMotion();
@@ -397,7 +413,7 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
   const [overflows, setOverflows] = useState(false);
   // Nothing is drawn until the real width is known, so markers never slide from a fallback layout.
   const [measured, setMeasured] = useState(false);
-  const slot = keysVariant === 'slot' ? slotBox(slotKind, w) : null;
+  const slot = keysVariant === 'slot' ? slotBox(slotKind, w, slotWidth) : null;
   // A house marker is taller than a dot: add room above the track for the house and its label.
   const houseExtra = keysVariant === 'house' ? Math.max(0, Math.ceil(g0.keysR * 3.8 * 0.98 + 8 + g0.font - g0.trackY)) : 0;
   const slotTrackY = slot ? Math.max(g0.trackY, Math.ceil(slot.ay + 2 + g0.font * 0.75 - slot.labelGap)) : 0;
@@ -485,9 +501,12 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
   const blocks = useMemo<{ above: Span; below: Span }>(() => {
     if (houseHalf) return { above: [keysX - houseHalf, keysX + houseHalf], below: null };
     // the slot covers the space above the road; the 3D house's plinth also dips below it right of Keys
-    if (slot) return { above: [keysX - slot.ax - 4, keysX - slot.ax + slot.sw], below: slotKind !== 'home' ? [keysX - 4, keysX - slot.ax + slot.sw] : null };
-    return { above: null, below: null };
-  }, [houseHalf, slot?.ax, slot?.sw, slotKind, keysX]); // eslint-disable-line react-hooks/exhaustive-deps
+    const all: Span = labelsAbove ? [-1e6, 1e6] : null;
+    if (slot) return { above: [keysX - slot.ax - 4, keysX - slot.ax + slot.sw], below: all ?? (slotKind !== 'home' ? [keysX - 4, keysX - slot.ax + slot.sw] : null) };
+    return { above: null, below: all };
+  }, [houseHalf, slot?.ax, slot?.sw, slotKind, keysX, labelsAbove]); // eslint-disable-line react-hooks/exhaustive-deps
+  // labels drawn on an illustration get a halo of the ground they sit on
+  const halo = labelHalo ? { stroke: labelHalo, strokeWidth: 4, paintOrder: 'stroke' as const, strokeLinejoin: 'round' as const } : null;
   const clusters = useMemo(
     // With a house at Keys, Keys is labelled above it, so it leaves the label lanes entirely.
     () => layoutLabels(ownKeysLabel ? placed.filter((p) => p.key !== 'keys') : placed, w, g.charW, todayLabel.length * g.charW, joinText, [...highlight, 'keys'], blocks),
@@ -624,7 +643,7 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
               x={PAD}
               y={ty - g.above}
               textAnchor="start"
-              style={{ fill: 'var(--ink-2)', fontSize: g.font }}
+              style={{ fill: 'var(--ink-2)', fontSize: g.font, ...halo }}
               initial={play ? { opacity: 0 } : false}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.2, delay: play ? entranceDelay : 0 }}
@@ -646,7 +665,7 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
                     key={c.id}
                     y={c.side === 'above' ? ty - g.above : ty + g.below}
                     textAnchor="start"
-                    style={{ fontSize: g.font, fontWeight: c.keys.includes('keys') ? 600 : 400, fill: strong ? 'var(--ink)' : 'var(--ink-2)' }}
+                    style={{ fontSize: g.font, fontWeight: c.keys.includes('keys') ? 600 : 400, fill: strong ? 'var(--ink)' : 'var(--ink-2)', ...halo }}
                     initial={{ opacity: 0, x: c.left }}
                     animate={{ opacity: 1, x: c.left }}
                     exit={{ opacity: 0, transition: { duration: 0.1 } }}
@@ -673,11 +692,11 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
                 {t('road.labels.keys')}
               </motion.text>
             )}
-            {slot && (
+            {slot && !noSlotLabel && (
               <motion.text
                 y={ty - slot.ay + slot.labelGap}
                 textAnchor="start"
-                style={{ x: slotLabelX, fontSize: g.font, fontWeight: 600, fill: 'var(--ink)' }}
+                style={{ x: slotLabelX, fontSize: g.font, fontWeight: 600, fill: 'var(--ink)', ...halo }}
                 initial={play ? { opacity: 0 } : false}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.2, ease: ease.out, delay: play && !entranceOver ? (keysAt ?? reachDelay(keysX)) + 0.1 : 0 }}
@@ -699,7 +718,7 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.1 } }}
                 transition={{ duration: 0.16, ease: ease.out }}
-                className="pointer-events-none absolute z-10 w-[240px] rounded-[8px] bg-ink px-3 py-2 text-[13px] leading-[18px] text-white"
+                className="pointer-events-none absolute z-10 w-[240px] rounded-[8px] bg-tip px-3 py-2 text-[13px] leading-[18px] text-on-tip"
                 style={{
                   top: ty + g.keysR + 8,
                   left: Math.min(Math.max(activeM.x - 120, 8), w - 248),
@@ -709,7 +728,7 @@ export function Road({ result, today = new Date(), elapsed = 0, onEntranceDone, 
                 <span className="tnum block font-medium">
                   {activeM.label} · {monthName(addMonths(today, activeM.month), lang, true)}
                 </span>
-                <span className="mt-1 block text-white/85">{activeM.action}</span>
+                <span className="mt-1 block text-on-tip/85">{activeM.action}</span>
               </motion.div>
             )}
           </AnimatePresence>

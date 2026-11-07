@@ -29,17 +29,30 @@ export function placeCamera(cam: THREE.PerspectiveCamera, p: Pose) {
   cam.lookAt(tx, ty, tz);
 }
 
+/** A framing: where the camera sits and the scene extent it fits into the slot. */
+export type Frame = { pose: Pose; extent: { w: number; h: number } };
+/** Result and plan pages: the 3/4 product shot of the house on its plinth. */
+export const SLOT_FRAME: Frame = { pose: SLOT_POSE, extent: EXTENT };
+/**
+ * The landing hero's street: the house without its plinth, seen nearly front-on (a little from the right and
+ * above) so its front path runs straight down to the illustrated sidewalk; the neighbours' stills use the
+ * same camera. Calibrated like SLOT_FRAME: house, trees and mailbox centred with ~24px of air at 400px.
+ */
+export const STREET_FRAME: Frame = { pose: { az: 18, el: 15, dist: 0, target: [0.297, 2.161, 0.72] }, extent: { w: 10.39, h: 8.31 } };
+export const FRAMES = { slot: SLOT_FRAME, street: STREET_FRAME } as const;
+export type FrameName = keyof typeof FRAMES;
+
 /** The product-shot camera for a slot of this size; tilt (−1…1) leans it toward the cursor (≤4° / 2°). */
-export function slotCamera(cam: THREE.PerspectiveCamera, width: number, height: number, tx = 0, ty = 0) {
+export function slotCamera(cam: THREE.PerspectiveCamera, width: number, height: number, tx = 0, ty = 0, frame: Frame = SLOT_FRAME) {
   cam.clearViewOffset();
   cam.fov = FOV;
   cam.aspect = width / Math.max(1, height);
   cam.updateProjectionMatrix();
-  placeCamera(cam, { ...SLOT_POSE, az: SLOT_POSE.az + tx * 4, el: SLOT_POSE.el - ty * 2, dist: fitDistance(width / Math.max(1, height)) });
+  placeCamera(cam, { ...frame.pose, az: frame.pose.az + tx * 4, el: frame.pose.el - ty * 2, dist: fitDistance(width / Math.max(1, height), FOV, frame.extent) });
 }
 
 /** Slot camera: the product-shot pose, with a slight tilt toward the cursor (≤4°) on fine pointers. */
-function SlotRig({ tilt, active }: { tilt: boolean; active: boolean }) {
+function SlotRig({ tilt, active, frame }: { tilt: boolean; active: boolean; frame: Frame }) {
   const { camera, size, invalidate } = useThree();
   const want = useRef({ x: 0, y: 0 });
   const cur = useRef({ x: 0, y: 0 });
@@ -56,7 +69,7 @@ function SlotRig({ tilt, active }: { tilt: boolean; active: boolean }) {
     const k = Math.min(1, delta * 4);
     cur.current.x += (want.current.x - cur.current.x) * k;
     cur.current.y += (want.current.y - cur.current.y) * k;
-    slotCamera(camera as THREE.PerspectiveCamera, size.width, size.height, cur.current.x, cur.current.y);
+    slotCamera(camera as THREE.PerspectiveCamera, size.width, size.height, cur.current.x, cur.current.y, frame);
     if (Math.abs(want.current.x - cur.current.x) > 0.001 || Math.abs(want.current.y - cur.current.y) > 0.001) invalidate();
   });
   return null;
@@ -90,6 +103,13 @@ export type HouseSceneProps = {
   doorOpen?: boolean;
   sun?: number;
   smoke?: boolean;
+  /** 0 day … 1 night (dark theme) */
+  night?: number;
+  /** 1 plinth … 0 standing on the page's ground */
+  ground?: number;
+  /** HOUSE_VARIANTS index (neighbours) */
+  variant?: number;
+  frame?: FrameName;
   tilt?: boolean;
   /** false pauses rendering (off screen) */
   active?: boolean;
@@ -98,9 +118,13 @@ export type HouseSceneProps = {
   className?: string;
 };
 
-export default function HouseScene({ build = 'full', lit = 0, porch = false, doorOpen = false, sun = 0, smoke = false, tilt = false, active = true, onFirstFrame, onBuilt, className = '' }: HouseSceneProps) {
-  const state = useMemo<HouseState>(() => ({ lit, porch, doorOpen, sun, smoke }), [lit, porch, doorOpen, sun, smoke]);
-  const ctl = useMemo(() => makeHouseController(build, state), [build]); // eslint-disable-line react-hooks/exhaustive-deps
+export default function HouseScene({ build = 'full', lit = 0, porch = false, doorOpen = false, sun = 0, smoke = false, night = 0, ground = 1, variant = 0, frame = 'slot', tilt = false, active = true, onFirstFrame, onBuilt, className = '' }: HouseSceneProps) {
+  const state = useMemo<HouseState>(() => ({ lit, porch, doorOpen, sun, smoke, night, ground }), [lit, porch, doorOpen, sun, smoke, night, ground]);
+  const ctl = useMemo(() => {
+    const c = makeHouseController(build, state);
+    c.variant = variant;
+    return c;
+  }, [build, variant]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <Canvas
       className={className}
@@ -113,7 +137,7 @@ export default function HouseScene({ build = 'full', lit = 0, porch = false, doo
       aria-hidden
     >
       <Sync ctl={ctl} state={state} active={active} />
-      <SlotRig tilt={tilt} active={active} />
+      <SlotRig tilt={tilt} active={active} frame={FRAMES[frame]} />
       <Lights ctl={ctl} />
       <House ctl={ctl} onBuilt={onBuilt} />
       <FirstFrame onFirstFrame={onFirstFrame} />

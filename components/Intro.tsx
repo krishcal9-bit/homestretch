@@ -6,7 +6,8 @@ import { P } from '@/lib/illustrationPalette';
 import { brand } from '@/lib/brand';
 import { useLang } from '@/lib/i18n';
 import { WordmarkTitle, TITLE_T } from '@/components/brand/Wordmark';
-import { HOUSE_SIZES, HOUSE_STILL, hasWebGL } from '@/components/three/HouseCanvas';
+import { hasWebGL } from '@/components/three/HouseCanvas';
+import { STREET_SIZES, STREET_STILL, STREET_STILL_NIGHT } from '@/components/three/HeroHouse';
 import { introStage } from '@/components/three/introStage';
 import { INTRO, INTRO_STILL, INTRO_WAIT_MS } from './introTimeline';
 
@@ -57,6 +58,7 @@ export function Intro({ live = true, onStart, onHandoff, onDone, onSkip }: { liv
     (m: '3d' | 'still') => {
       setMode(m);
       introStage.set({ mode: m });
+      performance.mark?.(`hs-intro-${m}`);
       onStart?.(m);
       const T = m === '3d' ? INTRO : INTRO_STILL;
       const at = (s: number, f: () => void) => timers.current.push(setTimeout(f, s * 1000));
@@ -162,7 +164,9 @@ export function Intro({ live = true, onStart, onHandoff, onDone, onSkip }: { liv
             animate={stillTo ? { x: stillTo.left - stillBox.left, y: stillTo.top - stillBox.top, scale: stillTo.width / stillBox.w } : { y: 0 }}
             transition={stillTo ? { type: 'spring', duration: 0.5, bounce: 0 } : { duration: 0.5, ease: EASE }}
           >
-            <Image src={HOUSE_STILL} alt="" fill sizes={HOUSE_SIZES} priority className="object-contain" />
+            {/* the hero's own still (the house as it stands on the street), so the landing matches the slot */}
+            <Image src={STREET_STILL} alt="" fill sizes={STREET_SIZES} priority className="still-day object-contain" />
+            <Image src={STREET_STILL_NIGHT} alt="" fill sizes={STREET_SIZES} className="still-night object-contain" />
           </motion.div>
         )}
       </div>

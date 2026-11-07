@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useInView, useReducedMotion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import type { HouseSceneProps } from './HouseScene';
+import { useNight } from './useNight';
 
 /**
  * The 3D house in a fixed 5:4 slot. three.js loads only when the slot is near the viewport (its own chunk,
@@ -13,6 +14,8 @@ import type { HouseSceneProps } from './HouseScene';
  */
 const Scene = dynamic(() => import('./HouseScene'), { ssr: false });
 export const HOUSE_STILL = '/house/house.png';
+/** The same still at night (dark theme): moonlight, every window lit. */
+export const HOUSE_STILL_NIGHT = '/house/house-night.png';
 /** One `sizes` for every still of the house, so the intro and the hero share one (preloaded) file. */
 export const HOUSE_SIZES = '(min-width: 1024px) 560px, 90vw';
 
@@ -66,6 +69,7 @@ export function HouseCanvas({
   hideLive?: boolean;
 }) {
   const reduce = useReducedMotion();
+  const night = useNight();
   const ref = useRef<HTMLDivElement>(null);
   const near = useInView(ref, { margin: '400px 0px' });
   const visible = useInView(ref);
@@ -82,20 +86,24 @@ export function HouseCanvas({
   const showStill = !live || (!ready && !building) || hideLive;
   return (
     <div ref={ref} className={`relative aspect-[5/4] w-full ${className}`} role={label ? 'img' : undefined} aria-label={label}>
-      <Image
-        src={HOUSE_STILL}
-        alt=""
-        fill
-        sizes={HOUSE_SIZES}
-        priority={priority}
-        className="pointer-events-none select-none object-contain transition-opacity duration-300"
-        style={{ opacity: showStill ? 1 : 0 }}
-        aria-hidden
-      />
+      {[HOUSE_STILL, HOUSE_STILL_NIGHT].map((src, i) => (
+        <Image
+          key={src}
+          src={src}
+          alt=""
+          fill
+          sizes={HOUSE_SIZES}
+          priority={priority && i === 0}
+          className={`${i ? 'still-night' : 'still-day'} pointer-events-none select-none object-contain transition-opacity duration-300`}
+          style={{ opacity: showStill ? 1 : 0 }}
+          aria-hidden
+        />
+      ))}
       {live && (
         <div className="absolute inset-0 transition-opacity duration-300" style={{ opacity: !hideLive && (ready || building) ? 1 : 0, transitionDuration: hideLive ? '0ms' : undefined }}>
           <Scene
             {...scene}
+            night={night}
             active={visible && !(hold && ready)}
             onFirstFrame={() => {
               setReady(true);

@@ -4,15 +4,23 @@ import { motion } from 'motion/react';
 
 /**
  * Section-by-section navigation for the landing page.
- *  - Down / PageDown / Space / J → next section; Up / PageUp / K → previous. 700ms, cubic-bezier(0.77,0,0.175,1).
+ *  - Down / PageDown / Space / J → next section; Up / PageUp / K → previous. 800ms, cubic-bezier(0.77,0,0.175,1)
+ *    (a camera move: each scene's layers travel at their own speed, the skies crossfade).
  *  - Presses during a move are ignored; keys are never hijacked while focus is in an input, slider,
  *    radio group or (for Space) a button.
  *  - Wheel/trackpad/touch scroll normally; CSS scroll-snap settles on sections.
  *  - Tracks the active section and how many times each has been activated (to replay its animation).
+ *  - Tracks the target: where the camera is headed. It changes the moment a move starts (arrow, dot, key)
+ *    or, while scrolling freely, when a section crosses the middle of the viewport. The landing's sky
+ *    crossfades and its scenes' ambient motion start and stop on the target (its own context, so only
+ *    the few components that follow it re-render).
  */
 type Ctx = { ids: string[]; active: number; activations: number[]; goTo: (i: number) => void; next: () => void };
 const NavCtx = createContext<Ctx | null>(null);
 export const useSectionNav = () => useContext(NavCtx)!;
+const TargetCtx = createContext(0);
+/** The section the camera is on or headed to. */
+export const useSectionTarget = () => useContext(TargetCtx);
 
 // cubic-bezier(0.77, 0, 0.175, 1)
 function bez(t: number) {
@@ -28,9 +36,18 @@ function bez(t: number) {
 }
 
 const HEADER = 64;
+/** One section change, start to land. */
+export const MOVE_MS = 800;
 
 export function SectionNavProvider({ ids, children, enabled = true }: { ids: string[]; children: ReactNode; enabled?: boolean }) {
   const [active, setActive] = useState(0);
+  const [target, setTargetState] = useState(0);
+  const targetRef = useRef(0);
+  const setTarget = useCallback((i: number) => {
+    if (targetRef.current === i) return;
+    targetRef.current = i;
+    setTargetState(i);
+  }, []);
   const [activations, setActivations] = useState<number[]>(() => ids.map((_, i) => (i === 0 ? 1 : 0)));
   const moving = useRef(false);
   const activeRef = useRef(0);
@@ -77,11 +94,37 @@ export function SectionNavProvider({ ids, children, enabled = true }: { ids: str
     return () => io.disconnect();
   }, [ids, activate]);
 
+  // Free scrolling (wheel, trackpad, touch, scrollbar): the target is the section under the viewport's middle.
+  useEffect(() => {
+    let raf = 0;
+    const read = () => {
+      raf = 0;
+      if (moving.current) return;
+      const mid = HEADER + (window.innerHeight - HEADER) / 2;
+      let best = 0;
+      ids.forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= mid) best = i;
+      });
+      setTarget(best);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(read);
+    };
+    read();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, [ids, setTarget]);
+
   const goTo = useCallback(
     (i: number) => {
       const idx = Math.max(0, Math.min(ids.length - 1, i));
       const el = document.getElementById(ids[idx]);
       if (!el || moving.current) return;
+      setTarget(idx); // the camera heads there now: the sky starts its crossfade with the move
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const from = window.scrollY;
       const to = idx === 0 ? 0 : el.getBoundingClientRect().top + window.scrollY - HEADER;
@@ -91,7 +134,7 @@ export function SectionNavProvider({ ids, children, enabled = true }: { ids: str
       html.classList.add('landing-snap-off'); // snapping would fight the programmatic scroll
       const t0 = performance.now();
       const step = (now: number) => {
-        const p = Math.min(1, (now - t0) / 700);
+        const p = Math.min(1, (now - t0) / MOVE_MS);
         window.scrollTo(0, from + (to - from) * bez(p));
         if (p < 1) requestAnimationFrame(step);
         else {
@@ -103,7 +146,7 @@ export function SectionNavProvider({ ids, children, enabled = true }: { ids: str
       };
       requestAnimationFrame(step);
     },
-    [ids, activate],
+    [ids, activate, setTarget],
   );
   const next = useCallback(() => goTo(activeRef.current + 1 >= ids.length ? 0 : activeRef.current + 1), [goTo, ids.length]);
 
@@ -131,7 +174,11 @@ export function SectionNavProvider({ ids, children, enabled = true }: { ids: str
   }, [enabled, goTo]);
 
   const value = useMemo(() => ({ ids, active, activations, goTo, next }), [ids, active, activations, goTo, next]);
-  return <NavCtx.Provider value={value}>{children}</NavCtx.Provider>;
+  return (
+    <NavCtx.Provider value={value}>
+      <TargetCtx.Provider value={target}>{children}</TargetCtx.Provider>
+    </NavCtx.Provider>
+  );
 }
 
 /**

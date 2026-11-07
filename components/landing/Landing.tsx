@@ -16,13 +16,17 @@ import { Road } from '@/components/result/Road';
 import { Intro, INTRO } from '@/components/Intro';
 import { hasWebGL } from '@/components/three/HouseCanvas';
 import { HeroHouse, preloadStage } from '@/components/three/HeroHouse';
+import { P } from '@/lib/illustrationPalette';
 import { brand } from '@/lib/brand';
-import { World } from '@/components/scenery/World';
+import { HeroScene, streetLayout, type StreetLayout } from './scenes/HeroScene';
 import { SectionArrow, SectionDots, SectionNavProvider, useSectionPlay } from './SectionNav';
 import { PhoneVoice } from '@/components/illustrations/landing/PhoneVoice';
-import { JourneyRoad } from '@/components/illustrations/landing/JourneyRoad';
+import { IntakeScene } from './scenes/IntakeScene';
+import { RoadScene } from './scenes/RoadScene';
+import { HomesGround, HomesScene, useBadgeFloat } from './scenes/HomesScene';
+import { useSceneLive, useSceneShown } from './scenes/Scene';
+import { DuskCount, DuskScene } from './scenes/DuskScene';
 import { NeighborhoodMap } from '@/components/illustrations/landing/NeighborhoodMap';
-import { HundredCount, HundredHouses } from '@/components/illustrations/landing/HundredHouses';
 import { AnimatePresence } from 'motion/react';
 import { StaffLink, Wordmark } from '@/components/FamilyHeader';
 import type { Profile } from '@/lib/types';
@@ -190,20 +194,18 @@ function OdometerDate({ iso, phase, lang }: { iso: string; phase: Phase; lang: '
 }
 
 /* ------------------------------------------------------------------ */
-/* Hero demo                                                            */
+/* Hero: one street scene (components/landing/scenes/HeroScene.tsx).   */
+/* The demo lives in it: the date and slider in the sky, the Road      */
+/* painted along the sidewalk into the 3D house's front path.          */
 /* ------------------------------------------------------------------ */
-/**
- * The hero's product stage: one surface holding the app's own answer — the ready date, the 3D house standing
- * on the Road's Keys end (the road runs into its front path), and the slider that moves the date.
- */
-function HeroDemo({ phase, intro, onEarlier }: { phase: Phase; intro: boolean | null; onEarlier: () => void }) {
-  const { t, lang } = useLang();
+/** The sample family demo's state, shared by the controls in the sky and the Road on the street. */
+function useHeroDemo() {
+  const { t } = useLang();
   const [family, setFamily] = useState<'reyes' | 'nguyen'>('reyes');
-  const [extra, setExtra] = useState<Record<string, number>>({ reyes: FAMILIES.reyes.levers.extraDebt, nguyen: FAMILIES.nguyen.levers.extraDebt });
+  const [extras, setExtras] = useState<Record<string, number>>({ reyes: FAMILIES.reyes.levers.extraDebt, nguyen: FAMILIES.nguyen.levers.extraDebt });
   const profile = FAMILIES[family];
-  const result = useMemo(() => computeReadiness({ ...profile, levers: { ...profile.levers, extraDebt: extra[family] } }), [profile, extra, family]);
-  const play = animated(phase);
-  const t0 = offset(phase);
+  const extra = extras[family];
+  const result = useMemo(() => computeReadiness({ ...profile, levers: { ...profile.levers, extraDebt: extra } }), [profile, extra]);
   // The 3D house answers the slider: the earlier the date, the warmer the sun and the more windows lit.
   const span = useMemo(() => {
     const at = (x: number) => computeReadiness({ ...profile, levers: { ...profile.levers, extraDebt: x } }).monthsToReady;
@@ -212,18 +214,6 @@ function HeroDemo({ phase, intro, onEarlier }: { phase: Phase; intro: boolean | 
   const gain = span.base > span.best ? Math.min(1, Math.max(0, (span.base - result.monthsToReady) / (span.base - span.best))) : 0;
   const litWindows = 1 + Math.round(gain * 3);
   const sunStep = Math.round(gain * 20) / 20;
-  // the house element is stable (memoized on its few primitive props), so dragging never re-renders the canvas
-  const house = useMemo(() => <HeroHouse intro={intro} lit={litWindows} sun={sunStep} />, [intro, litWindows, sunStep]);
-  // Wide stages: the house stands on the Road's Keys end. Phones: date, house (~80% wide), Road, slider, stacked.
-  // Decided before the first client paint (the hero is invisible until then).
-  const [onRoad, setOnRoad] = useState<boolean | null>(null);
-  useLayoutEffect(() => {
-    const mq = window.matchMedia('(min-width: 560px)');
-    const on = () => setOnRoad(mq.matches);
-    on();
-    mq.addEventListener('change', on);
-    return () => mq.removeEventListener('change', on);
-  }, []);
 
   // "7 months sooner" pill: delta since the drag began; fades 1.5s after the last change.
   const baseline = useRef<number | null>(null);
@@ -237,16 +227,21 @@ function HeroDemo({ phase, intro, onEarlier }: { phase: Phase; intro: boolean | 
       setDragged(!!localStorage.getItem('hs.dragged'));
     } catch {}
   }, []);
-  const onSlide = (v: number) => {
-    if (baseline.current === null) baseline.current = result.monthsToReady;
-    setExtra((x) => ({ ...x, [family]: v }));
-    if (!dragged) {
-      setDragged(true);
-      try {
-        localStorage.setItem('hs.dragged', '1');
-      } catch {}
-    }
-  };
+  const onSlide = useCallback(
+    (v: number) => {
+      if (baseline.current === null) baseline.current = lastMonths.current;
+      setExtras((x) => ({ ...x, [family]: v }));
+      setDragged((d) => {
+        if (!d) {
+          try {
+            localStorage.setItem('hs.dragged', '1');
+          } catch {}
+        }
+        return true;
+      });
+    },
+    [family],
+  );
   useEffect(() => {
     const m = result.monthsToReady;
     if (m === lastMonths.current) return;
@@ -254,31 +249,36 @@ function HeroDemo({ phase, intro, onEarlier }: { phase: Phase; intro: boolean | 
     lastMonths.current = m;
     if (baseline.current === null) return; // family switch, not a drag
     const n = m - baseline.current;
-    if (earlier) {
-      setKeysGlow((k) => k + 1);
-      onEarlier();
-    }
+    if (earlier) setKeysGlow((k) => k + 1);
     if (n !== 0) setDelta({ n, id: Date.now() });
     if (fadeTimer.current) clearTimeout(fadeTimer.current);
     fadeTimer.current = setTimeout(() => {
       setDelta(null);
       baseline.current = null;
     }, 1500);
-  }, [result.monthsToReady, onEarlier]);
-  const switchFamily = (f: 'reyes' | 'nguyen') => {
+  }, [result.monthsToReady]);
+  const switchFamily = useCallback((f: 'reyes' | 'nguyen') => {
     baseline.current = null;
     setDelta(null);
     setFamily(f);
-  };
+  }, []);
+  const deltaText = delta ? (delta.n < 0 ? (delta.n === -1 ? t('landing.sooner1') : t('landing.sooner', { n: -delta.n })) : delta.n === 1 ? t('landing.later1') : t('landing.later', { n: delta.n })) : '';
+  return { family, switchFamily, extra, onSlide, result, litWindows, sunStep, delta, deltaText, keysGlow, dragged };
+}
+type Demo = ReturnType<typeof useHeroDemo>;
 
+/** In the sky above the street: which sample family, the ready date (brass), the slider that moves it. No panel. */
+function HeroControls({ demo, phase }: { demo: Demo; phase: Phase }) {
+  const { t, lang } = useLang();
+  const play = animated(phase);
+  const t0 = offset(phase);
   const fade = (delay: number) =>
     play
       ? { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.4, ease: ease.out, delay: t0 + delay } }
       : { initial: phase === 'reduced' ? { opacity: 0 } : false, animate: { opacity: 1 }, transition: { duration: 0.15 } };
-  const deltaText = delta ? (delta.n < 0 ? (delta.n === -1 ? t('landing.sooner1') : t('landing.sooner', { n: -delta.n })) : delta.n === 1 ? t('landing.later1') : t('landing.later', { n: delta.n })) : '';
-
+  const { family, switchFamily, extra, onSlide, result, delta, deltaText, dragged } = demo;
   return (
-    <div className="relative rounded-[14px] border border-line bg-surface px-4 pb-3 pt-4 sm:px-7 sm:pb-4 sm:pt-6" data-testid="sample-road" data-intro style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
+    <div className="relative w-full" data-testid="sample-road" data-intro style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
       <motion.div key={`toggle-${phase === 'pending'}`} {...fade(phase === 'opening' ? 0.1 : SEQ.sub)} className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <div className="w-[248px]">
           <Segmented<'reyes' | 'nguyen'>
@@ -297,7 +297,6 @@ function HeroDemo({ phase, intro, onEarlier }: { phase: Phase; intro: boolean | 
         </p>
       </motion.div>
 
-      {/* the ready date */}
       <div className="relative mt-3 [container-type:inline-size] sm:mt-5">
         <div className="relative flex min-h-[28px] items-center justify-between gap-3">
           <motion.p key={`ready-${phase === 'pending'}`} {...fade(phase === 'opening' ? 0.15 : SEQ.dateAt - 0.1)} className="text-[15px] text-ink-2">
@@ -313,10 +312,9 @@ function HeroDemo({ phase, intro, onEarlier }: { phase: Phase; intro: boolean | 
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, transition: { duration: 0.2 } }}
                   transition={{ duration: 0.16, ease: ease.out }}
-                  className={`tnum absolute right-0 top-0 inline-flex h-[28px] items-center whitespace-nowrap rounded-full px-3 text-[13px] font-medium transition-colors duration-200 ${delta.n < 0 ? 'bg-pine text-white' : 'bg-surface text-ink-2 ring-1 ring-line'}`}
+                  className={`tnum absolute right-0 top-0 inline-flex h-[28px] items-center whitespace-nowrap rounded-full px-3 text-[13px] font-medium transition-colors duration-200 ${delta.n < 0 ? 'bg-pine text-on-pine' : 'bg-surface text-ink-2 ring-1 ring-line'}`}
                   data-testid="delta-pill"
                 >
-                  {/* one pill; only its text swaps while the drag continues */}
                   <AnimatedMonth text={deltaText} />
                 </motion.span>
               )}
@@ -328,45 +326,25 @@ function HeroDemo({ phase, intro, onEarlier }: { phase: Phase; intro: boolean | 
         </p>
       </div>
 
-      {/* the house stands on the road's Keys end: the road runs into its front path */}
-      {onRoad === false && <div className="relative mx-auto aspect-[5/4] w-[88%] max-w-[340px]">{house}</div>}
-      <div className="relative mt-1">
-        <Road
-          result={result}
-          size={onRoad === false ? 'md' : 'lg'}
-          entrance={phase === 'pending' || play ? 'always' : 'none'}
-          entranceDelay={phase === 'opening' ? INTRO.pull + 0.25 : SEQ.roadAt}
-          drawDuration={phase === 'opening' ? 0.6 : SEQ.roadDraw}
-          drawEase="inOut"
-          progressTo={result.monthsToReady}
-          keysGlow={keysGlow}
-          keysVariant={onRoad === false ? 'dot' : 'slot'}
-          slotKind="stage"
-          keysSlot={onRoad ? house : undefined}
-          pinKeys
-          hold={phase === 'pending'}
-        />
-      </div>
-
       <motion.div key={`lever-${phase === 'pending'}`} {...fade(phase === 'opening' ? 0.35 : SEQ.roadAt + 0.3)} className="mt-3">
         <div className="flex items-center justify-between gap-4">
           <label htmlFor="sample-extra" className="text-[16px] font-medium text-ink">
             {t('landing.lever')}
           </label>
           <span className="tnum text-[16px] font-medium text-ink">
-            <AnimatedNumber value={extra[family]} format={(n) => t('result.perMonth', { amount: money(n, lang) })} />
+            <AnimatedNumber value={extra} format={(n) => t('result.perMonth', { amount: money(n, lang) })} />
           </span>
         </div>
         <Slider
           id="sample-extra"
           size="lg"
-          value={extra[family]}
+          value={extra}
           min={0}
           max={400}
           step={10}
           onChange={onSlide}
           label={t('landing.lever')}
-          valueText={money(extra[family], lang)}
+          valueText={money(extra, lang)}
           nudgeAt={play ? (phase === 'opening' ? INTRO.total + 0.5 : SEQ.nudgeAt) : undefined}
         />
         <div className="h-[20px]">
@@ -383,34 +361,87 @@ function HeroDemo({ phase, intro, onEarlier }: { phase: Phase; intro: boolean | 
   );
 }
 
+/** Measures the street for the hero section (and keeps --street-h on it, which reserves the street's room). */
+function useStreetLayout(sectionRef: React.RefObject<HTMLElement | null>, controlsRef: React.RefObject<HTMLDivElement | null>) {
+  const [layout, setLayout] = useState<StreetLayout | null>(null);
+  useLayoutEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    let last = '';
+    const measure = () => {
+      const W = el.clientWidth;
+      const s = el.getBoundingClientRect();
+      const c = controlsRef.current?.getBoundingClientRect();
+      const Xc = c && W >= 1024 ? Math.round(c.left - s.left + c.width / 2) : undefined;
+      const next = streetLayout(W, window.innerHeight, Xc);
+      const key = JSON.stringify(next);
+      if (key === last) return;
+      last = key;
+      el.style.setProperty('--street-h', `${next.height}px`);
+      setLayout(next);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.addEventListener('resize', measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, [sectionRef, controlsRef]);
+  return layout;
+}
+
 function Hero({ phase, intro }: { phase: Phase; intro: boolean | null }) {
   const { t } = useLang();
   const router = useVTRouter();
   const reduce = useReducedMotion();
   const play = animated(phase);
   const t0 = offset(phase);
-  const onEarlier = useMemo(() => () => {}, []);
+  const demo = useHeroDemo();
+  const sectionRef = useRef<HTMLElement>(null);
+  const controlsRef = useRef<HTMLDivElement>(null);
+  const layout = useStreetLayout(sectionRef, controlsRef);
+  // the house element is stable (memoized on its few primitive props), so dragging never re-renders the canvas
+  const house = useMemo(() => <HeroHouse intro={intro} lit={demo.litWindows} sun={demo.sunStep} frame="street" />, [intro, demo.litWindows, demo.sunStep]);
+  const road = layout && (
+    <Road
+      result={demo.result}
+      size={layout.phone ? 'md' : 'lg'}
+      entrance={phase === 'pending' || play ? 'always' : 'none'}
+      entranceDelay={SEQ.roadAt}
+      drawDuration={SEQ.roadDraw}
+      drawEase="inOut"
+      progressTo={demo.result.monthsToReady}
+      keysGlow={demo.keysGlow}
+      keysVariant="slot"
+      slotKind="street"
+      slotWidth={layout.sw}
+      keysSlot={house}
+      pinKeys
+      hold={phase === 'pending'}
+      labelsAbove
+      labelHalo={P.sage}
+      noSlotLabel
+    />
+  );
   const fadeUp = play
     ? { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.4, ease: ease.out, delay: t0 + (phase === 'opening' ? 0.25 : SEQ.sub) } }
     : { initial: phase === 'reduced' ? { opacity: 0 } : false, animate: { opacity: 1 }, transition: { duration: 0.15 } };
   return (
-    <section id="hero" data-testid="hero" className="snap-section relative min-h-[calc(100svh-64px)]">
-      <div className="hero-content relative z-[1] mx-auto grid max-w-[1280px] grid-cols-1 content-start gap-x-10 gap-y-5 px-5 pb-20 pt-4 lg:min-h-[calc(100svh-64px)] lg:grid-cols-12 lg:grid-rows-[1fr_1fr] lg:content-stretch lg:gap-y-0 lg:px-8 lg:pb-16 lg:pt-6 xl:gap-x-14">
-        <div className="lg:col-span-5 lg:row-start-1 lg:self-end">
-          <motion.p key={`partner-${phase === 'pending'}`} {...fadeUp} transition={play ? { duration: 0.3, ease: ease.out, delay: t0 } : fadeUp.transition} className="mb-3 text-[15px] text-ink-2 lg:mb-5">
+    <section ref={sectionRef} id="hero" data-testid="hero" className="snap-section relative min-h-[calc(100svh-64px)] [--street-h:clamp(300px,46svh,400px)]">
+      <HeroScene layout={layout} road={road} />
+      {/* the sky: headline on the left, the ready date and slider over the family's house */}
+      <div className="relative z-[1] mx-auto grid max-w-[1280px] grid-cols-1 content-center items-center gap-x-10 gap-y-5 px-5 pb-4 pt-4 lg:grid-cols-12 lg:gap-y-0 lg:px-8 lg:pb-6 lg:pt-6 xl:gap-x-14" style={{ minHeight: 'calc(100svh - 64px - var(--street-h))' }}>
+        <div className="lg:col-span-5">
+          <motion.p key={`partner-${phase === 'pending'}`} {...fadeUp} transition={play ? { duration: 0.3, ease: ease.out, delay: t0 } : fadeUp.transition} className="mb-3 text-[15px] text-ink-2 lg:mb-4">
             {t('app.partner')}
           </motion.p>
           <Headline text={t('landing.headline')} phase={phase} />
-        </div>
-        {/* the product stage: the ready date, the house on the Road, the slider (phones: right under the headline) */}
-        <div className="lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1 lg:self-center">
-          <HeroDemo phase={phase} intro={intro} onEarlier={onEarlier} />
-        </div>
-        <div className="lg:col-span-5 lg:row-start-2 lg:self-start">
-          <motion.p key={`sub-${phase === 'pending'}`} {...fadeUp} className="mt-2 max-w-[44ch] lg:mt-6 text-[18px] leading-[28px] text-ink-2 lg:text-[20px] lg:leading-[30px]" data-intro style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
+          <motion.p key={`sub-${phase === 'pending'}`} {...fadeUp} className="mt-4 hidden max-w-[44ch] text-[18px] leading-[28px] text-ink-2 sm:block lg:mt-5" data-intro style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
             {t('landing.sub')}
           </motion.p>
-          <motion.div key={`cta-${phase === 'pending'}`} {...fadeUp} className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4" data-intro style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
+          <motion.div key={`cta-${phase === 'pending'}`} {...fadeUp} className="mt-5 flex flex-wrap items-center gap-x-8 gap-y-3 lg:mt-7" data-intro style={{ visibility: phase === 'pending' ? 'hidden' : undefined }}>
             <motion.a
               href="/start"
               onClick={(e) => {
@@ -420,25 +451,30 @@ function Hero({ phase, intro }: { phase: Phase; intro: boolean | null }) {
               }}
               whileTap={{ scale: 0.97 }}
               transition={spring.snappy}
-              className="inline-flex min-h-[56px] items-center rounded-[8px] bg-pine px-8 text-[20px] font-medium text-white transition-colors duration-[120ms] hover:bg-pine-hover"
+              className="inline-flex min-h-[52px] items-center rounded-[8px] bg-pine px-7 text-[18px] font-medium text-on-pine transition-colors duration-[120ms] hover:bg-pine-hover lg:min-h-[56px] lg:px-8 lg:text-[20px]"
               style={{ viewTransitionName: 'cta' }}
               data-testid="find-my-date"
             >
               {t('landing.cta')}
             </motion.a>
             <a
-              href="#story"
+              href="#scene-intake"
               onClick={(e) => {
                 e.preventDefault();
-                document.getElementById('story')?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+                document.getElementById('scene-intake')?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
               }}
-              className="hit inline-flex min-h-[44px] items-center text-[17px] font-medium text-pine underline-offset-4 hover:underline"
+              className="hit hidden min-h-[44px] items-center text-[17px] font-medium text-pine underline-offset-4 hover:underline sm:inline-flex"
             >
               {t('landing.how')}
             </a>
           </motion.div>
         </div>
+        <div ref={controlsRef} className="mx-auto w-full max-w-[540px] lg:col-span-7">
+          <HeroControls demo={demo} phase={phase} />
+        </div>
       </div>
+      {/* the street's room (the scene draws it; the Road and the house take input there) */}
+      <div aria-hidden style={{ height: 'var(--street-h)' }} />
       <SectionArrow index={0} label={t('landing.arrowNext')} topLabel={t('landing.arrowTop')} />
     </section>
   );
@@ -509,8 +545,14 @@ function MaskHeading({ children, reduce }: { children: React.ReactNode; reduce: 
   );
 }
 
-/** A full-viewport section: text on one side, a large illustration on the other (alternating); graphic first on phones. */
-function SceneSection({ id, index, flip = false, bob = false, text, graphic, minGraphic = 420 }: { id: string; index: number; flip?: boolean; bob?: boolean; text: (reduce: boolean) => React.ReactNode; graphic: (reduce: boolean) => React.ReactNode; minGraphic?: number }) {
+/**
+ * A full-viewport section built around its scene: the scene fills the section behind everything (its own
+ * background and depth layers, components/landing/scenes); the text sits on its calm side.
+ *  - 'split': text in 5 columns, the centrepiece in 7 (text first on phones, the centrepiece below)
+ *  - 'sky': the scene is the centrepiece; the text sits alone in the calm sky at the top-left
+ * `scene` receives the play count (0 until the first activation), so it can replay its own moment.
+ */
+function SceneSection({ id, index, layout = 'split', bob = false, text, graphic, scene, anchor, minGraphic = 420 }: { id: string; index: number; layout?: 'split' | 'sky'; bob?: boolean; text: (reduce: boolean) => React.ReactNode; graphic?: (reduce: boolean) => React.ReactNode; scene?: (play: number, reduce: boolean) => React.ReactNode; /** a persistent box around the centrepiece with scenery registered to it (drawn under it) */ anchor?: React.ReactNode; minGraphic?: number }) {
   const { t } = useLang();
   const reduce = !!useReducedMotion();
   const ref = useRef<HTMLElement>(null);
@@ -523,19 +565,53 @@ function SceneSection({ id, index, flip = false, bob = false, text, graphic, min
     const id = requestAnimationFrame(() => setGn(n));
     return () => cancelAnimationFrame(id);
   }, [n]);
-  const graphicEl = useMemo(() => (gn > 0 ? graphic(reduce) : null), [gn, reduce, graphic]);
+  const graphicEl = useMemo(() => (gn > 0 && graphic ? graphic(reduce) : null), [gn, reduce, graphic]);
+  const sceneEl = useMemo(() => (scene ? scene(gn, reduce) : null), [gn, reduce, scene]);
   return (
-    <section ref={ref} id={id} data-testid={id} className="snap-section relative flex min-h-[calc(100svh-64px)] items-center overflow-hidden" aria-label={t(`landing.nav${index}`)}>
-      <div className="mx-auto grid w-full max-w-[1280px] grid-cols-1 items-center gap-10 px-5 pb-24 pt-12 lg:grid-cols-12 lg:gap-12 lg:px-8 lg:pb-20 lg:pt-8">
-        <div className={`lg:col-span-5 ${flip ? 'lg:order-2' : ''}`} key={`t${n}`}>
-          {textEl}
+    <section ref={ref} id={id} data-testid={id} className={`snap-section relative flex min-h-[calc(100svh-64px)] overflow-hidden ${layout === 'sky' ? 'items-start' : 'items-center'}`} aria-label={t(`landing.nav${index}`)}>
+      {sceneEl}
+      {layout === 'sky' ? (
+        <div className="relative z-[1] mx-auto w-full max-w-[1280px] px-5 pb-[max(300px,44svh)] pt-10 lg:px-8 lg:pb-24 lg:pt-12">
+          <div className="max-w-[520px]" key={`t${n}`}>
+            {textEl}
+          </div>
         </div>
-        <div className={`order-first lg:col-span-7 ${flip ? 'lg:order-1' : 'lg:order-2'}`} style={{ minHeight: minGraphic }}>
-          {graphicEl && <div key={`g${gn}`}>{graphicEl}</div>}
+      ) : (
+        <div className="relative z-[1] mx-auto grid w-full max-w-[1280px] grid-cols-1 items-center gap-10 px-5 pb-24 pt-12 lg:grid-cols-12 lg:gap-12 lg:px-8 lg:pb-20 lg:pt-8">
+          <div className="relative z-[2] lg:col-span-5" key={`t${n}`}>
+            {textEl}
+          </div>
+          <div className="lg:col-span-7" style={{ minHeight: minGraphic }}>
+            {anchor ? (
+              <AnchorBox under={anchor} index={index}>
+                {graphicEl && (
+                  <div className="absolute inset-0" key={`g${gn}`}>
+                    {graphicEl}
+                  </div>
+                )}
+              </AnchorBox>
+            ) : (
+              graphicEl && <div key={`g${gn}`}>{graphicEl}</div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
       <SectionArrow index={index} label={t('landing.arrowNext')} topLabel={t('landing.arrowTop')} bob={bob} />
     </section>
+  );
+}
+
+/** The homes block's box: the ground plane under it stays put while the block replays on each activation. */
+function AnchorBox({ under, index, children }: { under: React.ReactNode; index: number; children: React.ReactNode }) {
+  const live = useSceneLive(index);
+  const shown = useSceneShown(index);
+  return (
+    <div className="relative mx-auto aspect-[600/350] w-full max-w-[620px]" data-live={live ? 'true' : 'false'}>
+      <div className="absolute inset-0" style={shown ? undefined : { contentVisibility: 'hidden' }}>
+        {under}
+      </div>
+      {children}
+    </div>
   );
 }
 
@@ -554,10 +630,13 @@ function SceneIntake() {
           </motion.p>
         </>
       )}
-      graphic={(reduce) => <PhoneVoice reduce={reduce} />}
+      graphic={(reduce) => <PhoneVoice reduce={reduce} backdrop={false} />}
+      scene={intakeScene}
     />
   );
 }
+const intakeScene = () => <IntakeScene />;
+const roadScene = (play: number, reduce: boolean) => <RoadScene play={play} reduce={reduce} />;
 
 function SceneRoad() {
   const { t } = useLang();
@@ -570,9 +649,8 @@ function SceneRoad() {
     <SceneSection
       id="scene-road"
       index={2}
-      flip
+      layout="sky"
       bob
-      minGraphic={220}
       text={(reduce) => (
         <>
           <MaskHeading reduce={reduce}>{t('landing.s2')}</MaskHeading>
@@ -586,13 +664,15 @@ function SceneRoad() {
           </ul>
         </>
       )}
-      graphic={(reduce) => <JourneyRoad reduce={reduce} />}
+      scene={roadScene}
     />
   );
 }
 
 function SceneHomes() {
   const { t } = useLang();
+  const probe = useRef<HTMLSpanElement>(null);
+  const badgeY = useBadgeFloat(probe);
   const lots = useMemo(() => {
     const fams = SEED_FAMILIES.map((f) => ({ f, r: computeReadiness(f.profile) })).filter((x) => isEligible(x.r));
     const homes = SEED_HOMES.slice(0, 6);
@@ -624,27 +704,43 @@ function SceneHomes() {
           <div className="mt-8">
             <Ticker />
           </div>
+          <span ref={probe} className="hidden" />
         </>
       )}
-      graphic={(reduce) => <NeighborhoodMap lots={lots} reduce={reduce} />}
+      graphic={(reduce) => <NeighborhoodMap lots={lots} reduce={reduce} plain badgeY={badgeY} />}
+      anchor={homesAnchor}
+      scene={homesScene}
     />
   );
 }
+const homesAnchor = (
+  <>
+    <HomesGround />
+  </>
+);
+const homesScene = () => <HomesScene />;
 
-/** The only dark section: a dusk street of 100 homes lights up row by row while the counter rolls to 100; then the sentence and button rise. */
+/**
+ * The closing band: a dusk street of a hundred homes (DuskScene) fills it; the lamps come on, then the windows
+ * light in a wave toward the horizon while the counter rolls to 100; the sentence and the button rise in the
+ * open sky above. The footer sits below the band, on paper.
+ */
 function Closing() {
   const { t } = useLang();
   const reduce = !!useReducedMotion();
   const ref = useRef<HTMLElement>(null);
   const n = useSectionPlay(4, ref);
   return (
-    <section ref={ref} id="closing" data-testid="closing" className="snap-section relative flex min-h-[calc(100svh-64px)] flex-col bg-pine text-white" aria-label={t('landing.nav4')}>
-      <div className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col justify-center px-5 py-12 lg:px-8" key={n}>
-        {n > 0 && <ClosingBody reduce={reduce} />}
-      </div>
-      {/* the up arrow sits in the pine band, above the footer */}
-      <div className="relative h-[76px]">
-        <SectionArrow index={4} label={t('landing.arrowNext')} topLabel={t('landing.arrowTop')} tone="dark" />
+    <section ref={ref} id="closing" data-testid="closing" className="snap-section relative flex min-h-[calc(100svh-64px)] flex-col text-on-band" aria-label={t('landing.nav4')}>
+      <div className="relative flex flex-1 flex-col">
+        <DuskScene play={n} reduce={reduce} />
+        <div className="relative z-[1] mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-5 pb-[34svh] pt-10 lg:px-8 lg:pb-[30svh] lg:pt-12" key={n}>
+          {n > 0 && <ClosingBody reduce={reduce} />}
+        </div>
+        {/* the up arrow sits in the band, above the footer */}
+        <div className="relative z-[1] h-[76px]">
+          <SectionArrow index={4} label={t('landing.arrowNext')} topLabel={t('landing.arrowTop')} tone="dark" />
+        </div>
       </div>
       <Footer />
     </section>
@@ -660,25 +756,24 @@ const ClosingBody = memo(function ClosingBody({ reduce }: { reduce: boolean }) {
   const fmt = (v: number) => String(Math.round(v));
   return (
           <>
-            <div className="flex flex-wrap items-end gap-x-10 gap-y-6">
-              <HundredHouses reduce={reduce} />
-              <p className="tnum text-[72px] font-semibold leading-none tracking-[-0.02em] lg:text-[96px]">
-                <HundredCount reduce={reduce} format={fmt} />
+            <div className="flex flex-col gap-x-10 gap-y-5 lg:flex-row lg:items-end">
+              <p className="tnum text-[64px] font-semibold leading-none tracking-[-0.02em] lg:text-[112px] lg:leading-[0.9]">
+                <DuskCount reduce={reduce} format={fmt} />
               </p>
+              <motion.p
+                initial={reduce ? false : { opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, ease: ease.out, delay: reduce ? 0 : 1.6 }}
+                className="tnum max-w-[24ch] text-[30px] font-semibold leading-[36px] tracking-[-0.02em] lg:pb-[2px] lg:text-[40px] lg:leading-[46px]"
+              >
+                {a1}
+                <RollTo to={100} reduce={reduce} format={fmt} />
+                {a2} {b1}
+                <RollTo to={100} reduce={reduce} format={fmt} />
+                {b2}
+              </motion.p>
             </div>
-            <motion.p
-              initial={reduce ? false : { opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, ease: ease.out, delay: reduce ? 0 : 1.25 }}
-              className="tnum mt-10 max-w-[24ch] text-[34px] font-semibold leading-[40px] tracking-[-0.02em] lg:text-[52px] lg:leading-[56px]"
-            >
-              {a1}
-              <RollTo to={100} reduce={reduce} format={fmt} />
-              {a2} {b1}
-              <RollTo to={100} reduce={reduce} format={fmt} />
-              {b2}
-            </motion.p>
-            <motion.div initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: ease.out, delay: reduce ? 0 : 1.45 }}>
+            <motion.div initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: ease.out, delay: reduce ? 0 : 1.8 }}>
               <motion.a
                 href="/start"
                 onClick={(e) => {
@@ -688,7 +783,7 @@ const ClosingBody = memo(function ClosingBody({ reduce }: { reduce: boolean }) {
                 }}
                 whileTap={{ scale: 0.97 }}
                 transition={spring.snappy}
-                className="mt-10 inline-flex min-h-[56px] items-center rounded-[8px] bg-white px-8 text-[20px] font-medium text-pine transition-colors duration-[120ms] hover:bg-pine-soft focus-visible:outline-white"
+                className="mt-8 inline-flex min-h-[56px] items-center rounded-[8px] bg-on-band px-8 text-[20px] font-medium text-band transition-colors duration-[120ms] hover:bg-on-band/85 focus-visible:outline-on-band"
               >
                 {t('landing.cta')}
               </motion.a>
@@ -783,7 +878,6 @@ export function Landing() {
       <noscript>
         <style>{`[data-intro]{visibility:visible!important}`}</style>
       </noscript>
-      <World />
       {phase === 'opening' && introMounted && <Intro live={intro} onHandoff={onHandoff} onDone={onIntroDone} onSkip={onIntroSkip} />}
       {/* a skip remounts the hero straight into its final state */}
       <HeroM key={phase === 'static' ? 'static' : 'live'} phase={heroPhase} intro={phase === 'pending' ? null : phase === 'opening'} />
